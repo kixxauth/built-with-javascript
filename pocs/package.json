@@ -3,6 +3,7 @@
   "name": "built-with-javascript-pocs",
   "version": "0.0.0-alpha-1",
   "description": "Proof of Concept projects for Built With JavaScript (www.builtwithjavascript.us)",
+  "type": "module",
   "scripts": {
     "test": "eslint ./"
   },
