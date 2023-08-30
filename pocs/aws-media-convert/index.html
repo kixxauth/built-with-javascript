@@ -22,17 +22,63 @@
 
     <body>
         <div id="appWrapper">
-            <form action="/upload.html" method="POST" enctype="multipart/form-data">
+            <form id="fileUploadForm">
                 <h2>Upload Media Files</h2>
                 <p>
                     <label>Choose media files</label>
-                    <input type="file" name="media_files">
+                    <input id="fileInput" type="file" name="media_file">
                 </p>
                 <p>
                     <button>Upload</button>
                 </p>
             </form>
+            <p id="notification"></p>
         </div>
     </body>
+
+    <script type="text/javascript">
+    (function () {
+        const form = document.getElementById('fileUploadForm');
+        const input = document.getElementById('fileInput');
+        const notification = document.getElementById('notification');
+
+        async function uploadFile(file) {
+            const res = await fetch(`./upload-new-file/${ file.name }`, {
+                method: 'PUT',
+                headers: {
+                    'content-type': file.type,
+                    'content-length': file.size,
+                },
+                body: file,
+            });
+
+            if (!res.ok) {
+                throw new Error(`Unexpected status code from server: ${ res.status }`);
+            }
+
+            return file;
+        }
+
+        function printNotification(msg) {
+            notification.innerText = msg;
+        }
+
+        form.addEventListener('submit', (ev) => {
+            ev.stopPropagation();
+            ev.preventDefault();
+
+            const file = input.files[0];
+
+            if (file) {
+                uploadFile(file).then(() => {
+                    printNotification(`File ${ file.name } uploaded.`);
+                }, (error) => {
+                    console.error('Error uploading file:');
+                    console.error(error);
+                });
+            }
+        });
+    }());
+    </script>
 
 </html>

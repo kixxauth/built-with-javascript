@@ -1,51 +1,84 @@
 import http from 'node:http';
 import fsp from 'node:fs/promises';
+import fs from 'node:fs';
 
 
 const DIR_URL = new URL('./', import.meta.url);
 
 const server = http.createServer(handleHttpRequest);
 
-async function handleHttpRequest(req, res) {
-    const fileUrl = new URL('./index.html', DIR_URL);
-    const body = await fsp.readFile(fileUrl, { encoding: 'utf8' });
-
+function handleHttpRequest(req, res) {
     const url = new URL(`http://localhost:3000${ req.url }`);
-
     logRequest(req, url);
-
-    const chunks = [];
-
-    req.on('data', (chunk) => {
-        chunks.push(chunk);
-    });
-
-    req.on('end', () => {
-        if (chunks.length > 0) {
-            const buff = Buffer.concat(chunks);
-            console.log('POST body => ');
-            console.log(buff.toString('utf8'));
-        }
-
-        res.writeHead(200, {
-            'content-type': 'text/html',
-            'content-length': Buffer.byteLength(body),
-        });
-
-        res.write(body);
-        res.end();
-    });
+    routeRequest(req, res, url);
 }
 
 function routeRequest(req, res, url) {
     const matchString = `${ req.method } ${ url.pathname }`;
 
     switch (matchString) {
-        case 'POST /upload':
+        case 'GET /':
+            sendIndexPage(req, res);
             break;
         default:
-            throw new Error('Not implemented');
+            if (matchString.startsWith('PUT /upload-new-file/')) {
+                acceptFile(req, res, url);
+            } else {
+                sendNotFound(req, res);
+            }
     }
+}
+
+async function sendIndexPage(req, res) {
+    const fileUrl = new URL('./index.html', DIR_URL);
+    const body = await fsp.readFile(fileUrl, { encoding: 'utf8' });
+    sendHtml(res, body);
+}
+
+function acceptFile(req, res, url) {
+    const fileName = url.pathname.split('/').pop();
+    const contentType = req.headers['content-type'];
+    const destinationUrl = new URL(`./tmp/source-videos/${ fileName }`, DIR_URL);
+    const writeStream = fs.createWriteStream(destinationUrl);
+
+    req.on('end', () => {
+        const body = JSON.stringify({
+            fileName,
+            contentType,
+        });
+
+        res.writeHead(201, {
+            'content-type': 'application/json',
+            'content-length': Buffer.byteLength(body),
+        });
+
+        res.write(body);
+        res.end();
+    });
+
+    req.pipe(writeStream);
+}
+
+function sendNotFound(req, res) {
+    const body = `${ req.method } URL "${ req.url }" not found on this server\n`;
+
+    res.writeHead(404, {
+        'content-type': 'text/plain',
+        'content-length': Buffer.byteLength(body),
+    });
+
+    res.write(body);
+    res.end();
+}
+
+function sendHtml(res, body) {
+    res.writeHead(200, {
+        'content-type': 'text/html',
+        'content-length': Buffer.byteLength(body),
+    });
+
+    res.write(body);
+    res.end();
 }
 
 function logRequest(req, url) {
