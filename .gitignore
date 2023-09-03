@@ -21,6 +21,9 @@ build/Release
 # Dependency directories
 node_modules/
 
+# Do not Node/NPM package-lock feature.
+package-lock.json
+
 # Optional npm cache directory
 .npm
 
@@ -35,3 +38,6 @@ node_modules/
 
 # A temporary location to use as a scratchpad
 tmp/
+
+# Protect secrets from getting into source control
+.secrets
