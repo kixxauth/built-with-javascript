@@ -1,11 +1,28 @@
 import http from 'node:http';
 import fsp from 'node:fs/promises';
-import fs from 'node:fs';
+// The `crypto` name is global in ES2022
+// eslint-disable-next-line no-shadow
+import crypto from 'node:crypto';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
+
+const AWS_ACCESS_KEY_ID = process.argv[2];
+const AWS_SECRET_KEY = process.argv[3];
 
 const DIR_URL = new URL('./', import.meta.url);
 
+
 const server = http.createServer(handleHttpRequest);
+
+
+const s3client = new S3Client({
+    region: 'us-east-2',
+    credentials: {
+        accessKeyId: AWS_ACCESS_KEY_ID,
+        secretAccessKey: AWS_SECRET_KEY,
+    },
+});
+
 
 function handleHttpRequest(req, res) {
     const url = new URL(`http://localhost:3000${ req.url }`);
@@ -38,25 +55,58 @@ async function sendIndexPage(req, res) {
 function acceptFile(req, res, url) {
     const fileName = url.pathname.split('/').pop();
     const contentType = req.headers['content-type'];
-    const destinationUrl = new URL(`./tmp/source-videos/${ fileName }`, DIR_URL);
-    const writeStream = fs.createWriteStream(destinationUrl);
+    const contentLength = parseInt(req.headers['content-length'], 10);
+    const md5Hasher = crypto.createHash('md5');
 
-    req.on('end', () => {
-        const body = JSON.stringify({
-            fileName,
-            contentType,
-        });
+    const chunks = [];
 
-        res.writeHead(201, {
-            'content-type': 'application/json',
-            'content-length': Buffer.byteLength(body),
-        });
-
-        res.write(body);
-        res.end();
+    req.on('data', (chunk) => {
+        md5Hasher.update(chunk);
+        chunks.push(chunk);
     });
 
-    req.pipe(writeStream);
+    req.on('end', () => {
+        const hash = md5Hasher.digest('hex');
+
+        const command = new PutObjectCommand({
+            Bucket: 'poc-2023-08-28-media-convert',
+            Key: `source-files/${ fileName }/${ hash }`,
+            ContentType: contentType,
+            ContentLength: contentLength,
+            Body: Buffer.concat(chunks),
+            // We could set StorageClass to S3 STANDARD_IA or S3 ONEZONE_IA to save money
+            // https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html
+            // StorageClass: "",
+        });
+
+        s3client.send(command).then((s3Response) => {
+            // eslint-disable-next-line no-console
+            console.log('S3 Response:', s3Response);
+
+            const body = JSON.stringify({
+                fileName,
+                contentType,
+                contentLength,
+                hash,
+            });
+
+            // eslint-disable-next-line no-console
+            console.log('Server Response:', body);
+
+            res.writeHead(201, {
+                'content-type': 'application/json',
+                'content-length': Buffer.byteLength(body),
+            });
+
+            res.write(body);
+            res.end();
+        }).catch((err) => {
+            // eslint-disable-next-line no-console
+            console.log(err);
+            res.writeHead(500, 'Internal Server Error');
+            res.end();
+        });
+    });
 }
 
 function sendNotFound(req, res) {

@@ -56,7 +56,12 @@
                 throw new Error(`Unexpected status code from server: ${ res.status }`);
             }
 
-            return file;
+            const info = await res.json();
+
+            console.log('Uploaded file', file.name);
+            console.log(info);
+
+            return info;
         }
 
         function printNotification(msg) {
@@ -70,8 +75,8 @@
             const file = input.files[0];
 
             if (file) {
-                uploadFile(file).then(() => {
-                    printNotification(`File ${ file.name } uploaded.`);
+                uploadFile(file).then((info) => {
+                    printNotification(`File ${ info.fileName } uploaded - hash: ${ info.hash }`);
                 }, (error) => {
                     console.error('Error uploading file:');
                     console.error(error);
