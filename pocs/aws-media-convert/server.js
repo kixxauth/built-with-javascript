@@ -52,59 +52,70 @@ async function sendIndexPage(req, res) {
     sendHtml(res, body);
 }
 
-function acceptFile(req, res, url) {
+async function acceptFile(req, res, url) {
     const fileName = url.pathname.split('/').pop();
     const contentType = req.headers['content-type'];
     const contentLength = parseInt(req.headers['content-length'], 10);
-    const md5Hasher = crypto.createHash('md5');
 
-    const chunks = [];
+    const { hash, buff } = await createFileBufferAndHashDigest(req);
+    const bucket = 'poc-2023-08-28-media-convert';
+    const filepath = `source-files/${ fileName }/${ hash }`;
 
-    req.on('data', (chunk) => {
-        md5Hasher.update(chunk);
-        chunks.push(chunk);
+    const command = new PutObjectCommand({
+        Bucket: bucket,
+        Key: filepath,
+        ContentType: contentType,
+        ContentLength: contentLength,
+        Body: buff,
+        // We could set StorageClass to S3 STANDARD_IA or S3 ONEZONE_IA to save money
+        // https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html
+        // StorageClass: "",
     });
 
-    req.on('end', () => {
-        const hash = md5Hasher.digest('hex');
+    const s3Response = await s3client.send(command);
 
-        const command = new PutObjectCommand({
-            Bucket: 'poc-2023-08-28-media-convert',
-            Key: `source-files/${ fileName }/${ hash }`,
-            ContentType: contentType,
-            ContentLength: contentLength,
-            Body: Buffer.concat(chunks),
-            // We could set StorageClass to S3 STANDARD_IA or S3 ONEZONE_IA to save money
-            // https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html
-            // StorageClass: "",
+    // eslint-disable-next-line no-console
+    console.log(`File stored in S3 at ${ bucket }${ filepath } with ETag`, s3Response.ETag);
+
+    const body = JSON.stringify({
+        fileName,
+        contentType,
+        contentLength,
+        hash,
+    });
+
+    // eslint-disable-next-line no-console
+    console.log('Server Response:', body);
+
+    res.writeHead(201, {
+        'content-type': 'application/json',
+        'content-length': Buffer.byteLength(body),
+    });
+
+    res.write(body);
+    res.end();
+}
+
+function createFileBufferAndHashDigest(req) {
+    return new Promise(function createFileBufferAndHashDigestPromise(resolve, reject) {
+        const md5Hasher = crypto.createHash('md5');
+
+        const chunks = [];
+
+        req.once('error', reject);
+
+        req.on('data', (chunk) => {
+            md5Hasher.update(chunk);
+            chunks.push(chunk);
         });
 
-        s3client.send(command).then((s3Response) => {
-            // eslint-disable-next-line no-console
-            console.log('S3 Response:', s3Response);
+        req.on('end', () => {
+            req.off('error', reject);
 
-            const body = JSON.stringify({
-                fileName,
-                contentType,
-                contentLength,
-                hash,
-            });
+            const hash = md5Hasher.digest('hex');
+            const buff = Buffer.concat(chunks);
 
-            // eslint-disable-next-line no-console
-            console.log('Server Response:', body);
-
-            res.writeHead(201, {
-                'content-type': 'application/json',
-                'content-length': Buffer.byteLength(body),
-            });
-
-            res.write(body);
-            res.end();
-        }).catch((err) => {
-            // eslint-disable-next-line no-console
-            console.log(err);
-            res.writeHead(500, 'Internal Server Error');
-            res.end();
+            resolve({ hash, buff });
         });
     });
 }
