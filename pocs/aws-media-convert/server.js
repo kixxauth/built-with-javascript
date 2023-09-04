@@ -3,11 +3,14 @@ import fsp from 'node:fs/promises';
 // The `crypto` name is global in ES2022
 // eslint-disable-next-line no-shadow
 import crypto from 'node:crypto';
+import { MediaConvertClient, CreateJobCommand } from '@aws-sdk/client-mediaconvert';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 
 const AWS_ACCESS_KEY_ID = process.argv[2];
 const AWS_SECRET_KEY = process.argv[3];
+const AWS_MEDIACONVERT_ROLE = 'arn:aws:iam::159720545559:role/service-role/MediaConvert_POC_Role';
+const AWS_MEDIACONVERT_BUCKET = 'poc-2023-08-28-media-convert';
 
 const DIR_URL = new URL('./', import.meta.url);
 
@@ -16,6 +19,14 @@ const server = http.createServer(handleHttpRequest);
 
 
 const s3client = new S3Client({
+    region: 'us-east-2',
+    credentials: {
+        accessKeyId: AWS_ACCESS_KEY_ID,
+        secretAccessKey: AWS_SECRET_KEY,
+    },
+});
+
+const mediaConvertClient = new MediaConvertClient({
     region: 'us-east-2',
     credentials: {
         accessKeyId: AWS_ACCESS_KEY_ID,
@@ -58,12 +69,12 @@ async function acceptFile(req, res, url) {
     const contentLength = parseInt(req.headers['content-length'], 10);
 
     const { hash, buff } = await createFileBufferAndHashDigest(req);
-    const bucket = 'poc-2023-08-28-media-convert';
-    const filepath = `source-files/${ fileName }/${ hash }`;
+    const bucket = AWS_MEDIACONVERT_BUCKET;
+    const filepath = `/${ fileName }/${ hash }`;
 
     const command = new PutObjectCommand({
         Bucket: bucket,
-        Key: filepath,
+        Key: `source-files${ filepath }`,
         ContentType: contentType,
         ContentLength: contentLength,
         Body: buff,
@@ -76,6 +87,8 @@ async function acceptFile(req, res, url) {
 
     // eslint-disable-next-line no-console
     console.log(`File stored in S3 at ${ bucket }${ filepath } with ETag`, s3Response.ETag);
+
+    await createMediaConvertJob(filepath);
 
     const body = JSON.stringify({
         fileName,
@@ -118,6 +131,69 @@ function createFileBufferAndHashDigest(req) {
             resolve({ hash, buff });
         });
     });
+}
+
+async function createMediaConvertJob(filepath) {
+    const command = new CreateJobCommand({
+        Role: AWS_MEDIACONVERT_ROLE,
+        Settings: {
+            TimecodeConfig: { Source: 'ZEROBASED' },
+            Inputs: [{
+                FileInput: `s3://${ AWS_MEDIACONVERT_BUCKET }/source-files${ filepath }`,
+                TimecodeSource: 'ZEROBASED',
+                VideoSelector: {},
+                AudioSelectors: {},
+            }],
+            OutputGroups: [
+                {
+                    Name: 'MP4 File',
+                    OutputGroupSettings: {
+                        Type: 'FILE_GROUP_SETTINGS',
+                        FileGroupSettings: {
+                            Destination: `s3://${ AWS_MEDIACONVERT_BUCKET }/output/${ filepath }/`,
+                        },
+                    },
+                    Outputs: {
+                        NameModifier: '-mp4-file',
+                        ContainerSettings: {
+                            Container: 'MP4',
+                            Mp4Settings: {},
+                        },
+                        VideoDescription: {
+                            Width: 1280,
+                            Height: 720,
+                            CodecSettings: {
+                                Codec: 'H_264',
+                                H264Settings: {
+                                    MaxBitrate: 2000000,
+                                    RateControlMode: 'QVBR',
+                                    QvbrSettings: { QvbrQualityLevel: 7 },
+                                    SceneChangeDetect: 'TRANSITION_DETECTION',
+                                },
+                            },
+                        },
+                        AudioDescriptions: [{
+                            AudioSourceName: 'Audio Selector 1',
+                            CodecSettings: {
+                                Codec: 'AAC',
+                                AacSettings: {
+                                    Bitrate: 96000,
+                                    CodingMode: 'CODING_MODE_2_0',
+                                    SampleRate: 48000,
+                                },
+                            },
+                        }],
+                    },
+                },
+            ],
+        },
+    });
+
+    const response = await mediaConvertClient.send(command);
+
+    console.log(response);
+
+    return {};
 }
 
 function sendNotFound(req, res) {
