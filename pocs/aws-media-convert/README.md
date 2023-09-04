@@ -3,7 +3,7 @@
 ## Objectives
 
 - [x] Capture and upload videos from mobile and desktop to our POC Node.js server.
-- [ ] Forward uploaded video files to S3 storage using the AWS JavaScript SDK.
+- [x] Forward uploaded video files to S3 storage using the AWS JavaScript SDK.
 - [ ] Trigger several different MediaConvert jobs to output each video file into several different formats we want to test.
 - [ ] Store the access information for each media output to disk from the Node.js server so we can list them out later.
 - [ ] Serve a page from the Node.js server which lists out all the completed MediaConvert jobs.
@@ -16,7 +16,7 @@
 - [x] Add file upload capability using an HTML form in the `index.html` page.
 - [x] Use the Node.js server to write the file to disk just to prove it is working as expected.
 - [x] Add a file name field to the upload form in the `index.html` page.
-- [ ] Use the Node.js server and AWS SDK to upload the file to S3.
+- [x] Use the Node.js server and AWS SDK to upload the file to S3.
 - [ ] Write the file metadata to disk as a Video object in JSON.
 - [ ] Use the Node.js server and AWS SDK to start a simple AWS MediaConvert job to transcode the video file to an mp4 for testing.
 - [ ] Update the Video JSON object on disk with the MediaConvert job info.
