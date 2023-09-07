@@ -1,5 +1,21 @@
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
+import path from 'node:path';
+
+
 export default class Database {
-    initialize() {
+
+    #database = new Map();
+
+    async initialize({ sourceDirectory }) {
+        const rootFile = path.join(sourceDirectory, 'site.toml');
+        const rootPath = path.join(sourceDirectory, 'site');
+
+        const context = await this.#readDataFile(rootFile);
+
+        await this.visitDirectory(context, rootPath, rootPath);
+
+        return this;
     }
 
     async #visitDirectory(context, rootPath, dirPath) {
@@ -8,7 +24,7 @@ export default class Database {
         // DO NOT want to impact parent nodes.
         const thisContext = structuredClone(context);
 
-        const { directories, files } = this.#listDirectory(dirPath);
+        const { directories, dataFiles } = this.#listDirectory(dirPath);
 
         // Does this directory have a page file?
         let pageFile;
@@ -17,7 +33,7 @@ export default class Database {
         // Does this directory have a directory file?
         let directoryFile;
 
-        files.forEach((fpath) => {
+        dataFiles.forEach((fpath) => {
             switch (path.basename(fpath)) {
                 case 'page.js':
                     pageFile = fpath;
@@ -77,7 +93,49 @@ export default class Database {
         thisContext.dirPath = dirPath;
         thisContext.filePath = filePath;
         thisContext.pathname = pathname;
-        thisContext.metadata = await this.#computePageMetadata(thisContext);
+
+        this.#database.set(pathname, thisContext);
+
+        // Make a deep copy of the context object to protect against
+        // mutation and an unintended recursive reference structure.
+        const nextContext = context;
+
+        if (directoryFile) {
+            const newData = await this.#readDataFile(directoryFile);
+
+            Object.assign(nextContext, newData);
+        }
+
+        for (const dir of directories) {
+            await this.#visitDirectory(nextContext, rootPath, dir);
+        }
+
+        return null;
+    }
+
+    async #listDirectory(dirpath) {
+        const entries = await fsp.readdir(dirpath);
+
+        const directories = [];
+        const dataFiles = [];
+        const contentFiles = [];
+
+        entries.forEach((entry) => {
+            const fullpath = path.join(dirpath, entry);
+            const stat = fs.statSync(fullpath, { throwIfNoEntry: false });
+
+            if (stat.isDirectory()) {
+                directories.push(fullpath);
+            } else if (stat.isFile()) {
+                if (path.extname(entry) === '.js') {
+                    dataFiles.push(fullpath);
+                } else {
+                    contentFiles.push(fullpath);
+                }
+            }
+        });
+
+        return { directories, dataFiles, contentFiles };
     }
 
     async #readDataFile(filepath) {
