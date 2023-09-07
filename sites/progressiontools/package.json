@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "name": "progressiontools",
+  "version": "1.0.0",
+  "description": "Build tools for the progressiontools.com site",
+  "type": "module",
+  "scripts": {
+    "test": "eslint ./"
+  },
+  "dependencies": {
+    "eslint": "~8.48.0"
+  },
+  "author": "Kris Walker (www.kriswalker.me)",
+  "license": "CC-BY-SA-4.0"
+}
