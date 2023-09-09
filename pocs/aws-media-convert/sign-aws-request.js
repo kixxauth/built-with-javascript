@@ -4,6 +4,16 @@ import crypto from 'node:crypto'; // eslint-disable-line no-shadow
 const SIGNATURE_ALGORITHM = 'AWS4-HMAC-SHA256';
 
 
+export function headersToPlainObject(headers) {
+    const obj = {};
+
+    for (const [ key, val ] of headers.entries()) {
+        obj[key] = val;
+    }
+
+    return obj;
+}
+
 // Return HTTP headers for a signed AWS request
 //
 // - awsOptions - Object
