@@ -19,14 +19,13 @@ export function signRequest(awsOptions, requestOptions, payload) {
 
     const {
         method,
+        headers,
         url,
-        contentType,
     } = requestOptions;
 
     const { host, pathname, searchParams } = url;
     payload = payload || '';
 
-    const headers = new Headers();
     const date = new Date();
     const dateString = getDateString(date);
     const dateTimeString = getDateTimeString(date);
@@ -35,10 +34,6 @@ export function signRequest(awsOptions, requestOptions, payload) {
     headers.set('host', host);
     headers.set('x-amz-content-sha256', payloadHash);
     headers.set('x-amz-date', dateTimeString);
-
-    if (contentType) {
-        headers.set('content-type', contentType);
-    }
 
     const scope = `${ dateString }/${ region }/${ service }/aws4_request`;
     const canonicalHeaders = createCanonicalHeadersString(headers);
@@ -85,7 +80,7 @@ function createSignatureKey(service, region, secretKey, dateString) {
 }
 
 function getSignedHeadersList(headers) {
-    return getSortedHeaderKeys(headers).join(';');
+    return getSortedCanonicalHeaderKeys(headers).join(';');
 }
 
 function createCanonicalQueryString(searchParams) {
@@ -112,7 +107,7 @@ function createCanonicalQueryString(searchParams) {
 }
 
 function createCanonicalHeadersString(headers) {
-    const keys = getSortedHeaderKeys(headers);
+    const keys = getSortedCanonicalHeaderKeys(headers);
 
     return keys
         .map((key) => {
@@ -121,14 +116,16 @@ function createCanonicalHeadersString(headers) {
         .join('\n');
 }
 
-function getSortedHeaderKeys(headers) {
+function getSortedCanonicalHeaderKeys(headers) {
     const headerKeys = [];
 
     for (const key of headers.keys()) {
         headerKeys.push(normalizeHeaderKey(key));
     }
 
-    return headerKeys.sort();
+    return headerKeys.sort().filter((key) => {
+        return key.startsWith('x-amz-') || key === 'host' || key === 'content-type';
+    });
 }
 
 function normalizeHeaderKey(key) {
