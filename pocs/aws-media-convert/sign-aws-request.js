@@ -30,7 +30,7 @@ export function signRequest(awsOptions, requestOptions, payload) {
     const date = new Date();
     const dateString = getDateString(date);
     const dateTimeString = getDateTimeString(date);
-    const payloadHash = hashSHA256(payload);
+    const payloadHash = hashSHA256(payload).toString('hex');
 
     headers.set('host', host);
     headers.set('x-amz-content-sha256', payloadHash);
@@ -54,7 +54,7 @@ export function signRequest(awsOptions, requestOptions, payload) {
         payloadHash,
     ].join('\n');
 
-    const requestHash = hashSHA256(canonicalRequestString);
+    const requestHash = hashSHA256(canonicalRequestString).toString('hex');
 
     const stringToSign = [
         SIGNATURE_ALGORITHM,
@@ -63,12 +63,8 @@ export function signRequest(awsOptions, requestOptions, payload) {
         requestHash,
     ].join('\n');
 
-    // DateKey = HMAC-SHA256("AWS4"+"<SecretAccessKey>", "<YYYYMMDD>")
-    // DateRegionKey = HMAC-SHA256(<DateKey>, "<aws-region>")
-    // DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
-    // SigningKey = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
     const key = createSignatureKey(service, region, secretKey, dateString);
-    const signature = signSHA256(key, stringToSign);
+    const signature = signSHA256(key, stringToSign).toString('hex');
 
     const authorizationHeader = [
         `${ SIGNATURE_ALGORITHM } Credential=${ accessKey }/${ scope }`,
@@ -156,11 +152,11 @@ function getDateTimeString(date) {
 function hashSHA256(data) {
     const hash = crypto.createHash('sha256');
     hash.update(data);
-    return hash.digest('hex');
+    return hash.digest();
 }
 
 function signSHA256(key, data) {
     const hmac = crypto.createHmac('sha256', key);
     hmac.update(data);
-    return hmac.digest('hex');
+    return hmac.digest();
 }
