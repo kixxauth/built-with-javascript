@@ -24,7 +24,7 @@ export function signRequest(awsOptions, requestOptions, payload) {
     } = requestOptions;
 
     const { host, pathname, searchParams } = url;
-    payload = payload || Buffer.from('', 'utf8');
+    payload = payload || '';
 
     const headers = new Headers();
     const date = new Date();
@@ -49,7 +49,7 @@ export function signRequest(awsOptions, requestOptions, payload) {
         method,
         pathname,
         canonicalQueryString,
-        canonicalHeaders,
+        canonicalHeaders + '\n',
         signedHeaders,
         payloadHash,
     ].join('\n');
