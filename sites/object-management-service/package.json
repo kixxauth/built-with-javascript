@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "name": "object-management-service",
+  "version": "0.0.1",
+  "description": "Object Management Service",
+  "type": "module",
+  "scripts": {
+    "test": "eslint ./"
+  },
+  "devDependencies": {
+    "eslint": "~8.48.0"
+  },
+  "author": "Kris Walker (www.kriswalker.me)",
+  "license": "CC-BY-SA-4.0"
+}
