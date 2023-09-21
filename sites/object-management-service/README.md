@@ -100,17 +100,6 @@ Returns HTML; List all scopes in the database and provides a tool for creating s
 
 The entire admin database is stored as a JSON object in S3. In this database object all the scopes are listed. Render the first Admin:ListObjects page link for each scope in the database.
 
-### Admin:CreateScopedToken
-```
-POST /admin-rpc
-
-{"method": "createScopedToken", "params": {"scopeId": "SCOPE_ID"}}
-```
-
-Returns JSON; `{ "result": {"scopeId": "SCOPE_ID","token": "TOKEN_STRING"}}`
-
-Fetch the admin database object. If the scope does not exist in the database, then create it. Then generate a UUID as a token and accociate it with the scope in the database before saving it back to S3.
-
 ### Admin:ListObjects
 `GET /admin/objects?page_limit=integer&start_after_key=encodedString&scope=string`
 
@@ -126,6 +115,17 @@ __NOTE:__ This will return keys for all versions of a particular object.
 Returns HTML; Display the object. Images and video are shown along with metadata, while other objects show only metadata. Objects in the ARCHIVE and DEEP_ARCHIVE storage classes are not shown, but provide a link to download them.
 
 Uses the S3 REST API. Make a HEAD request to S3 to get metadata for the specified key and version. If no version is specified, then get the latest version by default. Use object metadata to render the appropriate HTML for each instance of the object, and provide download or playable links from the CDN or origin server.
+
+### Admin:CreateScopedToken
+```
+POST /admin-rpc
+
+{"method": "createScopedToken", "params": {"scopeId": "SCOPE_ID"}}
+```
+
+Returns JSON; `{ "result": {"scopeId": "SCOPE_ID","token": "TOKEN_STRING"}}`
+
+Fetch the admin database object. If the scope does not exist in the database, then create it. Then generate a UUID as a token and accociate it with the scope in the database before saving it back to S3.
 
 Origin Server API
 -----------------
