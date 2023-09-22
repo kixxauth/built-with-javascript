@@ -3,6 +3,20 @@ export default class HTTPRequest {
     #nodeRequest = null;
 
     constructor(spec) {
+
+        Object.defineProperties(this, {
+            url: {
+                enumerable: true,
+                writable: false,
+                value: spec.url,
+            },
+            params: {
+                enumerable: true,
+                writable: true,
+                value: null,
+            },
+        });
+
         this.#nodeRequest = spec.req;
     }
 
