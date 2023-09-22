@@ -14,7 +14,11 @@ export default class RoutingTable {
     #routeMatchers = [];
     #httpInterfacesByName = new Map();
 
-    setRoutes(routes) {
+    registerHttpInterface(name, component) {
+        this.#httpInterfacesByName.set(name, component);
+    }
+
+    registerRoutes(routes) {
         for (const endpoint of routes) {
             const httpInterfaceName = endpoint.HTTPInterface;
             const pattern = endpoint.pattern;
