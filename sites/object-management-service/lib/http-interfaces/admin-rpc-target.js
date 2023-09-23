@@ -3,6 +3,7 @@ import { KixxAssert } from '../../dependencies.js';
 const {
     isFunction,
     isNonEmptyString,
+    isPlainObject,
     toFriendlyString,
 } = KixxAssert;
 
@@ -93,7 +94,20 @@ export default class AdminRPCTarget {
     }
 
     createScopedToken(params) {
+        if (!isPlainObject(params)) {
+            const error = new Error(`Invalid params; expects JSON object not ${ toFriendlyString(params) }`);
+            error.code = -32602;
+            throw error;
+        }
+
         const { scopeId } = params;
+
+        if (!isNonEmptyString(scopeId)) {
+            const error = new Error(`Invalid scopeId; expects String not ${ toFriendlyString(scopeId) }`);
+            error.code = -32602;
+            throw error;
+        }
+
         return { scopeId, tokens: [] };
     }
 }
