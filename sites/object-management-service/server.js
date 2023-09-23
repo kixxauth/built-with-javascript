@@ -1,7 +1,19 @@
 import http from 'node:http';
+import RoutingTable from './lib/server/routing-table.js';
+import HTTPRequestTarget from './lib/server/http-request-target.js';
+import routes from './routes.js';
+import AdminRPCTarget from './lib/http-interfaces/admin-rpc-target.js';
 
 
 const PORT = 3003;
+
+
+const routingTable = new RoutingTable();
+const httpRequestTarget = new HTTPRequestTarget({ routingTable });
+
+routingTable.registerHTTPInterface('AdminRPCTarget', new AdminRPCTarget());
+
+routingTable.registerRoutes(routes);
 
 
 function printErrorAndExit(message, error) {
@@ -14,38 +26,25 @@ function printErrorAndExit(message, error) {
 
 
 const server = http.createServer((req, res) => {
-    const url = new URL(req.url, `http://localhost:${ PORT }`);
 
     // eslint-disable-next-line no-console
-    console.log(req.method, url.pathname);
-
-    const chunks = [];
+    console.log(req.method, req.url);
 
     req.on('error', (error) => {
         printErrorAndExit('request error event', error);
     });
 
-    req.on('data', (chunk) => {
-        chunks.push(chunk);
-    });
+    httpRequestTarget.handleRequest(req, res).catch(function onRequestError(error) {
+        const body = 'Internal server error.\n';
 
-    req.on('end', () => {
-        const utf8 = Buffer.concat(chunks).toString('utf8');
-        const json = JSON.parse(utf8);
-
-        const responseData = JSON.stringify({
-            jsonrpc: '2.0',
-            id: json.id,
-            result: { scopeId: json.params.scopeId, tokens: [] },
+        res.writeHead(500, 'Internal Server Error', {
+            'content-type': 'text/plain',
+            'content-length': Buffer.byteLength(body),
         });
 
-        res.writeHead(200, {
-            'content-type': 'application/json',
-            'content-length': Buffer.byteLength(responseData),
-        });
+        res.end(body);
 
-        res.write(responseData);
-        res.end();
+        printErrorAndExit('internal server error', error);
     });
 });
 

@@ -1,3 +1,3 @@
-import * as KixxAssertMod from './vendor/kixx-assert/mode.js';
+import * as KixxAssertMod from './vendor/kixx-assert/mod.js';
 
 export const KixxAssert = KixxAssertMod;

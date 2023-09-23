@@ -31,27 +31,29 @@ export default class Route {
         return this.#supportedHttpMethods.includes(method);
     }
 
-    handleRequest(request) {
+    handleRequest(request, response) {
         const { method } = request;
         const methodName = this.#methods[method];
 
         const handler = this.#httpInterface[methodName].bind(this.#httpInterface);
 
         request.params = this.#params;
-        return handler(request);
+        return handler(request, response);
     }
 
-    handleError(error, request) {
-        if (isFunction(this.#httpInterface.handleError)) {
-            return this.#httpInterface.handleError(error, request);
-        }
-        return null;
+    canHandleError() {
+        return isFunction(this.#httpInterface.handleError);
     }
 
-    createNotAllowedResponse(request) {
-        if (isFunction(this.#httpInterface.createNotAllowedResponse)) {
-            return this.#httpInterface.createNotAllowedResponse(this.#supportedHttpMethods, request);
-        }
-        return null;
+    handleError(error, request, response) {
+        return this.#httpInterface.handleError(error, request, response);
+    }
+
+    canSendNotAllowedResponse() {
+        return isFunction(this.#httpInterface.returnNotAllowedResponse);
+    }
+
+    returnNotAllowedResponse(request, response) {
+        return this.#httpInterface.returnNotAllowedResponse(this.#supportedHttpMethods, request, response);
     }
 }

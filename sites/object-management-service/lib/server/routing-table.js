@@ -14,7 +14,7 @@ export default class RoutingTable {
     #routeMatchers = [];
     #httpInterfacesByName = new Map();
 
-    registerHttpInterface(name, component) {
+    registerHTTPInterface(name, component) {
         this.#httpInterfacesByName.set(name, component);
     }
 
@@ -78,33 +78,30 @@ export default class RoutingTable {
         }
     }
 
-    async routeRequest(request) {
+    routeRequest(request, response) {
         const route = this.#findRoute(request);
-        let response;
 
         if (!route) {
-            return this.#createNotFoundResponse(request);
+            return this.#returnNotFoundResponse(request, response);
         }
 
         if (!route.allowsHttpMethod(request.method)) {
-            response = route.createNotAllowedResponse(request);
-            if (response) {
-                return response;
+            if (route.canSendNotAllowedResponse()) {
+                return route.returnNotAllowedResponse(request, response);
             }
 
-            return this.#createNotAllowedResponse(route.getAllowedMethods(), request);
+            return this.#returnNotAllowedResponse(route.getAllowedMethods(), request, response);
         }
 
         try {
-            response = await route.handleRequest(request);
+            return route.handleRequest(request, response);
         } catch (error) {
-            response = route.handleError(error, request);
-            if (!response) {
-                response = this.#handleError(error, request);
+            if (route.canHandleError()) {
+                return route.handleError(error, request, response);
             }
-        }
 
-        return response;
+            return this.#handleError(error, request, response);
+        }
     }
 
     #findRoute(request) {
@@ -121,7 +118,7 @@ export default class RoutingTable {
         return null;
     }
 
-    #handleError(error, request) {
+    #handleError(error, request, response) {
         // TODO: We need a logger.
         /* eslint-disable no-console */
         console.error('Error in request handler:');
@@ -131,50 +128,24 @@ export default class RoutingTable {
         const { url } = request;
         const body = `There was an internal error on the server while processing ${ url.pathname }.\n`;
 
-        const headers = new Headers({
-            'content-type': 'text/plain',
-            'content-length': Buffer.byteLength(body),
-        });
-
-        return new Response(body, {
-            status: 500,
-            statusText: 'Internal Server Error',
-            headers,
-        });
+        return response.respondWithPlainText(500, body);
     }
 
-    #createNotFoundResponse(request) {
+    #returnNotFoundResponse(request, response) {
         const { url } = request;
         const body = `The URL path ${ url.pathname } could not be found on this server.\n`;
 
-        const headers = new Headers({
-            'content-type': 'text/plain',
-            'content-length': Buffer.byteLength(body),
-        });
-
-        return new Response(body, {
-            status: 404,
-            statusText: 'Not Found',
-            headers,
-        });
+        return response.respondWithPlainText(404, body);
     }
 
-    #createNotAllowedResponse(allowedMethods, request) {
+    #returnNotAllowedResponse(allowedMethods, request, response) {
         const { method, url } = request;
 
         let body = `The HTTP method ${ method } is not allowed on the URL path ${ url.pathname }.\n`;
         body += `Use ${ allowedMethods.join(', ') } instead.\n`;
 
-        const headers = new Headers({
-            'content-type': 'text/plain',
-            'content-length': Buffer.byteLength(body),
-            allowed: allowedMethods.join(', '),
-        });
+        response.headers.set('allowed', allowedMethods.join(', '));
 
-        return new Response(body, {
-            status: 405,
-            statusText: 'Method Not Allowed',
-            headers,
-        });
+        return response.respondWithPlainText(405, body);
     }
 }

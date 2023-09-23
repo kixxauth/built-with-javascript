@@ -20,6 +20,10 @@ export default class HTTPRequest {
         this.#nodeRequest = spec.req;
     }
 
+    get method() {
+        return this.#nodeRequest.method;
+    }
+
     json() {
         return new Promise((resolve, reject) => {
             const req = this.#nodeRequest;

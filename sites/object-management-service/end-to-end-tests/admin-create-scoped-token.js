@@ -42,7 +42,16 @@ function main() {
 
         res.on('end', () => {
             const utf8 = Buffer.concat(chunks).toString('utf8');
-            const json = JSON.parse(utf8);
+            let json = {};
+
+            try {
+                json = JSON.parse(utf8);
+            } catch (error) {
+                /* eslint-disable no-console */
+                console.error('JSON parsing error:');
+                console.error(error);
+                /* eslint-enable no-console */
+            }
 
             assertResult(res, utf8, json);
         });

@@ -1,4 +1,6 @@
 import HTTPRequest from './http-request.js';
+import HTTPResponse from './http-response.js';
+import { headersToObject } from './headers-to-object.js';
 
 
 export default class HTTPRequestTarget {
@@ -13,39 +15,19 @@ export default class HTTPRequestTarget {
         // TODO: Dynamically get protocol, host, and port from configuration.
         const url = new URL(req.url, `http://localhost:3003`);
 
-        // eslint-disable-next-line no-console
-        console.log(req.method, url.pathname);
-
         const request = new HTTPRequest({ req, url });
+        let response = new HTTPResponse();
 
-        const response = await this.#routingTable.routeRequest(request);
+        response = await this.#routingTable.routeRequest(request, response);
 
-        const { status, statusText, body } = response;
+        const {
+            statusCode,
+            statusMessage,
+            headers,
+            body,
+        } = response;
 
-        const headers = headersToObject(response.headers);
-
-        res.writeHead(status, statusText, headers);
-
-        // TODO: Handle streams as HTTP response
-        // if (isFunction(body.pipe)) {
-        //     body.pipe(res);
-        // }
-
-        res.write(body);
-        res.end();
+        res.writeHead(statusCode, statusMessage, headersToObject(headers));
+        res.end(body);
     }
-}
-
-function headersToObject(headers) {
-    if (headers instanceof Headers) {
-        const obj = {};
-
-        for (const [ key, val ] of headers.entries()) {
-            obj[key] = val;
-        }
-
-        return obj;
-    }
-
-    return headers;
 }
