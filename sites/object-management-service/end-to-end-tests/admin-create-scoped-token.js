@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
     isNonEmptyString,
     assert,
+    assertFalsy,
     assertEqual,
     assertMatches
 } from './vendor/kixx-assert/mod.js';
@@ -72,8 +73,14 @@ function assertResult(res, utf8, json) {
     assertMatches(/^application\/json/, headers['content-type']);
     assertEqual(Buffer.byteLength(utf8), parseInt(headers['content-length'], 10));
 
+    if (json.error) {
+        // eslint-disable-next-line no-console
+        console.log(json);
+        assertFalsy(json.error, '; The "error" member should be empty.');
+    }
+
     assertEqual('2.0', json.jsonrpc);
-    assert(isNonEmptyString(json.id));
+    assert(isNonEmptyString(json.id), '; The "id" should be a String');
     assertEqual('foo', json.result.scopeId);
     assert(Array.isArray(json.result.tokens));
 
