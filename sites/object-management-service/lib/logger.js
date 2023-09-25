@@ -1,11 +1,14 @@
-import { Logger } from 'kixx-logger';
-import { getFullStackTrace } from './errors.js';
+import { Logger, streams } from 'kixx-logger';
+import { getFullStack } from './errors.js';
 
 
-export function createLogger({ name, level }) {
+export function createLogger({ name, level, makePretty }) {
+    const stream = streams.JsonStdout.create({ makePretty });
+
     return Logger.create({
         name,
         level,
+        stream,
         serializers: {
             req(req) {
                 return {
@@ -15,7 +18,7 @@ export function createLogger({ name, level }) {
                 };
             },
             error(error) {
-                const stack = getFullStackTrace(error).split('\n');
+                const stack = getFullStack(error).split('\n');
 
                 return {
                     name: error.name || 'NO_NAME',

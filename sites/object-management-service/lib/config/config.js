@@ -37,6 +37,10 @@ class LoggerConfig {
     getLevel() {
         return this.#config.level || 'trace';
     }
+
+    getMakePretty() {
+        return this.#config.makePretty || false;
+    }
 }
 
 class ServerConfig {

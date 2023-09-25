@@ -20,6 +20,7 @@ async function start() {
     const logger = createLogger({
         name: 'server',
         level: config.logger.getLevel(),
+        makePretty: config.logger.getMakePretty(),
     });
 
     function printErrorAndExit(message, error) {

@@ -1,4 +1,4 @@
-import { JSONParsingError } from '../errors/mod.js';
+import { JSONParsingError } from '../errors.js';
 
 
 export default class HTTPRequest {
