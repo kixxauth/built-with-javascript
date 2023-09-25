@@ -4,6 +4,9 @@
   "version": "0.0.1",
   "description": "Object Management Service",
   "type": "module",
+  "engines": {
+    "node": ">=16.13.2"
+  },
   "scripts": {
     "test": "eslint ./"
   },

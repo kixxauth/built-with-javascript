@@ -1,4 +1,6 @@
 import { Logger } from 'kixx-logger';
+import { getFullStackTrace } from './errors.js';
+
 
 export function createLogger({ name, level }) {
     return Logger.create({
@@ -13,11 +15,13 @@ export function createLogger({ name, level }) {
                 };
             },
             error(error) {
+                const stack = getFullStackTrace(error).split('\n');
+
                 return {
                     name: error.name || 'NO_NAME',
                     code: error.code || 'NO_CODE',
                     message: error.message || 'NO_MESSAGE',
-                    stack: error.stack ? error.stack.split('\n') : 'NO_STACK',
+                    stack,
                 };
             },
         },

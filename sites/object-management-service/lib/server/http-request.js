@@ -1,3 +1,6 @@
+import { JSONParsingError } from '../errors/mod.js';
+
+
 export default class HTTPRequest {
 
     #nodeRequest = null;
@@ -45,9 +48,8 @@ export default class HTTPRequest {
 
                 try {
                     json = JSON.parse(utf8);
-                } catch (err) {
-                    // TODO: Throw a JsonParsingError to be more explicit.
-                    reject(err);
+                } catch (cause) {
+                    reject(new JSONParsingError(`Error parsing HTTP JSON body: ${ cause.message }`, { cause }));
                 }
 
                 resolve(json);

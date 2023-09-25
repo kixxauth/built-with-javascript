@@ -10,16 +10,33 @@ const {
 
 export default class AdminRPCTarget {
 
+    #logger = null;
+
+    constructor({ logger }) {
+        this.#logger = logger.createChild({ name: 'AdminRPCTarget' });
+    }
+
     async remoteProcedureCall(request, response) {
         const jsonResponse = { jsonrpc: '2.0', id: null };
 
         let jsonRequest;
         try {
             jsonRequest = await request.json();
-        } catch (err) {
+        } catch (error) {
+            if (error.code === 'JSON_PARSING_ERROR') {
+                jsonResponse.error = {
+                    code: -32700,
+                    message: error.message,
+                };
+
+                return response.respondWithJSON(200, jsonResponse);
+            }
+
+            this.#logger.error('error buffering request JSON body', { error });
+
             jsonResponse.error = {
-                code: -32700,
-                message: err.message,
+                code: -32603,
+                message: 'Internal RPC Error.',
             };
 
             return response.respondWithJSON(200, jsonResponse);
