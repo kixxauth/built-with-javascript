@@ -41,3 +41,6 @@ tmp/
 
 # Protect secrets from getting into source control
 .secrets
+
+sites/object-management-service/config/**
+!sites/object-management-service/config/start.toml

@@ -1,16 +1,27 @@
 import http from 'node:http';
 import { Logger } from 'kixx-logger';
+import Config from './lib/config/config.js';
 import RoutingTable from './lib/server/routing-table.js';
 import HTTPRequestTarget from './lib/server/http-request-target.js';
 import routes from './routes.js';
 import AdminRPCTarget from './lib/http-interfaces/admin-rpc-target.js';
 
 
+const ROOT_DIR_FILE_URL = new URL('./', import.meta.url);
+
+// TODO: Replace PORT with config value.
 const PORT = 3003;
 
 
+const config = new Config({
+    rootConfigDir: new URL('config/', ROOT_DIR_FILE_URL),
+});
+
+config.load('development');
+
 const logger = Logger.create({
     name: 'server',
+    // TODO: Replace level with config value.
     level: Logger.Levels.DEBUG,
     serializers: {
         req(req) {

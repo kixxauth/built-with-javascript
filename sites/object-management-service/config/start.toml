@@ -1,0 +1,11 @@
+[server]
+port = 3003
+
+[logger]
+#  TRACE: 'trace',
+#  DEBUG: 'debug',
+#  INFO: 'info',
+#  WARN: 'warn',
+#  ERROR: 'error',
+#  FATAL: 'fatal'
+level = "trace"

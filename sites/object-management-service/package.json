@@ -8,6 +8,7 @@
     "test": "eslint ./"
   },
   "dependencies": {
+    "@iarna/toml": "~2.2.5",
     "kixx-logger": "~2.1.0",
     "path-to-regexp": "~6.2.1"
   },
