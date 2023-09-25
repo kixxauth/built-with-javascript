@@ -3,20 +3,21 @@ import toml from '@iarna/toml';
 
 export default class Config {
 
-    #logger = null;
-    #server = null;
     #rootConfigDir = null;
 
     constructor({ rootConfigDir }) {
         this.#rootConfigDir = rootConfigDir;
+
+        this.logger = null;
+        this.server = null;
     }
 
     async load(environment) {
         const fileName = `${ environment }.toml`;
         const config = await this.#loadFile(fileName);
 
-        this.#logger = new LoggerConfig(config.logger);
-        this.#server = new ServerConfig(config.server);
+        this.logger = new LoggerConfig(config.logger);
+        this.server = new ServerConfig(config.server);
     }
 
     async #loadFile(fileName) {
