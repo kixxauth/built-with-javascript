@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { Logger } from 'kixx-logger';
 import RoutingTable from './lib/server/routing-table.js';
 import HTTPRequestTarget from './lib/server/http-request-target.js';
 import routes from './routes.js';
@@ -8,27 +9,47 @@ import AdminRPCTarget from './lib/http-interfaces/admin-rpc-target.js';
 const PORT = 3003;
 
 
-const routingTable = new RoutingTable();
-const httpRequestTarget = new HTTPRequestTarget({ routingTable });
+const logger = Logger.create({
+    name: 'server',
+    level: Logger.Levels.DEBUG,
+    serializers: {
+        req(req) {
+            return {
+                method: req.method,
+                url: req.url,
+                contentLength: req.headers['content-length'] ? parseInt(req.headers['content-length'], 10) : 0,
+            };
+        },
+        error(error) {
+            return {
+                name: error.name || 'NO_NAME',
+                code: error.code || 'NO_CODE',
+                message: error.message || 'NO_MESSAGE',
+                stack: error.stack ? error.stack.split('\n') : 'NO_STACK',
+            };
+        },
+    },
+});
 
-routingTable.registerHTTPInterface('AdminRPCTarget', new AdminRPCTarget());
+const routingTable = new RoutingTable({ logger });
+const httpRequestTarget = new HTTPRequestTarget({ logger, routingTable });
+
+routingTable.registerHTTPInterface('AdminRPCTarget', new AdminRPCTarget({
+    logger,
+}));
 
 routingTable.registerRoutes(routes);
 
 
 function printErrorAndExit(message, error) {
-    /* eslint-disable no-console */
-    console.error(message);
-    console.error(error);
+    logger.error(message, { error });
     process.exit(1);
-    /* eslint-enable no-console */
 }
 
 
 const server = http.createServer((req, res) => {
 
-    // eslint-disable-next-line no-console
-    console.log(req.method, req.url);
+    logger.log('http request', { req });
 
     req.on('error', (error) => {
         printErrorAndExit('request error event', error);
@@ -54,7 +75,7 @@ server.on('error', (error) => {
 
 server.on('listening', () => {
     // eslint-disable-next-line no-console
-    console.log(`server running at http://localhost:${ PORT }`);
+    logger.log(`server running at http://localhost:${ PORT }`);
 });
 
 server.listen(PORT);

@@ -11,8 +11,13 @@ const {
 
 export default class RoutingTable {
 
+    #logger = null;
     #routeMatchers = [];
     #httpInterfacesByName = new Map();
+
+    constructor({ logger }) {
+        this.#logger = logger.createChild({ name: 'RoutingTable' });
+    }
 
     registerHTTPInterface(name, component) {
         this.#httpInterfacesByName.set(name, component);
@@ -119,11 +124,7 @@ export default class RoutingTable {
     }
 
     #handleError(error, request, response) {
-        // TODO: We need a logger.
-        /* eslint-disable no-console */
-        console.error('Error in request handler:');
-        console.error(error);
-        /* eslint-enable no-console */
+        this.#logger.error('error in request handler', { error });
 
         const { url } = request;
         const body = `There was an internal error on the server while processing ${ url.pathname }.\n`;
