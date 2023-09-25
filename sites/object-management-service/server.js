@@ -25,11 +25,20 @@ async function start() {
 
     function printErrorAndExit(message, error) {
         logger.error(message, { error });
-        process.exit(1);
+
+        // Allow time for the error message to print before exiting.
+        setTimeout(() => {
+            process.exit(1);
+        }, 200);
     }
 
     const routingTable = new RoutingTable({ logger });
-    const httpRequestTarget = new HTTPRequestTarget({ logger, routingTable });
+
+    const httpRequestTarget = new HTTPRequestTarget({
+        config,
+        logger,
+        routingTable,
+    });
 
     routingTable.registerHTTPInterface('AdminRPCTarget', new AdminRPCTarget({
         logger,

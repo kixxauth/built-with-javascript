@@ -6,14 +6,15 @@ import { headersToObject } from './headers-to-object.js';
 export default class HTTPRequestTarget {
 
     #routingTable = null;
+    #config = null;
 
     constructor(spec) {
+        this.#config = spec.config;
         this.#routingTable = spec.routingTable;
     }
 
     async handleRequest(req, res) {
-        // TODO: Dynamically get protocol, host, and port from configuration.
-        const url = new URL(req.url, `http://localhost:3003`);
+        const url = new URL(req.url, `${ this.#getProtocol(req) }//${ this.#getHostname(req) }:${ this.#getPort(req) }`);
 
         const request = new HTTPRequest({ req, url });
         let response = new HTTPResponse();
@@ -29,5 +30,24 @@ export default class HTTPRequestTarget {
 
         res.writeHead(statusCode, statusMessage, headersToObject(headers));
         res.end(body);
+    }
+
+    #getProtocol() {
+        return 'http:';
+    }
+
+    #getHostname(req) {
+        const host = req.headers.host;
+
+        if (host) {
+            const { hostname } = new URL(`http://${ host }`);
+            return hostname;
+        }
+
+        return 'localhost';
+    }
+
+    #getPort() {
+        return this.#config.server.getPort();
     }
 }
