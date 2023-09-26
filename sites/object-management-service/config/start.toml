@@ -10,3 +10,9 @@ port = 3003
 #  FATAL: 'fatal'
 level = "trace"
 makePretty = true
+
+[dataStore]
+region = ""
+bucketName = ""
+accessKeyId = ""
+secretAccessKey = ""

@@ -11,12 +11,17 @@ const {
 export default class AdminRPCTarget {
 
     #logger = null;
+    #dataStore = null;
 
-    constructor({ logger }) {
+    constructor({ logger, dataStore }) {
         this.#logger = logger.createChild({ name: 'AdminRPCTarget' });
+        this.#dataStore = dataStore;
     }
 
     async remoteProcedureCall(request, response) {
+        // TODO: Authenticate the Admin JSON RPC API.
+        const user = await this.#dataStore.fetch('user', 'foo');
+
         const jsonResponse = { jsonrpc: '2.0', id: null };
 
         let jsonRequest;

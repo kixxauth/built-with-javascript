@@ -1,6 +1,7 @@
 import http from 'node:http';
 import Config from './lib/config/config.js';
 import { createLogger } from './lib/logger.js';
+import DataStore from './lib/datastore.js';
 import RoutingTable from './lib/server/routing-table.js';
 import HTTPRequestTarget from './lib/server/http-request-target.js';
 import routes from './routes.js';
@@ -32,6 +33,8 @@ async function start() {
         }, 200);
     }
 
+    const dataStore = new DataStore({ config });
+
     const routingTable = new RoutingTable({ logger });
 
     const httpRequestTarget = new HTTPRequestTarget({
@@ -42,6 +45,7 @@ async function start() {
 
     routingTable.registerHTTPInterface('AdminRPCTarget', new AdminRPCTarget({
         logger,
+        dataStore,
     }));
 
     routingTable.registerRoutes(routes);

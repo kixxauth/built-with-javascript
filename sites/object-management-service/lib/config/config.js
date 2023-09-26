@@ -10,14 +10,27 @@ export default class Config {
 
         this.logger = null;
         this.server = null;
+        this.dataStore = null;
     }
 
     async load(environment) {
         const fileName = `${ environment }.toml`;
         const config = await this.#loadFile(fileName);
 
-        this.logger = new LoggerConfig(config.logger);
-        this.server = new ServerConfig(config.server);
+        Object.defineProperties(this, {
+            logger: {
+                enumerable: true,
+                value: new LoggerConfig(config.logger),
+            },
+            server: {
+                enumerable: true,
+                value: new ServerConfig(config.server),
+            },
+            dataStore: {
+                enumerable: true,
+                value: new DataStoreConfig(config.dataStore),
+            },
+        });
     }
 
     async #loadFile(fileName) {
@@ -52,5 +65,29 @@ class ServerConfig {
 
     getPort() {
         return this.#config.port || 3003;
+    }
+}
+
+class DataStoreConfig {
+    #config = null;
+
+    constructor(config) {
+        this.#config = config;
+    }
+
+    getRegion() {
+        return this.#config.region;
+    }
+
+    getBucketName() {
+        return this.#config.bucketName;
+    }
+
+    getAccessKeyId() {
+        return this.#config.accessKeyId;
+    }
+
+    getSecretAccessKey() {
+        return this.#config.secretAccessKey;
     }
 }
