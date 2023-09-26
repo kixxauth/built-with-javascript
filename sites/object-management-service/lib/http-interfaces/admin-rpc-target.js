@@ -1,4 +1,6 @@
 import { KixxAssert } from '../../dependencies.js';
+import { UnauthorizedError, ForbiddenError, JSONParsingError } from '../errors.js';
+import HTTPRequestSession from '../http-request-session.js';
 
 const {
     isFunction,
@@ -18,17 +20,48 @@ export default class AdminRPCTarget {
         this.#dataStore = dataStore;
     }
 
+    handleError(error, request, response) {
+        const jsonResponse = { jsonrpc: '2.0', id: null };
+
+        let message;
+        let code;
+
+        switch (error.code) {
+            case UnauthorizedError.CODE:
+            case ForbiddenError.CODE:
+                message = error.message;
+                code = error.code;
+                break;
+            default:
+                this.#logger.error('caught error', { error });
+                message = 'Internal RPC Error.';
+                code = -32603;
+        }
+
+        jsonResponse.error = { code, message };
+
+        return response.respondWithJSON(200, jsonResponse);
+    }
+
     async remoteProcedureCall(request, response) {
-        // TODO: Authenticate the Admin JSON RPC API.
-        const user = await this.#dataStore.fetch('user', 'foo');
+        const session = new HTTPRequestSession({
+            dataStore: this.#dataStore,
+            request,
+        });
+
+        const user = await session.getUser();
 
         const jsonResponse = { jsonrpc: '2.0', id: null };
+
+        if (!user.isAdminUser()) {
+            throw new ForbiddenError('user must have admin privileges');
+        }
 
         let jsonRequest;
         try {
             jsonRequest = await request.json();
         } catch (error) {
-            if (error.code === 'JSON_PARSING_ERROR') {
+            if (error.code === JSONParsingError.CODE) {
                 jsonResponse.error = {
                     code: -32700,
                     message: error.message,
@@ -97,13 +130,14 @@ export default class AdminRPCTarget {
             } else {
                 result = this[method](params);
             }
-        } catch (err) {
+        } catch (error) {
+            this.#logger.error('internal rpc error', { method, error });
             let message = 'Internal RPC Error.';
             let code = -32603;
 
-            if (Number.isInteger(err.code) && err.code < 0) {
-                code = err.code;
-                message = err.message;
+            if (Number.isInteger(error.code) && error.code < 0) {
+                code = error.code;
+                message = error.message;
             }
 
             jsonResponse.error = { code, message };

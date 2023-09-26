@@ -83,6 +83,10 @@ class DataStoreConfig {
         return this.#config.bucketName;
     }
 
+    getEnvironment() {
+        return this.#config.environment;
+    }
+
     getAccessKeyId() {
         return this.#config.accessKeyId;
     }

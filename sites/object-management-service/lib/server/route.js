@@ -38,6 +38,8 @@ export default class Route {
         const handler = this.#httpInterface[methodName].bind(this.#httpInterface);
 
         request.params = this.#params;
+
+        // May not always return a Promise!
         return handler(request, response);
     }
 

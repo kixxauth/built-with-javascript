@@ -25,6 +25,7 @@ function main() {
     const reqOptions = {
         method: 'POST',
         headers: {
+            authorization: 'Bearer 57e897f8-3b81-4cde-92c0-66d619b44663',
             'content-type': 'application/json',
             'content-length': Buffer.byteLength(data),
         },

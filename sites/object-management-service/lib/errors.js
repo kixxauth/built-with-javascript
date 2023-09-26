@@ -33,6 +33,14 @@ export class StackedError extends Error {
 export class OperationalError extends StackedError {
 }
 
+export class UnauthorizedError extends StackedError {
+    static CODE = 'UNAUTHORIZED_ERROR';
+}
+
+export class ForbiddenError extends StackedError {
+    static CODE = 'FORBIDDEN_ERROR';
+}
+
 export class JSONParsingError extends StackedError {
     static CODE = 'JSON_PARSING_ERROR';
 }

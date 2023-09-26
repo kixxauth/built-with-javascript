@@ -52,8 +52,6 @@ async function start() {
 
     const server = http.createServer((req, res) => {
 
-        logger.log('http request', { req });
-
         req.on('error', (error) => {
             printErrorAndExit('request error event', error);
         });

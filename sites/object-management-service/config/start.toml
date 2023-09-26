@@ -14,5 +14,6 @@ makePretty = true
 [dataStore]
 region = ""
 bucketName = ""
+environment = "development"
 accessKeyId = ""
 secretAccessKey = ""

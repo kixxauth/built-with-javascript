@@ -1,5 +1,9 @@
 {
     "user:57e897f8-3b81-4cde-92c0-66d619b44663": {
-        "isAdmin": true
+        "type": "user",
+        "id": "57e897f8-3b81-4cde-92c0-66d619b44663",
+        "groups": [
+            "admin"
+        ]
     }
 }

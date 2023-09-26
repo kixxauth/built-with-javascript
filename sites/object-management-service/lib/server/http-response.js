@@ -5,7 +5,7 @@ export default class HTTPResponse {
 
     constructor() {
         Object.defineProperties(this, {
-            statusCode: {
+            status: {
                 enumerable: true,
                 writable: true,
                 value: 200,
@@ -29,7 +29,7 @@ export default class HTTPResponse {
     }
 
     respondWithJSON(statusCode, obj) {
-        this.statusCode = statusCode;
+        this.status = statusCode;
         this.statusMessage = statusMessagesByCode.get(statusCode);
 
         this.body = JSON.stringify(obj);
@@ -41,7 +41,7 @@ export default class HTTPResponse {
     }
 
     respondWithPlainText(statusCode, utf8) {
-        this.statusCode = statusCode;
+        this.status = statusCode;
         this.statusMessage = statusMessagesByCode.get(statusCode);
 
         this.body = utf8;

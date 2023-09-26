@@ -83,7 +83,7 @@ export default class RoutingTable {
         }
     }
 
-    routeRequest(request, response) {
+    async routeRequest(request, response) {
         const route = this.#findRoute(request);
 
         if (!route) {
@@ -98,15 +98,21 @@ export default class RoutingTable {
             return this.#returnNotAllowedResponse(route.getAllowedMethods(), request, response);
         }
 
+        let res;
+
+        // By using `await route.handleRequest()` we cast the result to a Promise and catch any errors
+        // appropriately no matter if the route.handeRequest() function is async or blocking.
         try {
-            return route.handleRequest(request, response);
+            res = await route.handleRequest(request, response);
         } catch (error) {
             if (route.canHandleError()) {
-                return route.handleError(error, request, response);
+                res = await route.handleError(error, request, response);
+            } else {
+                res = await this.#handleError(error, request, response);
             }
-
-            return this.#handleError(error, request, response);
         }
+
+        return res;
     }
 
     #findRoute(request) {

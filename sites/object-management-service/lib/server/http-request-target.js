@@ -1,19 +1,35 @@
 import HTTPRequest from './http-request.js';
 import HTTPResponse from './http-response.js';
-import { headersToObject } from './headers-to-object.js';
+import { headersToObject } from './http-headers.js';
 
 
 export default class HTTPRequestTarget {
 
-    #routingTable = null;
     #config = null;
+    #logger = null;
+    #routingTable = null;
+    #requestId = 0;
 
     constructor(spec) {
         this.#config = spec.config;
+        this.#logger = spec.logger.createChild({ name: 'HTTPRequestTarget' });
         this.#routingTable = spec.routingTable;
     }
 
     async handleRequest(req, res) {
+        const id = this.#getRequestId();
+        const { method } = req;
+        const fullURL = req.url;
+        const contentLength = req.headers['content-length'] ? parseInt(req.headers['content-length'], 10) : 0;
+
+        this.#logger.log('http request', {
+            id,
+            method,
+            url:
+            fullURL,
+            contentLength,
+        });
+
         const url = new URL(req.url, `${ this.#getProtocol(req) }//${ this.#getHostname(req) }:${ this.#getPort(req) }`);
 
         const request = new HTTPRequest({ req, url });
@@ -22,13 +38,23 @@ export default class HTTPRequestTarget {
         response = await this.#routingTable.routeRequest(request, response);
 
         const {
-            statusCode,
+            status,
             statusMessage,
             headers,
             body,
         } = response;
 
-        res.writeHead(statusCode, statusMessage, headersToObject(headers));
+        const responseContentLength = headers.has('content-length') ? parseInt(headers.get('content-length'), 10) : 0;
+
+        this.#logger.log('http response', {
+            id,
+            status,
+            method,
+            url: fullURL,
+            contentLength: responseContentLength,
+        });
+
+        res.writeHead(status, statusMessage, headersToObject(headers));
         res.end(body);
     }
 
@@ -49,5 +75,10 @@ export default class HTTPRequestTarget {
 
     #getPort() {
         return this.#config.server.getPort();
+    }
+
+    #getRequestId() {
+        this.#requestId += 1;
+        return this.#requestId;
     }
 }

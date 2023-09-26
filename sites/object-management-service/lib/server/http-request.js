@@ -1,3 +1,4 @@
+import { objectToHeaders } from './http-headers.js';
 import { JSONParsingError } from '../errors.js';
 
 
@@ -7,7 +8,16 @@ export default class HTTPRequest {
 
     constructor(spec) {
 
+        this.#nodeRequest = spec.req;
+
+        const headers = objectToHeaders(this.#nodeRequest.headers);
+
         Object.defineProperties(this, {
+            headers: {
+                enumerable: true,
+                writable: false,
+                value: headers,
+            },
             url: {
                 enumerable: true,
                 writable: false,
@@ -19,8 +29,6 @@ export default class HTTPRequest {
                 value: null,
             },
         });
-
-        this.#nodeRequest = spec.req;
     }
 
     get method() {

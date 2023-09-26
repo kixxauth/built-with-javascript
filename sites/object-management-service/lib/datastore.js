@@ -3,23 +3,35 @@ import { OperationalError, JSONParsingError } from './errors.js';
 import { KixxAssert } from '../dependencies.js';
 
 
-const { assert, isNonEmptyString } = KixxAssert;
+const { isNonEmptyString, assert, assertIncludes } = KixxAssert;
+
+
+const ALLOWED_ENVIRONMENTS = [
+    'development',
+    'production',
+];
 
 
 export default class DataStore {
 
     #s3Client = null;
     #s3BucketName = null;
-    #dataStoreDocumentKey = 'development/main_document.json';
+    #dataStoreDocumentKey = null;
 
     constructor({ config }) {
         const region = config.dataStore.getRegion();
         const bucketName = config.dataStore.getBucketName();
+        const environment = config.dataStore.getEnvironment();
         const accessKeyId = config.dataStore.getAccessKeyId();
         const secretAccessKey = config.dataStore.getSecretAccessKey();
 
         assert(isNonEmptyString(region), 'AWS region must be a non empty String');
         assert(isNonEmptyString(bucketName), 'AWS bucketName must be a non empty String');
+        assertIncludes(
+            environment,
+            ALLOWED_ENVIRONMENTS,
+            `DataStore environment must be one of "${ ALLOWED_ENVIRONMENTS.join('","') }"`
+        );
         assert(isNonEmptyString(accessKeyId), 'AWS accessKeyId must be a non empty String');
         assert(isNonEmptyString(secretAccessKey), 'AWS secretAccessKey must be a non empty String');
 
@@ -31,13 +43,15 @@ export default class DataStore {
             },
         });
 
+        this.#dataStoreDocumentKey = `${ environment }/main_document.json`;
         this.#s3BucketName = bucketName;
     }
 
     async fetch(type, id) {
         const itemKey = this.#createItemKey(type, id);
         const doc = await this.#fetchDocument();
-        return doc[itemKey];
+        // Return null instead of undefined if the object does not exist.
+        return doc[itemKey] || null;
     }
 
     async #fetchDocument() {
@@ -56,11 +70,7 @@ export default class DataStore {
             );
         }
 
-        const json = await this.#bufferAwsResponseJSON(response.Body);
-
-        console.log('JSON =>', json);
-
-        return json;
+        return this.#bufferAwsResponseJSON(response.Body);
     }
 
     #bufferAwsResponseJSON(body) {

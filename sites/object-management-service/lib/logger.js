@@ -10,13 +10,6 @@ export function createLogger({ name, level, makePretty }) {
         level,
         stream,
         serializers: {
-            req(req) {
-                return {
-                    method: req.method,
-                    url: req.url,
-                    contentLength: req.headers['content-length'] ? parseInt(req.headers['content-length'], 10) : 0,
-                };
-            },
             error(error) {
                 const stack = getFullStack(error).split('\n');
 
