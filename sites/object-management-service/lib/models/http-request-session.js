@@ -1,6 +1,6 @@
-import { KixxAssert } from '../dependencies.js';
-import { UnauthorizedError, ForbiddenError } from './errors.js';
-import User from './models/user.js';
+import { KixxAssert } from '../../dependencies.js';
+import { UnauthorizedError, ForbiddenError } from '../errors.js';
+import User from './user.js';
 
 
 const { isNonEmptyString } = KixxAssert;

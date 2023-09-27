@@ -1,7 +1,7 @@
 import { KixxAssert } from '../../dependencies.js';
 import { UnauthorizedError, ForbiddenError, JSONParsingError } from '../errors.js';
 import Scope from '../models/scope.js';
-import HTTPRequestSession from '../http-request-session.js';
+import HTTPRequestSession from '../models/http-request-session.js';
 
 const {
     isFunction,
