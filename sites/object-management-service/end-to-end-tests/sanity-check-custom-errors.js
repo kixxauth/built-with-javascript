@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+// TODO: Use KixxAssert from root dependencies.
 import { assertEqual } from './vendor/kixx-assert/mod.js';
 import { OperationalError, JSONParsingError, getFullStack } from '../lib/errors.js';
 
