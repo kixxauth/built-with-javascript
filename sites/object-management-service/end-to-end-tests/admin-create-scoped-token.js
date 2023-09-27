@@ -1,13 +1,14 @@
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
-// TODO: Use KixxAssert from root dependencies.
-import {
+import { KixxAssert } from '../dependencies.js';
+
+const {
     isNonEmptyString,
     assert,
     assertFalsy,
     assertEqual,
-    assertMatches
-} from './vendor/kixx-assert/mod.js';
+    assertMatches,
+} = KixxAssert;
 
 
 const scopeId = '92a27706-77ce-4127-8aee-d8f4e4f330cb';
