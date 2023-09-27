@@ -1,5 +1,5 @@
 import { KixxAssert } from '../dependencies.js';
-import { UnauthorizedError } from './errors.js';
+import { UnauthorizedError, ForbiddenError } from './errors.js';
 import User from './models/user.js';
 
 
@@ -25,12 +25,22 @@ export default class HTTPRequestSession {
 
         const token = authHeader.replace(/^bearer[\s]*/i, '');
 
-        const userData = await this.#dataStore.fetch('user', token);
+        const user = await User.fetch(this.#dataStore, token);
 
-        if (!userData) {
+        if (!user) {
             throw new UnauthorizedError('user does not exist for given token');
         }
 
-        return new User(userData);
+        return user;
+    }
+
+    async getAdminUser() {
+        const user = await this.getUser();
+
+        if (!user.isAdminUser()) {
+            throw new ForbiddenError('user must have admin privileges');
+        }
+
+        return user;
     }
 }

@@ -9,9 +9,10 @@ import {
 } from './vendor/kixx-assert/mod.js';
 
 
+const scopeId = '92a27706-77ce-4127-8aee-d8f4e4f330cb';
+
 function main() {
     const requestId = randomUUID();
-    const scopeId = 'foo';
 
     const data = JSON.stringify({
         jsonrpc: '2.0',
@@ -82,8 +83,8 @@ function assertResult(res, utf8, json) {
 
     assertEqual('2.0', json.jsonrpc);
     assert(isNonEmptyString(json.id), '; The "id" should be a String');
-    assertEqual('foo', json.result.scopeId);
-    assert(Array.isArray(json.result.tokens));
+    assertEqual(scopeId, json.result.scopeId);
+    assert(Array.isArray(json.result.accessTokens));
 
     // eslint-disable-next-line no-console
     console.log('Test pass :D');

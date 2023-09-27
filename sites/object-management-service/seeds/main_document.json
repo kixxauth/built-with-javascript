@@ -5,5 +5,13 @@
         "groups": [
             "admin"
         ]
+    },
+    "scope:92a27706-77ce-4127-8aee-d8f4e4f330cb": {
+        "type": "scope",
+        "id": "92a27706-77ce-4127-8aee-d8f4e4f330cb",
+        "slug": "for-testing",
+        "accessTokens": [
+            "37e70d72-39c9-4db4-a61e-c4af20d093cb"
+        ]
     }
 }

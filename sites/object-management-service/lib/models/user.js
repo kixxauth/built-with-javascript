@@ -1,19 +1,22 @@
 export default class User {
+
+    static type = 'user';
+
     constructor(spec) {
         let groups = [];
+
         if (Array.isArray(spec.groups)) {
+            // Make a copy of the Array befeore we freeze it.
             groups = spec.groups.slice();
         }
 
         Object.defineProperties(this, {
             type: {
                 enumerable: true,
-                writable: false,
-                value: 'user',
+                value: this.constructor.type,
             },
             id: {
                 enumerable: true,
-                writable: false,
                 value: spec.id,
             },
             groups: {
@@ -26,5 +29,10 @@ export default class User {
 
     isAdminUser() {
         return this.groups.includes('admin');
+    }
+
+    static async fetch(dataStore, id) {
+        const sourceData = await dataStore.fetch(this.type, id);
+        return sourceData ? new User(sourceData) : null;
     }
 }

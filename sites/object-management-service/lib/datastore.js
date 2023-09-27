@@ -1,4 +1,4 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { OperationalError, JSONParsingError } from './errors.js';
 import { KixxAssert } from '../dependencies.js';
 
@@ -54,6 +54,11 @@ export default class DataStore {
         return doc[itemKey] || null;
     }
 
+    async write(record) {
+        const itemKey = this.#createItemKey(record.type, record.id);
+        await this.#updateDocument(itemKey, record);
+    }
+
     async #fetchDocument() {
         let response;
         try {
@@ -71,6 +76,29 @@ export default class DataStore {
         }
 
         return this.#bufferAwsResponseJSON(response.Body);
+    }
+
+    async #updateDocument(key, record) {
+        const doc = await this.#fetchDocument();
+
+        doc[key] = record;
+
+        try {
+            const command = new PutObjectCommand({
+                Bucket: this.#s3BucketName,
+                Key: this.#dataStoreDocumentKey,
+                StorageClass: 'STANDARD',
+                ContentType: 'application/json',
+                Body: JSON.stringify(doc, null, 4),
+            });
+
+            await this.#s3Client.send(command);
+        } catch (cause) {
+            throw new OperationalError(
+                `Error writing document object to S3 storage: ${ cause.message }`,
+                { code: 'AWS_S3_ERR_PUTOBJECT', cause, fatal: true }
+            );
+        }
     }
 
     #bufferAwsResponseJSON(body) {

@@ -1,5 +1,6 @@
 import { KixxAssert } from '../../dependencies.js';
 import { UnauthorizedError, ForbiddenError, JSONParsingError } from '../errors.js';
+import Scope from '../models/scope.js';
 import HTTPRequestSession from '../http-request-session.js';
 
 const {
@@ -49,13 +50,10 @@ export default class AdminRPCTarget {
             request,
         });
 
-        const user = await session.getUser();
+        // Authenticate and authorize the user.
+        await session.getAdminUser();
 
         const jsonResponse = { jsonrpc: '2.0', id: null };
-
-        if (!user.isAdminUser()) {
-            throw new ForbiddenError('user must have admin privileges');
-        }
 
         let jsonRequest;
         try {
@@ -125,10 +123,11 @@ export default class AdminRPCTarget {
 
         let result;
         try {
+            // Use await to cast RPC results to a Promise.
             if (Array.isArray(params)) {
-                result = this[method](...params);
+                result = await this[method](...params);
             } else {
-                result = this[method](params);
+                result = await this[method](params);
             }
         } catch (error) {
             this.#logger.error('internal rpc error', { method, error });
@@ -149,7 +148,7 @@ export default class AdminRPCTarget {
         return response.respondWithJSON(200, jsonResponse);
     }
 
-    createScopedToken(params) {
+    async createScopedToken(params) {
         if (!isPlainObject(params)) {
             const error = new Error(`Invalid params; expects JSON object not ${ toFriendlyString(params) }`);
             error.code = -32602;
@@ -164,6 +163,12 @@ export default class AdminRPCTarget {
             throw error;
         }
 
-        return { scopeId, tokens: [] };
+        const scope = await Scope.fetch(this.#dataStore, scopeId);
+        const newScope = scope.generateAuthenticationToken();
+
+        await newScope.save(this.#dataStore);
+
+        const { accessTokens } = newScope;
+        return { scopeId, accessTokens };
     }
 }
