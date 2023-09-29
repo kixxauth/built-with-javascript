@@ -23,8 +23,8 @@ export default class AdminRPCTarget {
         this.#dataStore = dataStore;
     }
 
-    handleError(error, request, response) {
-        const jsonResponse = { jsonrpc: '2.0', id: null };
+    handleError(error, request, response, jsonResponse) {
+        jsonResponse = jsonResponse || { jsonrpc: '2.0', id: null };
 
         let message;
         let code;
@@ -77,7 +77,7 @@ export default class AdminRPCTarget {
         try {
             jsonRequest = await request.json();
         } catch (error) {
-            return this.handleError(error, request, response);
+            return this.handleError(error, request, response, jsonResponse);
         }
 
         const { id, method, params } = jsonRequest;
@@ -88,7 +88,7 @@ export default class AdminRPCTarget {
                 code: -32600,
                 message: `Invalid "id" member ${ toFriendlyString(id) }`,
             };
-            return this.handleError(error, request, response);
+            return this.handleError(error, request, response, jsonResponse);
         }
 
         jsonResponse.id = id;
@@ -99,7 +99,7 @@ export default class AdminRPCTarget {
                 code: -32600,
                 message: `Invalid "method" member ${ toFriendlyString(method) }`,
             };
-            return this.handleError(error, request, response);
+            return this.handleError(error, request, response, jsonResponse);
         }
 
         // Constrain the RPC call to defined RPC methods.
@@ -108,7 +108,7 @@ export default class AdminRPCTarget {
                 code: -32601,
                 message: `The method "${ method }" cannot be found.`,
             };
-            return this.handleError(error, request, response);
+            return this.handleError(error, request, response, jsonResponse);
         }
 
         let result;
@@ -120,7 +120,7 @@ export default class AdminRPCTarget {
                 result = await this[method](params);
             }
         } catch (error) {
-            return this.handleError(error, request, response);
+            return this.handleError(error, request, response, jsonResponse);
         }
 
         jsonResponse.result = result;

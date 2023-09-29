@@ -28,6 +28,8 @@ export default function test_handleError() {
             }),
         };
 
+        const providedJSONResponse = { jsonrpc: '2.0', id: 'foo-bar-baz' };
+
         const subject = new AdminRPCTarget({
             logger: fakeLoggerWrapper,
             dataStore,
@@ -36,7 +38,7 @@ export default function test_handleError() {
         const { logger } = fakeLoggerWrapper;
         sandbox.stub(logger);
 
-        subject.handleError(error, request, response);
+        subject.handleError(error, request, response, providedJSONResponse);
 
         assert(logger.error.notCalled);
 
@@ -47,7 +49,7 @@ export default function test_handleError() {
         assertEqual(200, statusCode);
 
         assertEqual('2.0', jsonResponse.jsonrpc);
-        assertEqual(null, jsonResponse.id);
+        assertEqual('foo-bar-baz', jsonResponse.id);
         assertEqual('TEST_ERROR', jsonResponse.error.message);
         assertEqual(-32700, jsonResponse.error.code);
 
@@ -157,6 +159,8 @@ export default function test_handleError() {
             }),
         };
 
+        const providedJSONResponse = { jsonrpc: '2.0', id: 'foo-bar-baz' };
+
         const subject = new AdminRPCTarget({
             logger: fakeLoggerWrapper,
             dataStore,
@@ -165,7 +169,7 @@ export default function test_handleError() {
         const { logger } = fakeLoggerWrapper;
         sandbox.stub(logger);
 
-        subject.handleError(error, request, response);
+        subject.handleError(error, request, response, providedJSONResponse);
 
         assert(logger.error.notCalled);
 
@@ -176,7 +180,7 @@ export default function test_handleError() {
         assertEqual(200, statusCode);
 
         assertEqual('2.0', jsonResponse.jsonrpc);
-        assertEqual(null, jsonResponse.id);
+        assertEqual('foo-bar-baz', jsonResponse.id);
         assertEqual('standard JSON RPC error', jsonResponse.error.message);
         assertEqual(-1, jsonResponse.error.code);
 

@@ -34,9 +34,14 @@ export default async function test_remoteProcedureCall() {
         sandbox.stub(logger, 'error');
 
         sandbox.stub(subject, 'authenticateAdminUser').returns(Promise.resolve(null));
+        sandbox.stub(subject, 'createScopedToken').returns(Promise.resolve(null));
 
         response = await subject.remoteProcedureCall(request, response);
 
+        assertEqual(1, subject.authenticateAdminUser.callCount);
+        assertEqual(request, subject.authenticateAdminUser.firstCall.args[0]);
+
+        assert(subject.createScopedToken.notCalled);
         assert(logger.error.notCalled);
 
         assertEqual(1, response.respondWithJSON.callCount);
@@ -81,8 +86,13 @@ export default async function test_remoteProcedureCall() {
         sandbox.stub(logger, 'error');
 
         sandbox.stub(subject, 'authenticateAdminUser').returns(Promise.resolve(null));
+        sandbox.stub(subject, 'createScopedToken').returns(Promise.resolve(null));
 
         response = await subject.remoteProcedureCall(request, response);
+
+        assertEqual(1, subject.authenticateAdminUser.callCount);
+        assertEqual(request, subject.authenticateAdminUser.firstCall.args[0]);
+        assert(subject.createScopedToken.notCalled);
 
         assertEqual(1, logger.error.callCount);
         const info = logger.error.firstCall.args[1];
@@ -135,9 +145,14 @@ export default async function test_remoteProcedureCall() {
         sandbox.stub(logger, 'error');
 
         sandbox.stub(subject, 'authenticateAdminUser').returns(Promise.resolve(null));
+        sandbox.stub(subject, 'createScopedToken').returns(Promise.resolve(null));
 
         response = await subject.remoteProcedureCall(request, response);
 
+        assertEqual(1, subject.authenticateAdminUser.callCount);
+        assertEqual(request, subject.authenticateAdminUser.firstCall.args[0]);
+
+        assert(subject.createScopedToken.notCalled);
         assert(logger.error.notCalled);
 
         assertEqual(1, response.respondWithJSON.callCount);
@@ -187,9 +202,14 @@ export default async function test_remoteProcedureCall() {
         sandbox.stub(logger, 'error');
 
         sandbox.stub(subject, 'authenticateAdminUser').returns(Promise.resolve(null));
+        sandbox.stub(subject, 'createScopedToken').returns(Promise.resolve(null));
 
         response = await subject.remoteProcedureCall(request, response);
 
+        assertEqual(1, subject.authenticateAdminUser.callCount);
+        assertEqual(request, subject.authenticateAdminUser.firstCall.args[0]);
+
+        assert(subject.createScopedToken.notCalled);
         assert(logger.error.notCalled);
 
         assertEqual(1, response.respondWithJSON.callCount);
@@ -199,7 +219,7 @@ export default async function test_remoteProcedureCall() {
         assertEqual(200, statusCode);
 
         assertEqual('2.0', jsonResponse.jsonrpc);
-        assertEqual(null, jsonResponse.id);
+        assertEqual('foo-bar-baz', jsonResponse.id);
         assertEqual('Invalid "method" member undefined', jsonResponse.error.message);
         assertEqual(-32600, jsonResponse.error.code);
 
@@ -239,9 +259,14 @@ export default async function test_remoteProcedureCall() {
         sandbox.stub(logger, 'error');
 
         sandbox.stub(subject, 'authenticateAdminUser').returns(Promise.resolve(null));
+        sandbox.stub(subject, 'createScopedToken').returns(Promise.resolve(null));
 
         response = await subject.remoteProcedureCall(request, response);
 
+        assertEqual(1, subject.authenticateAdminUser.callCount);
+        assertEqual(request, subject.authenticateAdminUser.firstCall.args[0]);
+
+        assert(subject.createScopedToken.notCalled);
         assert(logger.error.notCalled);
 
         assertEqual(1, response.respondWithJSON.callCount);
@@ -251,7 +276,7 @@ export default async function test_remoteProcedureCall() {
         assertEqual(200, statusCode);
 
         assertEqual('2.0', jsonResponse.jsonrpc);
-        assertEqual(null, jsonResponse.id);
+        assertEqual('foo-bar-baz', jsonResponse.id);
         assertEqual('The method "remoteProcedureCall" cannot be found.', jsonResponse.error.message);
         assertEqual(-32601, jsonResponse.error.code);
 
@@ -267,6 +292,8 @@ export default async function test_remoteProcedureCall() {
 
         const fakeLoggerWrapper = new FakeLoggerWrapper();
         const dataStore = {};
+        const error = new Error('TEST_INVALID_PARAMS');
+        error.code = -32602;
 
         const json = {
             id: 'foo-bar-baz',
@@ -291,8 +318,14 @@ export default async function test_remoteProcedureCall() {
         sandbox.stub(logger, 'error');
 
         sandbox.stub(subject, 'authenticateAdminUser').returns(Promise.resolve(null));
+        sandbox.stub(subject, 'createScopedToken').throws(error);
 
         response = await subject.remoteProcedureCall(request, response);
+
+        assertEqual(1, subject.authenticateAdminUser.callCount);
+        assertEqual(request, subject.authenticateAdminUser.firstCall.args[0]);
+
+        assertEqual(1, subject.createScopedToken.callCount);
 
         assert(logger.error.notCalled);
 
@@ -303,8 +336,8 @@ export default async function test_remoteProcedureCall() {
         assertEqual(200, statusCode);
 
         assertEqual('2.0', jsonResponse.jsonrpc);
-        assertEqual(null, jsonResponse.id);
-        assertEqual('Invalid params; expects plain object not undefined', jsonResponse.error.message);
+        assertEqual('foo-bar-baz', jsonResponse.id);
+        assertEqual('TEST_INVALID_PARAMS', jsonResponse.error.message);
         assertEqual(-32602, jsonResponse.error.code);
 
         // Establish a habit of cleaning up the stub sandbox.
@@ -349,6 +382,11 @@ export default async function test_remoteProcedureCall() {
 
         response = await subject.remoteProcedureCall(request, response);
 
+        assertEqual(1, subject.authenticateAdminUser.callCount);
+        assertEqual(request, subject.authenticateAdminUser.firstCall.args[0]);
+
+        assertEqual(1, subject.createScopedToken.callCount);
+
         assertEqual(1, logger.error.callCount);
         const info = logger.error.firstCall.args[1];
         assertEqual(error, info.error);
@@ -360,7 +398,7 @@ export default async function test_remoteProcedureCall() {
         assertEqual(200, statusCode);
 
         assertEqual('2.0', jsonResponse.jsonrpc);
-        assertEqual(null, jsonResponse.id);
+        assertEqual('foo-bar-baz', jsonResponse.id);
         assertEqual('Internal RPC Error.', jsonResponse.error.message);
         assertEqual(-32603, jsonResponse.error.code);
 
