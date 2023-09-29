@@ -1,5 +1,9 @@
 import { KixxAssert } from '../../dependencies.js';
-import { UnauthorizedError, ForbiddenError, JSONParsingError } from '../errors.js';
+import {
+    UnauthorizedError,
+    ForbiddenError,
+    NotFoundError,
+    JSONParsingError } from '../errors.js';
 import Scope from '../models/scope.js';
 import HTTPRequestSession from '../models/http-request-session.js';
 
@@ -36,6 +40,7 @@ export default class AdminRPCTarget {
                 break;
             case UnauthorizedError.CODE:
             case ForbiddenError.CODE:
+            case NotFoundError.CODE:
                 message = error.message;
                 code = error.code;
                 break;
@@ -143,8 +148,11 @@ export default class AdminRPCTarget {
         }
 
         const scope = await Scope.fetch(this.#dataStore, scopeId);
-        const newScope = scope.generateAuthenticationToken();
+        if (!scope) {
+            throw new NotFoundError(`The scope "${ scopeId }" could not be found.`);
+        }
 
+        const newScope = scope.generateAuthenticationToken();
         await newScope.save(this.#dataStore);
 
         const { accessTokens } = newScope;

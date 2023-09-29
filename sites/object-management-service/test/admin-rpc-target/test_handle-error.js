@@ -3,6 +3,7 @@ import AdminRPCTarget from '../../lib/http-interfaces/admin-rpc-target.js';
 import {
     UnauthorizedError,
     ForbiddenError,
+    NotFoundError,
     JSONParsingError } from '../../lib/errors.js';
 import { KixxAssert } from '../../dependencies.js';
 import { FakeLoggerWrapper } from '../testing-utils.js';
@@ -144,6 +145,49 @@ export default function test_handleError() {
         sandbox.restore();
     }
 
+    function handleError_NotFoundError() {
+        // Create a Sinon sandbox for stubs isolated to this test.
+        const sandbox = sinon.createSandbox();
+
+        const fakeLoggerWrapper = new FakeLoggerWrapper();
+        const dataStore = {};
+        const error = new NotFoundError('TEST_ERROR');
+        const request = {};
+
+        const response = {
+            respondWithJSON: sandbox.stub().callsFake(() => {
+                return response;
+            }),
+        };
+
+        const subject = new AdminRPCTarget({
+            logger: fakeLoggerWrapper,
+            dataStore,
+        });
+
+        const { logger } = fakeLoggerWrapper;
+        sandbox.stub(logger);
+
+        subject.handleError(error, request, response);
+
+        assert(logger.error.notCalled);
+
+        assertEqual(1, response.respondWithJSON.callCount);
+
+        const [ statusCode, jsonResponse ] = response.respondWithJSON.firstCall.args;
+
+        assertEqual(200, statusCode);
+
+        assertEqual('2.0', jsonResponse.jsonrpc);
+        assertEqual(null, jsonResponse.id);
+        assertEqual('TEST_ERROR', jsonResponse.error.message);
+        assertEqual('NOT_FOUND_ERROR', jsonResponse.error.code);
+
+        // Establish a habit of cleaning up the stub sandbox.
+        sandbox.reset();
+        sandbox.restore();
+    }
+
     function handleError_StandardJSON_RPC_Error() {
         // Create a Sinon sandbox for stubs isolated to this test.
         const sandbox = sinon.createSandbox();
@@ -237,6 +281,7 @@ export default function test_handleError() {
     handleError_JSONParsingError();
     handleError_UnauthorizedError();
     handleError_ForbiddenError();
+    handleError_NotFoundError();
     handleError_StandardJSON_RPC_Error();
     handleError_AnyOtherError();
 }

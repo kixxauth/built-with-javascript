@@ -41,6 +41,10 @@ export class ForbiddenError extends StackedError {
     static CODE = 'FORBIDDEN_ERROR';
 }
 
+export class NotFoundError extends StackedError {
+    static CODE = 'NOT_FOUND_ERROR';
+}
+
 export class JSONParsingError extends StackedError {
     static CODE = 'JSON_PARSING_ERROR';
 }
