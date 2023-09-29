@@ -13,6 +13,8 @@ const {
 
 export default class AdminRPCTarget {
 
+    allowedRPCMethods = Object.freeze([ 'createScopedToken' ]);
+
     #logger = null;
     #dataStore = null;
 
@@ -28,15 +30,27 @@ export default class AdminRPCTarget {
         let code;
 
         switch (error.code) {
+            case JSONParsingError.CODE:
+                code = -32700;
+                message = error.message;
+                break;
             case UnauthorizedError.CODE:
             case ForbiddenError.CODE:
                 message = error.message;
                 code = error.code;
                 break;
             default:
-                this.#logger.error('caught error', { error });
                 message = 'Internal RPC Error.';
                 code = -32603;
+
+                if (Number.isInteger(error.code) && error.code < 0) {
+                    // Assume this is a standard JSON RPC Error:
+                    code = error.code;
+                    message = error.message;
+                } else {
+                    // Assume an unexpected internal error:
+                    this.#logger.error('caught error', { error });
+                }
         }
 
         jsonResponse.error = { code, message };
@@ -44,14 +58,18 @@ export default class AdminRPCTarget {
         return response.respondWithJSON(200, jsonResponse);
     }
 
-    async remoteProcedureCall(request, response) {
+    authenticateAdminUser(request) {
         const session = new HTTPRequestSession({
             dataStore: this.#dataStore,
             request,
         });
 
         // Authenticate and authorize the user.
-        await session.getAdminUser();
+        return session.getAdminUser();
+    }
+
+    async remoteProcedureCall(request, response) {
+        await this.authenticateAdminUser(request);
 
         const jsonResponse = { jsonrpc: '2.0', id: null };
 
@@ -59,66 +77,38 @@ export default class AdminRPCTarget {
         try {
             jsonRequest = await request.json();
         } catch (error) {
-            if (error.code === JSONParsingError.CODE) {
-                jsonResponse.error = {
-                    code: -32700,
-                    message: error.message,
-                };
-
-                return response.respondWithJSON(200, jsonResponse);
-            }
-
-            this.#logger.error('error buffering request JSON body', { error });
-
-            jsonResponse.error = {
-                code: -32603,
-                message: 'Internal RPC Error.',
-            };
-
-            return response.respondWithJSON(200, jsonResponse);
+            return this.handleError(error, request, response);
         }
 
         const { id, method, params } = jsonRequest;
 
         // The "id" member must be a String or null.
         if (!isNonEmptyString(id) && id !== null) {
-            jsonResponse.error = {
+            const error = {
                 code: -32600,
                 message: `Invalid "id" member ${ toFriendlyString(id) }`,
             };
-
-            return response.respondWithJSON(200, jsonResponse);
+            return this.handleError(error, request, response);
         }
 
         jsonResponse.id = id;
 
         // The "method" member must be a String.
         if (!isNonEmptyString(method)) {
-            jsonResponse.error = {
+            const error = {
                 code: -32600,
                 message: `Invalid "method" member ${ toFriendlyString(method) }`,
             };
-
-            return response.respondWithJSON(200, jsonResponse);
+            return this.handleError(error, request, response);
         }
 
-        // If we allowed "remoteProcedureCall" we would end up in an infinite loop.
-        if (method === 'remoteProcedureCall') {
-            jsonResponse.error = {
-                code: -32600,
-                message: 'The "method" member cannot be "remoteProcedureCall"',
-            };
-
-            return response.respondWithJSON(200, jsonResponse);
-        }
-
-        if (!isFunction(this[method])) {
-            jsonResponse.error = {
+        // Constrain the RPC call to defined RPC methods.
+        if (!this.allowedRPCMethods.includes(method) || !isFunction(this[method])) {
+            const error = {
                 code: -32601,
                 message: `The method "${ method }" cannot be found.`,
             };
-
-            return response.respondWithJSON(200, jsonResponse);
+            return this.handleError(error, request, response);
         }
 
         let result;
@@ -130,18 +120,7 @@ export default class AdminRPCTarget {
                 result = await this[method](params);
             }
         } catch (error) {
-            this.#logger.error('internal rpc error', { method, error });
-            let message = 'Internal RPC Error.';
-            let code = -32603;
-
-            if (Number.isInteger(error.code) && error.code < 0) {
-                code = error.code;
-                message = error.message;
-            }
-
-            jsonResponse.error = { code, message };
-
-            return response.respondWithJSON(200, jsonResponse);
+            return this.handleError(error, request, response);
         }
 
         jsonResponse.result = result;
@@ -150,7 +129,7 @@ export default class AdminRPCTarget {
 
     async createScopedToken(params) {
         if (!isPlainObject(params)) {
-            const error = new Error(`Invalid params; expects JSON object not ${ toFriendlyString(params) }`);
+            const error = new Error(`Invalid params; expects plain object not ${ toFriendlyString(params) }`);
             error.code = -32602;
             throw error;
         }

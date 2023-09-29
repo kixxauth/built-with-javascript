@@ -8,7 +8,9 @@
     "node": ">=16.13.2"
   },
   "scripts": {
-    "test": "eslint ./"
+    "lint": "eslint ./",
+    "unit-tests": "node ./test/run-tests.js",
+    "test": "npm run lint && npm run unit-tests"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "~3.418.0",
