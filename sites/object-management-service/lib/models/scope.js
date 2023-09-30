@@ -73,20 +73,15 @@ export default class Scope {
         return new Scope(spec);
     }
 
+    isUserAuthorized(user) {
+        return this.accessTokens.includes(user.id);
+    }
+
     toPlainObject() {
         return {
             type: this.type,
             id: this.id,
             accessTokens: this.accessTokens.slice(),
         };
-    }
-
-    save(dataStore) {
-        return dataStore.write(this);
-    }
-
-    static async fetch(dataStore, id) {
-        const sourceData = await dataStore.fetch(this.type, id);
-        return sourceData ? new Scope(sourceData) : null;
     }
 }

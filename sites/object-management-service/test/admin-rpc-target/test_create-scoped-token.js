@@ -1,4 +1,5 @@
 import sinon from 'sinon';
+import Scope from '../../lib/models/scope.js';
 import AdminRPCTarget from '../../lib/http-interfaces/admin-rpc-target.js';
 import { KixxAssert } from '../../dependencies.js';
 import { FakeLoggerWrapper } from '../testing-utils.js';
@@ -133,11 +134,11 @@ export default async function test_createScopedToken() {
 
         const scopeId = '082bf691-5d4d-44b0-9b36-0e80d10b2b56';
 
-        const scope = {
+        const scope = new Scope({
             type: 'scope',
             id: scopeId,
             accessTokens: [],
-        };
+        });
 
         const fakeLoggerWrapper = new FakeLoggerWrapper();
 
@@ -180,11 +181,11 @@ export default async function test_createScopedToken() {
 
         const scopeId = '082bf691-5d4d-44b0-9b36-0e80d10b2b56';
 
-        const scope = {
+        const scope = new Scope({
             type: 'scope',
             id: scopeId,
             accessTokens: [ '405a3a90-e2e8-414b-929f-9849160852c7' ],
-        };
+        });
 
         const fakeLoggerWrapper = new FakeLoggerWrapper();
 

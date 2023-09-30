@@ -1,5 +1,7 @@
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { OperationalError, JSONParsingError } from './errors.js';
+import User from './models/user.js';
+import Scope from './models/scope.js';
 import { KixxAssert } from '../dependencies.js';
 
 
@@ -11,6 +13,16 @@ const ALLOWED_ENVIRONMENTS = [
     'production',
 ];
 
+const Models = [
+    User,
+    Scope,
+];
+
+const ModelsByType = new Map();
+
+for (const Model of Models) {
+    ModelsByType.set(Model.type, Model);
+}
 
 export default class DataStore {
 
@@ -47,11 +59,33 @@ export default class DataStore {
         this.#s3BucketName = bucketName;
     }
 
-    async fetch(type, id) {
+    async fetch({ type, id }) {
         const itemKey = this.#createItemKey(type, id);
         const doc = await this.#fetchDocument();
+
+        if (doc[itemKey]) {
+            const Model = this.#getModel(type);
+            return new Model(doc[itemKey]);
+        }
+
         // Return null instead of undefined if the object does not exist.
-        return doc[itemKey] || null;
+        return null;
+    }
+
+    async fetchBatch(specs) {
+        const doc = await this.#fetchDocument();
+
+        return specs.map(({ type, id }) => {
+            const itemKey = this.#createItemKey(type, id);
+
+            if (doc[itemKey]) {
+                const Model = this.#getModel(type);
+                return new Model(doc[itemKey]);
+            }
+
+            // Return null instead of undefined if the object does not exist.
+            return null;
+        });
     }
 
     async write(record) {
@@ -135,6 +169,14 @@ export default class DataStore {
                 }
             });
         });
+    }
+
+    #getModel(type) {
+        if (ModelsByType.has(type)) {
+            return ModelsByType.get(type);
+        }
+
+        throw new Error(`Model "${ type }" has not been registered`);
     }
 
     #createItemKey(type, id) {

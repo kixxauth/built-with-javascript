@@ -147,13 +147,15 @@ export default class AdminRPCTarget {
             throw error;
         }
 
-        const scope = await Scope.fetch(this.#dataStore, scopeId);
+        let scope = new Scope({ id: scopeId });
+        scope = await this.#dataStore.fetch(scope);
+
         if (!scope) {
             throw new NotFoundError(`The scope "${ scopeId }" could not be found.`);
         }
 
         const newScope = scope.generateAuthenticationToken();
-        await newScope.save(this.#dataStore);
+        await this.#dataStore.write(newScope);
 
         const { accessTokens } = newScope;
         return { scopeId, accessTokens };

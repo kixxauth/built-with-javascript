@@ -31,8 +31,24 @@ export default class User {
         return this.groups.includes('admin');
     }
 
-    static async fetch(dataStore, id) {
-        const sourceData = await dataStore.fetch(this.type, id);
-        return sourceData ? new User(sourceData) : null;
+    setScope(scope) {
+        // Clone this user first.
+        const user = new User(this);
+
+        // Then assign the scope property.
+        return Object.defineProperty(user, 'scope', {
+            enumerable: true,
+            writable: false,
+            value: scope,
+        });
+    }
+
+    toJSON() {
+        // Only serialize a subset of properties.
+        return {
+            type: this.type,
+            id: this.id,
+            groups: this.groups,
+        };
     }
 }
