@@ -37,7 +37,7 @@ export default function test_handleError() {
         });
 
         const { logger } = fakeLoggerWrapper;
-        sandbox.stub(logger);
+        sandbox.stub(logger, 'error');
 
         subject.handleError(error, request, response, providedJSONResponse);
 
@@ -55,6 +55,7 @@ export default function test_handleError() {
         assertEqual(-32700, jsonResponse.error.code);
 
         // Establish a habit of cleaning up the stub sandbox.
+        logger.dispose();
         sandbox.reset();
         sandbox.restore();
     }
@@ -80,7 +81,7 @@ export default function test_handleError() {
         });
 
         const { logger } = fakeLoggerWrapper;
-        sandbox.stub(logger);
+        sandbox.stub(logger, 'error');
 
         subject.handleError(error, request, response);
 
@@ -98,6 +99,7 @@ export default function test_handleError() {
         assertEqual('UNAUTHORIZED_ERROR', jsonResponse.error.code);
 
         // Establish a habit of cleaning up the stub sandbox.
+        logger.dispose();
         sandbox.reset();
         sandbox.restore();
     }
@@ -123,7 +125,7 @@ export default function test_handleError() {
         });
 
         const { logger } = fakeLoggerWrapper;
-        sandbox.stub(logger);
+        sandbox.stub(logger, 'error');
 
         subject.handleError(error, request, response);
 
@@ -141,6 +143,7 @@ export default function test_handleError() {
         assertEqual('FORBIDDEN_ERROR', jsonResponse.error.code);
 
         // Establish a habit of cleaning up the stub sandbox.
+        logger.dispose();
         sandbox.reset();
         sandbox.restore();
     }
@@ -166,7 +169,7 @@ export default function test_handleError() {
         });
 
         const { logger } = fakeLoggerWrapper;
-        sandbox.stub(logger);
+        sandbox.stub(logger, 'error');
 
         subject.handleError(error, request, response);
 
@@ -184,6 +187,7 @@ export default function test_handleError() {
         assertEqual('NOT_FOUND_ERROR', jsonResponse.error.code);
 
         // Establish a habit of cleaning up the stub sandbox.
+        logger.dispose();
         sandbox.reset();
         sandbox.restore();
     }
@@ -211,7 +215,7 @@ export default function test_handleError() {
         });
 
         const { logger } = fakeLoggerWrapper;
-        sandbox.stub(logger);
+        sandbox.stub(logger, 'error');
 
         subject.handleError(error, request, response, providedJSONResponse);
 
@@ -229,6 +233,7 @@ export default function test_handleError() {
         assertEqual(-1, jsonResponse.error.code);
 
         // Establish a habit of cleaning up the stub sandbox.
+        logger.dispose();
         sandbox.reset();
         sandbox.restore();
     }
@@ -254,7 +259,7 @@ export default function test_handleError() {
         });
 
         const { logger } = fakeLoggerWrapper;
-        sandbox.stub(logger);
+        sandbox.stub(logger, 'error');
 
         subject.handleError(error, request, response);
 
@@ -274,6 +279,7 @@ export default function test_handleError() {
         assertEqual(-32603, jsonResponse.error.code);
 
         // Establish a habit of cleaning up the stub sandbox.
+        logger.dispose();
         sandbox.reset();
         sandbox.restore();
     }
