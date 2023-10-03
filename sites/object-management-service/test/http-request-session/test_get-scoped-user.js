@@ -23,15 +23,15 @@ export default async function test_getScopedUser() {
         });
 
         const request = { headers };
-        const dataStore = {};
+
+        // The access token does not match the user token.
+        const scope = new Scope({ id: scopeId, accessTokens: [ 'foo-bar-baz' ] });
+
+        const dataStore = {
+            fetch: sandbox.stub().returns(scope),
+        };
 
         const session = new HTTPRequestSession({ dataStore, request });
-
-        sandbox.stub(session, 'getUserAndScope').returns(Promise.resolve([
-            new User({ id: token }),
-            // The access token does not match the user token.
-            new Scope({ id: scopeId, accessTokens: [ 'foo-bar-baz' ] }),
-        ]));
 
         let didThrow = false;
         try {
@@ -60,19 +60,17 @@ export default async function test_getScopedUser() {
         });
 
         const request = { headers };
-        const dataStore = {};
+
+        // The access token does not match the user token.
+        const scope = new Scope({ id: scopeId, accessTokens: [ token ] });
+
+        const dataStore = {
+            fetch: sandbox.stub().returns(scope),
+        };
 
         const session = new HTTPRequestSession({ dataStore, request });
 
-        sandbox.stub(session, 'getUserAndScope').returns(Promise.resolve([
-            new User({ id: token }),
-            new Scope({ id: scopeId, accessTokens: [ token ] }),
-        ]));
-
         const user = await session.getScopedUser(scopeId);
-
-        assertEqual(1, session.getUserAndScope.callCount);
-        assertEqual(scopeId, session.getUserAndScope.firstCall.args[0]);
 
         assert(user instanceof User, 'expected user to be an instanceof User');
         assertEqual(token, user.id);

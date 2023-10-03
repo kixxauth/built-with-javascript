@@ -18,13 +18,8 @@ export default class HTTPRequestSession {
     }
 
     async getUserAndScope(scopeId) {
-        const authHeader = this.#request.headers.get('authorization');
-
-        if (!isNonEmptyString(authHeader)) {
-            throw new UnauthorizedError('missing authorization header');
-        }
-
-        const token = authHeader.replace(/^bearer[\s]*/i, '');
+        // Will throw UnauthorizedError if the token does not exist.
+        const token = this.#getAuthorizationToken();
 
         let user = new User({ id: token });
         let scope;
@@ -62,12 +57,31 @@ export default class HTTPRequestSession {
     async getScopedUser(scopeId) {
         assert(isNonEmptyString(scopeId), ': A non empty string is required as scopeId');
 
-        const [ user, scope ] = await this.getUserAndScope(scopeId);
+        // Will throw UnauthorizedError if the token does not exist.
+        const token = this.#getAuthorizationToken();
+        const user = new User({ id: token });
+
+        let scope = new Scope({ id: scopeId });
+        scope = await this.#dataStore.fetch(scope);
+
+        if (!scope) {
+            throw new ForbiddenError('the requested user scope does not exist');
+        }
 
         if (!scope.isUserAuthorized(user)) {
-            throw new ForbiddenError('User is not authorized on required scope');
+            throw new ForbiddenError('User is not authorized on requested scope');
         }
 
         return user.setScope(scope);
+    }
+
+    #getAuthorizationToken() {
+        const authHeader = this.#request.headers.get('authorization');
+
+        if (!isNonEmptyString(authHeader)) {
+            throw new UnauthorizedError('missing authorization header');
+        }
+
+        return authHeader.replace(/^bearer[\s]*/i, '');
     }
 }
