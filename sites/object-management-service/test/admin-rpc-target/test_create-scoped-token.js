@@ -96,12 +96,13 @@ export default async function test_createScopedToken() {
         // Create a Sinon sandbox for stubs isolated to this test.
         const sandbox = sinon.createSandbox();
 
-        const scopeId = '082bf691-5d4d-44b0-9b36-0e80d10b2b56';
+        const scopeId = 'testing-123';
 
         const fakeLoggerWrapper = new FakeLoggerWrapper();
 
         const dataStore = {
             fetch: sandbox.stub().returns(Promise.resolve(null)),
+            write: sandbox.stub().returns(Promise.resolve(true)),
         };
 
         const subject = new AdminRPCTarget({
@@ -111,16 +112,20 @@ export default async function test_createScopedToken() {
 
         const { logger } = fakeLoggerWrapper;
 
-        let didThrow = false;
-        try {
-            await subject.createScopedToken({ scopeId });
-        } catch (error) {
-            didThrow = true;
-            assertEqual('NOT_FOUND_ERROR', error.code);
-            assertEqual(`The scope "${ scopeId }" could not be found.`, error.message);
-        }
+        const result = await subject.createScopedToken({ scopeId });
 
-        assert(didThrow);
+        assertEqual(1, dataStore.write.callCount);
+        const newScope = dataStore.write.firstCall.args[0];
+        assertEqual(scopeId, newScope.id);
+        assert(Array.isArray(newScope.accessTokens));
+        assertEqual(1, newScope.accessTokens.length);
+        assert(isNonEmptyString(newScope.accessTokens[0]));
+
+        assertEqual(scopeId, result.scopeId);
+        assert(Array.isArray(result.accessTokens));
+        assertEqual(1, result.accessTokens.length);
+        assertEqual(newScope.accessTokens[0], result.accessTokens[0]);
+
 
         // Establish a habit of cleaning up the stub sandbox.
         logger.dispose();
