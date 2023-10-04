@@ -1,35 +1,95 @@
+/**
+ * This script requires:
+ * - The database to be seeded to allow authentication to the write server.
+ * - A file in `./tmp/video.mov` to be uploaded to S3.
+ * - The testing-123/foo/video.mov object must be removed from S3.
+ */
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-// import { KixxAssert } from '../dependencies.js';
+import { KixxAssert } from '../dependencies.js';
 
-// const {
-//     isNonEmptyString,
-//     assert,
-//     assertFalsy,
-//     assertEqual,
-//     assertMatches,
-// } = KixxAssert;
+const {
+    isNonEmptyString,
+    assert,
+    assertEqual,
+    assertEmpty,
+} = KixxAssert;
 
-/**
- * This script requires:
- * - A file in `./tmp/images.jpg` to be uploaded to S3.
- * - The database to be seeded to allow authentication to the write server.
- */
+
+const SCOPE_ID = 'testing-123';
+const AUTH_TOKEN = '37e70d72-39c9-4db4-a61e-c4af20d093cb';
+const WAIT = 90; // Seconds
+
 
 function main() {
+    let id;
+    let md5Hash;
 
-    const filepath = path.resolve('./tmp/image.jpg');
+    // Upload the object the first time, before it exists in S3.
+    // eslint-disable-next-line no-console
+    console.log('Uploading the test object for the first time.');
+    uploadObject((req, utf8, json) => {
+        id = json.data.id;
+        md5Hash = json.data.md5Hash;
+
+        console.log(json);
+        assertEqual('remote-object', json.data.type);
+        assert(isNonEmptyString(id));
+        assert(isNonEmptyString(md5Hash));
+        assertEqual(SCOPE_ID, json.data.scopeId);
+        assertEqual('foo/video.mov', json.data.key);
+        assertEqual('video/quicktime', json.data.contentType);
+        assertEqual('STANDARD', json.data.storageClass);
+        assertEmpty(json.data.filepath);
+
+        /* eslint-disable no-console */
+        console.log('First upload test complete');
+        console.log('');
+        console.log('Waiting for', WAIT, 'seconds before next test to avoid race condition.');
+        /* eslint-enable no-console */
+
+        // Upload the object the second time, when it already exists in S3.
+        // Use the setTimeout to avoid a race condition where we try to upload the object and immediately
+        // upload it again before it has been saved to S3.
+        setTimeout(() => {
+            // eslint-disable-next-line no-console
+            console.log('Uploading the test object for the second time.');
+            // eslint-disable-next-line no-shadow
+            uploadObject((req, utf8, json) => {
+                console.log(json);
+                assertEqual('remote-object', json.data.type);
+                assertEqual(id, json.data.id);
+                assertEqual(SCOPE_ID, json.data.scopeId);
+                assertEqual(md5Hash, json.data.md5Hash);
+                assertEqual('foo/video.mov', json.data.key);
+                assertEqual('video/quicktime', json.data.contentType);
+                assert(isNonEmptyString(json.data.version));
+                assert(isNonEmptyString(json.data.lastModifiedDate));
+                assertEmpty(json.data.filepath);
+
+                /* eslint-disable no-console */
+                console.log('Second upload test complete');
+                console.log('');
+                console.log('Test Pass :D');
+                /* eslint-enable no-console */
+            });
+        }, WAIT * 1000);
+    });
+}
+
+function uploadObject(callback) {
+    const filepath = path.resolve('./tmp/video.mov');
     const stats = fs.statSync(filepath);
     const sourceStream = fs.createReadStream(filepath);
 
-    const url = new URL('/objects/testing-123/foo/image.jpg', 'http://localhost:3003');
+    const url = new URL(`/objects/${ SCOPE_ID }/foo/video.mov`, 'http://localhost:3003');
 
     const reqOptions = {
         method: 'PUT',
         headers: {
-            authorization: 'Bearer 37e70d72-39c9-4db4-a61e-c4af20d093cb',
-            'content-type': 'image/jpeg',
+            authorization: `Bearer ${ AUTH_TOKEN }`,
+            'content-type': 'video/quicktime',
             'content-length': stats.size,
         },
     };
@@ -58,7 +118,7 @@ function main() {
                 /* eslint-enable no-console */
             }
 
-            assertResult(res, utf8, json);
+            callback(res, utf8, json);
         });
     });
 
@@ -67,18 +127,6 @@ function main() {
     });
 
     sourceStream.pipe(req);
-}
-
-function assertResult(req, utf8, json) {
-    /* eslint-disable no-console */
-    console.log('<<< UTF-8 >>>');
-    console.log(utf8);
-    console.log('<<< JSON >>>');
-    console.log(json);
-
-    console.log('');
-    console.log('Test pass :D');
-    /* eslint-enable no-console */
 }
 
 function printErrorAndExit(message, error) {

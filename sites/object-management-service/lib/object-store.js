@@ -1,4 +1,4 @@
-import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { KixxAssert } from '../dependencies.js';
 
 
@@ -13,6 +13,11 @@ const ALLOWED_ENVIRONMENTS = [
     'development',
     'production',
 ];
+
+const S3_STORAGE_CLASS_MAPPING = {
+    STANDARD: 'STANDARD_IA',
+    INFREQUENT_ACCESS: 'GLACIER_IR',
+};
 
 // Only allow word characters and "-" in key "filenames".
 // eslint-disable-next-line no-useless-escape
@@ -57,6 +62,41 @@ export default class ObjectStore {
         this.#s3BucketName = bucketName;
     }
 
+    async put(obj) {
+        const bucket = this.#s3BucketName;
+        const key = this.#generateRemoteObjectKey(obj);
+        const { id, contentType } = obj;
+        const storageClass = S3_STORAGE_CLASS_MAPPING[obj.storageClass];
+
+        this.#logger.log('put object; uploading', { bucket, key, id });
+
+        assert(
+            isNonEmptyString(id),
+            'RemoteObject.id must be a non empty string'
+        );
+        assert(
+            isNonEmptyString(contentType),
+            'RemoteObject.contentType must be a non empty string'
+        );
+        assert(
+            isNonEmptyString(storageClass),
+            'RemoteObject.storageClass must map to S3 storage class'
+        );
+
+        const result = await this.private_awsPutObjectCommand({
+            Bucket: bucket,
+            Key: key,
+            Body: obj.createReadStream(),
+            ContentType: contentType,
+            Metadata: { id },
+            StorageClass: storageClass,
+        });
+
+        this.#logger.log('put object; uploaded', { bucket, key, id });
+
+        return obj.updateFromS3Put(result);
+    }
+
     async fetchHead(obj) {
         const bucket = this.#s3BucketName;
         const key = this.#generateRemoteObjectKey(obj);
@@ -79,6 +119,12 @@ export default class ObjectStore {
 
         this.#logger.log('fetch object head; found', { bucket, key });
         return obj.updateFromS3Head(result);
+    }
+
+    // Private - Use public notation for testing.
+    private_awsPutObjectCommand(options) {
+        const command = new PutObjectCommand(options);
+        return this.#s3Client.send(command);
     }
 
     // Private - Use public notation for testing.

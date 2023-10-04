@@ -105,9 +105,7 @@ export default class WriteServer {
         const { scope } = user;
         const { key } = request.params;
         const contentType = request.headers.get('content-type');
-        // TODO: Use the storageClass when creating a new object.
-        //       Need to define a default storageClass.
-        // const storageClass = request.headers.get('x-kc-storage-class');
+        const storageClass = request.headers.get('x-kc-storage-class');
 
         assert(Array.isArray(key), 'Request.params.key expected to be an Array');
 
@@ -120,19 +118,63 @@ export default class WriteServer {
         // Throws ValidationError
         remoteObject.validateForFetchHead();
 
-        let localObject = new LocalObject({ scopeId: scope.id });
+        const localObject = new LocalObject({ scopeId: scope.id });
 
         // Stream the object content in parallel (don't await these Promises seperately).
-        [ remoteObject, localObject ] = await Promise.all([
+        const [ nextRemoteObject, nextLocalObject ] = await Promise.all([
             this.#objectStore.fetchHead(remoteObject),
             this.#localObjectStore.write(localObject, request.readStream),
         ]);
 
-        if (remoteObject && remoteObject.getEtag() === localObject.getEtag()) {
-            return response.respondWithJSON(200, { data: remoteObject });
+        if (nextRemoteObject && nextRemoteObject.getEtag() === nextLocalObject.getEtag()) {
+            this.#logger.log('putObject; etag match; skip upload');
+            return response.respondWithJSON(200, { data: nextRemoteObject });
         }
 
-        // TODO: Complete the object upload algorithm.
-        return response.respondWithJSON(201, { data: {} });
+        // eslint-disable-next-line require-atomic-updates
+        remoteObject = nextRemoteObject || remoteObject;
+
+        remoteObject = remoteObject
+            .incorporateLocalObject(nextLocalObject)
+            .setStorageClass(storageClass);
+
+        this.#logger.log('putObject; no etag match; uploading', {
+            id: remoteObject.id,
+            etag: remoteObject.getEtag(),
+            key: remoteObject.key,
+            storageClass: remoteObject.storageClass,
+        });
+
+        this.run_backgroundJob(remoteObject).then((completedRemoteObject) => {
+            // TODO: Remove local object.
+            this.#logger.log('putObject; background job complete', {
+                id: completedRemoteObject.id,
+                etag: completedRemoteObject.getEtag(),
+                key: completedRemoteObject.key,
+                storageClass: completedRemoteObject.storageClass,
+            });
+        }).catch((error) => {
+            this.#logger.error('putObject; background job error', {
+                id: remoteObject.id,
+                etag: remoteObject.getEtag(),
+                key: remoteObject.key,
+                storageClass: remoteObject.storageClass,
+                error,
+            });
+        });
+
+        return response.respondWithJSON(201, { data: remoteObject });
+    }
+
+    // Private - Using public notation to enable testing.
+    async run_backgroundJob(remoteObject) {
+        remoteObject.validateForPut();
+
+        remoteObject = await this.#objectStore.put(remoteObject);
+
+        console.log('Ready for video transcode:', remoteObject);
+
+        // TODO: Handle video transcoding request.
+        return remoteObject;
     }
 }

@@ -30,7 +30,7 @@ export default class LocalObjectStore {
             const hasher = crypto.createHash('md5');
             let md5Hash;
 
-            this.#logger.log('saving object', { id, filepath });
+            this.#logger.log('saving object', { id });
 
             sourceStream.on('error', reject);
             destStream.on('error', reject);
@@ -55,7 +55,7 @@ export default class LocalObjectStore {
                     md5Hash,
                 });
 
-                this.#logger.log('object saved', { id, filepath, md5Hash });
+                this.#logger.log('object saved', { id, md5Hash });
 
                 resolve(new LocalObject(spec));
             };
