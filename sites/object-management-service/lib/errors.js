@@ -45,6 +45,28 @@ export class NotFoundError extends StackedError {
     static CODE = 'NOT_FOUND_ERROR';
 }
 
+export class ValidationError extends StackedError {
+    static CODE = 'VALIDATION_ERROR';
+
+    errors = [];
+
+    get length() {
+        return this.errors.length;
+    }
+
+    push(message, source) {
+        const err = new Error(message);
+        err.source = source;
+        this.errors.push(err);
+    }
+
+    forEach(callback) {
+        for (let i = 0; i < this.errors.length; i += 1) {
+            callback(this.errors[i], i);
+        }
+    }
+}
+
 export class JSONParsingError extends StackedError {
     static CODE = 'JSON_PARSING_ERROR';
 }

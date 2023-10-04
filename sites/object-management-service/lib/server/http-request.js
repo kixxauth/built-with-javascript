@@ -35,6 +35,10 @@ export default class HTTPRequest {
         return this.#nodeRequest.method;
     }
 
+    get readStream() {
+        return this.#nodeRequest;
+    }
+
     json() {
         return new Promise((resolve, reject) => {
             const req = this.#nodeRequest;

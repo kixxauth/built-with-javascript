@@ -7,13 +7,13 @@ export default [
     //         HEAD: 'serveObjectMetadata',
     //     },
     // },
-    // {
-    //     pattern: '/objects/:scope/:key+',
-    //     HTTPInterface: 'WriteServer',
-    //     methods: {
-    //         PUT: 'putObject',
-    //     },
-    // },
+    {
+        pattern: '/objects/:scope/:key+',
+        HTTPInterface: 'WriteServer',
+        methods: {
+            PUT: 'putObject',
+        },
+    },
     // {
     //     pattern: '/admin/objects/:key/:version?',
     //     HTTPInterface: 'AdminServer',

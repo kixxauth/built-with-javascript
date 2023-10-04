@@ -1,5 +1,8 @@
+import os from 'node:os';
+import path from 'node:path';
 import fsp from 'node:fs/promises';
 import toml from '@iarna/toml';
+
 
 export default class Config {
 
@@ -29,6 +32,14 @@ export default class Config {
             dataStore: {
                 enumerable: true,
                 value: new DataStoreConfig(config.dataStore),
+            },
+            objectStore: {
+                enumerable: true,
+                value: new ObjectStoreConfig(config.objectStore),
+            },
+            localObjectStore: {
+                enumerable: true,
+                value: new LocalObjectStoreConfig(config.localObjectStore),
             },
         });
     }
@@ -68,6 +79,34 @@ class ServerConfig {
     }
 }
 
+class ObjectStoreConfig {
+    #config = null;
+
+    constructor(config) {
+        this.#config = config;
+    }
+
+    getRegion() {
+        return this.#config.region;
+    }
+
+    getBucketName() {
+        return this.#config.bucketName;
+    }
+
+    getEnvironment() {
+        return this.#config.environment;
+    }
+
+    getAccessKeyId() {
+        return this.#config.accessKeyId;
+    }
+
+    getSecretAccessKey() {
+        return this.#config.secretAccessKey;
+    }
+}
+
 class DataStoreConfig {
     #config = null;
 
@@ -93,5 +132,26 @@ class DataStoreConfig {
 
     getSecretAccessKey() {
         return this.#config.secretAccessKey;
+    }
+}
+
+class LocalObjectStoreConfig {
+    #config = null;
+
+    constructor(config = {}) {
+        this.#config = config;
+    }
+
+    getDirectory() {
+        return this.#config.directory || this.#getDefaultDirectory();
+    }
+
+    #getDefaultDirectory() {
+        return path.join(
+            os.tmpdir(),
+            'kc',
+            'object-management-service',
+            'tmp-object-storage'
+        );
     }
 }

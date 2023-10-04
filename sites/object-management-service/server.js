@@ -2,9 +2,12 @@ import http from 'node:http';
 import Config from './lib/config/config.js';
 import { createLogger } from './lib/logger.js';
 import DataStore from './lib/datastore.js';
+import ObjectStore from './lib/object-store.js';
+import LocalObjectStore from './lib/local-object-store.js';
 import RoutingTable from './lib/server/routing-table.js';
 import HTTPRequestTarget from './lib/server/http-request-target.js';
 import routes from './routes.js';
+import WriteServer from './lib/http-interfaces/write-server.js';
 import AdminRPCTarget from './lib/http-interfaces/admin-rpc-target.js';
 
 
@@ -33,7 +36,20 @@ async function start() {
         }, 200);
     }
 
-    const dataStore = new DataStore({ config });
+    const dataStore = new DataStore({
+        config,
+        logger,
+    });
+
+    const objectStore = new ObjectStore({
+        config,
+        logger,
+    });
+
+    const localObjectStore = new LocalObjectStore({
+        config,
+        logger,
+    });
 
     const routingTable = new RoutingTable({ logger });
 
@@ -42,6 +58,13 @@ async function start() {
         logger,
         routingTable,
     });
+
+    routingTable.registerHTTPInterface('WriteServer', new WriteServer({
+        logger,
+        dataStore,
+        objectStore,
+        localObjectStore,
+    }));
 
     routingTable.registerHTTPInterface('AdminRPCTarget', new AdminRPCTarget({
         logger,

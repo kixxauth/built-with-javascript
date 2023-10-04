@@ -17,3 +17,13 @@ bucketName = ""
 environment = "development"
 accessKeyId = ""
 secretAccessKey = ""
+
+[objectStore]
+region = ""
+bucketName = ""
+environment = "development"
+accessKeyId = ""
+secretAccessKey = ""
+
+[localObjectStore]
+directory = ""

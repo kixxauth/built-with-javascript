@@ -1,4 +1,8 @@
+import { KixxAssert } from '../../dependencies.js';
 import { statusMessagesByCode } from './status-messages-by-code.js';
+
+
+const { assert, isNonEmptyString, isNumberNotNaN } = KixxAssert;
 
 
 export default class HTTPResponse {
@@ -29,6 +33,7 @@ export default class HTTPResponse {
     }
 
     respondWithJSON(statusCode, obj) {
+        assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
         this.status = statusCode;
         this.statusMessage = statusMessagesByCode.get(statusCode);
 
@@ -41,6 +46,8 @@ export default class HTTPResponse {
     }
 
     respondWithPlainText(statusCode, utf8) {
+        assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
+        assert(isNonEmptyString(utf8), ': response body must be a string');
         this.status = statusCode;
         this.statusMessage = statusMessagesByCode.get(statusCode);
 
