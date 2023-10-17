@@ -42,5 +42,11 @@ tmp/
 # Protect secrets from getting into source control
 .secrets
 
+# Object Management Service
 sites/object-management-service/config/**
 !sites/object-management-service/config/start.toml
+
+# ADK Avy
+sites/adkavy/config/**
+!sites/adkavy/config/start.toml
+
