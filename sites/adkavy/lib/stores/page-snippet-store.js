@@ -13,10 +13,12 @@ marked.use({
 export default class PageSnippetStore {
 
     #directory = null;
+    #logger = null;
     #eventBus = null;
 
-    constructor({ config, eventBus }) {
-        this.#directory = config.pageDataStore.getDirectory();
+    constructor({ config, logger, eventBus }) {
+        this.#directory = config.pageSnippetStore.getDirectory();
+        this.#logger = logger.createChild({ name: 'PageSnippetStore' });
         this.#eventBus = eventBus;
     }
 
@@ -45,7 +47,8 @@ export default class PageSnippetStore {
     }
 
     #onFileChange(eventType, fileName) {
-        const pageId = path.basename(fileName, '.toml');
-        this.#eventBus.emit(`PageDataStore:update:${ pageId }`, { pageId });
+        const id = path.basename(fileName, '.md');
+        this.#logger.debug('emitting change for snippet', { id });
+        this.#eventBus.emit('PageSnippetStore:update', { id });
     }
 }

@@ -13,6 +13,7 @@ export default class BasePage {
     #pageId = null;
     #templateId = null;
 
+    #logger = null;
     #eventBus = null;
     #pageDataStore = null;
     #pageSnippetStore = null;
@@ -22,7 +23,7 @@ export default class BasePage {
     #caching = false;
 
     #cachedPageData = null;
-    #cachedContentSnippets = {};
+    #cachedContentSnippets = null;
     #cachedTemplate = null;
     #cachedHTML = null;
 
@@ -30,6 +31,7 @@ export default class BasePage {
         assert(isPlainObject(spec));
         assert(isNonEmptyString(spec.pageId));
         assert(isNonEmptyString(spec.templateId));
+        assert(spec.logger);
         assert(spec.eventBus);
         assert(spec.pageDataStore);
         assert(spec.pageSnippetStore);
@@ -40,16 +42,18 @@ export default class BasePage {
             templateId,
             isDynamic,
             caching,
+            logger,
             eventBus,
             pageDataStore,
             pageSnippetStore,
             templateStore,
         } = spec;
 
-        this.#pageId = Boolean(pageId);
-        this.#templateId = Boolean(templateId);
+        this.#pageId = pageId;
+        this.#templateId = templateId;
         this.#isDynamic = Boolean(isDynamic);
         this.#caching = Boolean(caching);
+        this.#logger = logger.createChild({ name: 'BasePage' });
         this.#pageDataStore = pageDataStore;
         this.#pageSnippetStore = pageSnippetStore;
         this.#templateStore = templateStore;
@@ -57,7 +61,8 @@ export default class BasePage {
         if (this.#caching) {
             const regenerateCache = this.rengerateCache.bind(this);
             eventBus.on(`PageDataStore:update:${ pageId }`, regenerateCache);
-            eventBus.on(`TemplateStore:update:${ templateId }`, regenerateCache);
+            eventBus.on('PageSnippetStore:update', regenerateCache);
+            eventBus.on('TemplateStore:update', regenerateCache);
         }
     }
 
@@ -70,9 +75,18 @@ export default class BasePage {
             return this.#cachedHTML;
         }
 
-        const page = await this.getPageData();
-        page.snippets = await this.getContentSnippets(page.snippets);
-        page.data = await this.getDynamicData(params);
+        let page = await this.getPageData();
+        page = page || {};
+
+        if (Array.isArray(page.snippets) && page.snippets.length > 0) {
+            page.snippets = await this.getContentSnippets(page.snippets);
+        } else {
+            page.snippets = {};
+        }
+
+        const data = await this.getDynamicData(params);
+        Object.assign(page, data);
+
         const template = await this.getTemplate();
 
         const html = template(page);
@@ -85,15 +99,20 @@ export default class BasePage {
     }
 
     async rengerateCache() {
+        const name = this.constructor.name;
+        const pageId = this.#pageId;
+
+        this.#logger.info('regnerating page cache', { name, pageId });
+
         try {
             this.#cachedHTML = null;
             this.#cachedPageData = null;
+            this.#cachedContentSnippets = null;
             this.#cachedTemplate = null;
-            this.#cachedContentSnippets = {};
             await this.generateHTML();
         } catch (cause) {
             const error = new OperationalError(
-                `Error regenerating page cache in ${ this.constructor.name }:${ this.#pageId }`,
+                `Error regenerating page cache in ${ name }:${ pageId }`,
                 { fatal: true, cause }
             );
             this.#eventBus.emit('error', error);
@@ -121,7 +140,7 @@ export default class BasePage {
             return this.#cachedContentSnippets;
         }
 
-        const snippets = this.#pageSnippetStore.fetch(snippetIds);
+        const snippets = this.#pageSnippetStore.fetchBatch(snippetIds);
 
         // We don't cache snippets for static pages, since we cache the full HTML
         // content utf8 for static pages.
@@ -139,7 +158,9 @@ export default class BasePage {
 
         const template = this.#templateStore.fetch(this.#templateId);
 
-        if (this.#caching) {
+        // We don't cache templates for static pages, since we cache the full HTML
+        // content utf8 for static pages.
+        if (this.#caching && this.#isDynamic) {
             this.#cachedTemplate = template;
         }
 

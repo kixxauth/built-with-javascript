@@ -36,24 +36,24 @@ export default class HTMLPage {
     }
 
     async renderPage(req, res, params) {
-        const { pageId } = params;
+        const { pageId, templateId } = params;
 
         assert(isNonEmptyString(pageId));
 
-        const page = this.#getPageInstance(pageId);
+        const page = this.#getPageInstance(pageId, templateId);
         const html = await page.generateHTML(req.pathnameParams);
 
         return res.respondWithHTML(html);
     }
 
-    #getPageInstance(pageId) {
+    #getPageInstance(pageId, templateId) {
         if (this.#pagesById.has(pageId)) {
             return this.#pagesById.get(pageId);
         }
 
         const page = new BasePage({
             pageId,
-            templateId: pageId,
+            templateId,
             caching: this.#caching,
             isDynamic: false,
             eventBus: this.#eventBus,

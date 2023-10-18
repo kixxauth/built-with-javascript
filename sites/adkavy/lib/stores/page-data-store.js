@@ -7,10 +7,12 @@ import toml from '@iarna/toml';
 export default class PageDataStore {
 
     #directory = null;
+    #logger = null;
     #eventBus = null;
 
-    constructor({ config, eventBus }) {
+    constructor({ config, logger, eventBus }) {
         this.#directory = config.pageDataStore.getDirectory();
+        this.#logger = logger.createChild({ name: 'PageDataStore' });
         this.#eventBus = eventBus;
     }
 
@@ -21,13 +23,26 @@ export default class PageDataStore {
     }
 
     async fetch(pageId) {
-        const filepath = path.join(this.#directory, `${ pageId }.toml`);
-        const utf8 = await fsp.readFile(filepath, { encoding: 'utf8' });
+        const filename = pageId.split('/').join('__');
+        const filepath = path.join(this.#directory, `${ filename }.toml`);
+
+        let utf8;
+        try {
+            utf8 = await fsp.readFile(filepath, { encoding: 'utf8' });
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                return null;
+            }
+            throw error;
+        }
+
         return toml.parse(utf8);
     }
 
-    #onFileChange(eventType, fileName) {
-        const pageId = path.basename(fileName, '.toml');
+    #onFileChange(eventType, filename) {
+        filename = path.basename(filename, '.toml');
+        const pageId = filename.replace(/[_]{2}/g, '/');
+        this.#logger.debug('emitting change for page', { pageId });
         this.#eventBus.emit(`PageDataStore:update:${ pageId }`, { pageId });
     }
 }
