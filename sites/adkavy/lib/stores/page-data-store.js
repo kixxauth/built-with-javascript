@@ -10,8 +10,8 @@ export default class PageDataStore {
     #logger = null;
     #eventBus = null;
 
-    constructor({ config, logger, eventBus }) {
-        this.#directory = config.pageDataStore.getDirectory();
+    constructor({ directory, logger, eventBus }) {
+        this.#directory = directory;
         this.#logger = logger.createChild({ name: 'PageDataStore' });
         this.#eventBus = eventBus;
     }

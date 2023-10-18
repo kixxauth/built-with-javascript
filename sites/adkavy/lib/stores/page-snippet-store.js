@@ -16,8 +16,8 @@ export default class PageSnippetStore {
     #logger = null;
     #eventBus = null;
 
-    constructor({ config, logger, eventBus }) {
-        this.#directory = config.pageSnippetStore.getDirectory();
+    constructor({ directory, logger, eventBus }) {
+        this.#directory = directory;
         this.#logger = logger.createChild({ name: 'PageSnippetStore' });
         this.#eventBus = eventBus;
     }

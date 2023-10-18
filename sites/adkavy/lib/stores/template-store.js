@@ -11,8 +11,8 @@ export default class TemplateStore {
     #logger = null;
     #eventBus = null;
 
-    constructor({ config, logger, eventBus }) {
-        this.#directory = config.templateStore.getDirectory();
+    constructor({ directory, logger, eventBus }) {
+        this.#directory = directory;
         this.#logger = logger.createChild({ name: 'TemplateStore' });
         this.#eventBus = eventBus;
     }
