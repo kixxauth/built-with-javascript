@@ -8,6 +8,7 @@ export default class HTMLPage {
 
     #caching = true;
 
+    #logger = null;
     #eventBus = null;
     #pageDataStore = null;
     #pageSnippetStore = null;
@@ -16,19 +17,17 @@ export default class HTMLPage {
     #pagesById = new Map();
 
     constructor(spec) {
-        assert(isPlainObject(spec));
-        assert(spec.eventBus);
-        assert(spec.pageDataStore);
-        assert(spec.pageSnippetStore);
-        assert(spec.templateStore);
+        assert(isPlainObject(spec), 'isPlainObject');
 
         const {
+            logger,
             eventBus,
             pageDataStore,
             pageSnippetStore,
             templateStore,
         } = spec;
 
+        this.#logger = logger;
         this.#eventBus = eventBus;
         this.#pageDataStore = pageDataStore;
         this.#pageSnippetStore = pageSnippetStore;
@@ -56,6 +55,7 @@ export default class HTMLPage {
             templateId,
             caching: this.#caching,
             isDynamic: false,
+            logger: this.#logger,
             eventBus: this.#eventBus,
             pageDataStore: this.#pageDataStore,
             pageSnippetStore: this.#pageSnippetStore,

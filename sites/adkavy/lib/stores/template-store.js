@@ -95,10 +95,11 @@ export default class TemplateStore {
     async #registerHelper(handlebars, filepath) {
         const sourceCode = await fsp.readFile(filepath, { encoding: 'utf8' });
         const context = { exports: { name: null, helper: null }, Handlebars };
+        const name = path.basename(filepath, '.js');
 
         vm.runInNewContext(sourceCode, context, { timeout: 100 });
 
-        const { name, helper } = context.exports;
+        const { helper } = context.exports;
 
         handlebars.registerHelper(name, helper);
         return true;

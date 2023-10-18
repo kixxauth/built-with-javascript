@@ -28,9 +28,9 @@ export default class BasePage {
     #cachedHTML = null;
 
     constructor(spec) {
-        assert(isPlainObject(spec));
-        assert(isNonEmptyString(spec.pageId));
-        assert(isNonEmptyString(spec.templateId));
+        assert(isPlainObject(spec), 'isPlainObject');
+        assert(isNonEmptyString(spec.pageId), 'spec.pageId isNonEmptyString');
+        assert(isNonEmptyString(spec.templateId), 'spec.templateId isNonEmptyString');
         assert(spec.logger);
         assert(spec.eventBus);
         assert(spec.pageDataStore);
