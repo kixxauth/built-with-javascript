@@ -55,9 +55,9 @@ export default class BasePage {
         this.#templateStore = templateStore;
 
         if (this.#caching) {
-            const rengerateCache = this.rengerateCache.bind(this);
-            eventBus.on(`PageDataStore:update:${ pageId }`, rengerateCache);
-            eventBus.on(`TemplateStore:update:${ templateId }`, rengerateCache);
+            const regenerateCache = this.rengerateCache.bind(this);
+            eventBus.on(`PageDataStore:update:${ pageId }`, regenerateCache);
+            eventBus.on(`TemplateStore:update:${ templateId }`, regenerateCache);
         }
     }
 
@@ -107,7 +107,9 @@ export default class BasePage {
 
         const pageData = this.#pageDataStore.fetch(this.#pageId);
 
-        if (this.#caching) {
+        // We don't cache page data for static pages, since we cache the full HTML
+        // content utf8 for static pages.
+        if (this.#caching && this.#isDynamic) {
             this.#cachedPageData = pageData;
         }
 
@@ -121,7 +123,9 @@ export default class BasePage {
 
         const snippets = this.#pageSnippetStore.fetch(snippetIds);
 
-        if (this.#caching) {
+        // We don't cache snippets for static pages, since we cache the full HTML
+        // content utf8 for static pages.
+        if (this.#caching && this.#isDynamic) {
             this.#cachedContentSnippets = snippets;
         }
 

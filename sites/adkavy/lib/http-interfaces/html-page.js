@@ -55,12 +55,14 @@ export default class HTMLPage {
             pageId,
             templateId: pageId,
             caching: this.#caching,
+            isDynamic: false,
             eventBus: this.#eventBus,
             pageDataStore: this.#pageDataStore,
             pageSnippetStore: this.#pageSnippetStore,
             templateStore: this.#templateStore,
         });
 
+        // Stash the page instance by pageId to use later.
         this.#pagesById.set(pageId, page);
 
         return page;
