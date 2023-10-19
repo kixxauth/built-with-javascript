@@ -37,11 +37,19 @@ export default class HTMLPage {
     async renderPage(req, res, params) {
         const { pageId, templateId } = params;
 
-        assert(isNonEmptyString(pageId));
+        assert(isNonEmptyString(pageId), 'pageId isNonEmptyString');
+        assert(isNonEmptyString(templateId), 'templateId isNonEmptyString');
 
         const page = this.#getPageInstance(pageId, templateId);
-        const html = await page.generateHTML(req.pathnameParams);
 
+        const requestJSON = req.url.pathname.endsWith('.json');
+
+        if (requestJSON) {
+            const json = await page.generateJSON(req.pathnameParams);
+            return res.respondWithJSON(json);
+        }
+
+        const html = await page.generateHTML(req.pathnameParams);
         return res.respondWithHTML(html);
     }
 

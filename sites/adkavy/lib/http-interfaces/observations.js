@@ -30,8 +30,15 @@ export default class Observations {
 
     async viewObservation(req, res) {
         const id = req.pathnameParams.observationId;
-        const html = await this.#viewObservationPage.generateHTML({ id });
+        const page = this.#viewObservationPage;
+        const requestJSON = req.url.pathname.endsWith('.json');
 
+        if (requestJSON) {
+            const json = await page.generateJSON({ id });
+            return res.respondWithJSON(json);
+        }
+
+        const html = await page.generateHTML({ id });
         return res.respondWithHTML(html);
     }
 }

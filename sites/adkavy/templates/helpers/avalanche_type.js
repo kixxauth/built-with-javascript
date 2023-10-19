@@ -1,5 +1,3 @@
-exports.name = 'avalanche_type';
-
 exports.helper = function avalanche_type(type) {
     switch (type) {
         case 'sluff':
