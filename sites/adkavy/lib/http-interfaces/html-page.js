@@ -27,11 +27,16 @@ export default class HTMLPage {
             templateStore,
         } = spec;
 
-        this.#logger = logger;
+        this.#logger = logger.createChild({ name: 'HTMLPage' });
         this.#eventBus = eventBus;
         this.#pageDataStore = pageDataStore;
         this.#pageSnippetStore = pageSnippetStore;
         this.#templateStore = templateStore;
+    }
+
+    handleError(error, req, res) {
+        this.#logger.error('caught unexpected error', { error });
+        return res.respondWithText(500, 'Unexpected server error.\n');
     }
 
     async renderPage(req, res, params) {

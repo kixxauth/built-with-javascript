@@ -70,11 +70,7 @@ export default class BasePage {
         return this.#caching && !this.#isDynamic;
     }
 
-    async generateHTML(params) {
-        if (this.#cachedHTML) {
-            return this.#cachedHTML;
-        }
-
+    async generateJSON(params) {
         let page = await this.getPageData();
         page = page || {};
 
@@ -85,8 +81,16 @@ export default class BasePage {
         }
 
         const data = await this.getDynamicData(params);
-        Object.assign(page, data);
 
+        return Object.assign(page, data);
+    }
+
+    async generateHTML(params) {
+        if (this.#cachedHTML) {
+            return this.#cachedHTML;
+        }
+
+        const page = await this.generateJSON(params);
         const template = await this.getTemplate();
 
         const html = template(page);
