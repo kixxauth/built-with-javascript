@@ -1,5 +1,6 @@
 import http from 'node:http';
 import path from 'node:path';
+import { EventEmitter } from 'node:events';
 import Config from './lib/config/config.js';
 import { createLogger } from './lib/logger.js';
 import RoutingTable from './lib/server/routing-table.js';
@@ -28,6 +29,12 @@ async function start() {
         name: 'server',
         level: config.logger.getLevel(),
         makePretty: config.logger.getMakePretty(),
+    });
+
+    const eventBus = new EventEmitter();
+
+    eventBus.on('error', (error) => {
+        printErrorAndExit('Error event on EventBus', error);
     });
 
     function printErrorAndExit(message, error) {
