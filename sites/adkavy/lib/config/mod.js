@@ -45,8 +45,8 @@ export default class Config {
     }
 
     async #loadFile(fileName) {
-        const url = new URL(fileName, this.#rootConfigDir);
-        const utf8 = await fsp.readFile(url, { encoding: 'utf8' });
+        const filepath = path.join(this.#rootConfigDir, fileName);
+        const utf8 = await fsp.readFile(filepath, { encoding: 'utf8' });
         return toml.parse(utf8);
     }
 }

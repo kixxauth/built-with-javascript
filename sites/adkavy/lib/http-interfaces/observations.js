@@ -19,6 +19,7 @@ export default class Observations {
             pageDataStore,
             pageSnippetStore,
             templateStore,
+            datastore,
         } = spec;
 
         this.#logger = logger.createChild({ name: 'Observations' });
@@ -29,6 +30,7 @@ export default class Observations {
             pageDataStore,
             pageSnippetStore,
             templateStore,
+            datastore,
         });
     }
 

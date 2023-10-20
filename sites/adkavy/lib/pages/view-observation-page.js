@@ -24,7 +24,7 @@ export default class ViewObservation extends BasePage {
         const id = params.observationId;
 
         let observation = new Observation({ id });
-        observation = await observation.load(this.datastore);
+        observation = await observation.load(this.#datastore);
 
         return { observation: observation.flatten() };
     }
