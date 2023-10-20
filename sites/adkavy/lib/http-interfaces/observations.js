@@ -2,7 +2,7 @@ import { KixxAssert } from '../dependencies.js';
 import { ValidationError } from '../errors.js';
 import ViewObservationPage from '../pages/view-observation-page.js';
 
-const { isPlainObject, assert } = KixxAssert;
+const { isPlainObject, isNonEmptyString, assert } = KixxAssert;
 
 
 export default class Observations {
@@ -80,6 +80,7 @@ export default class Observations {
 
     async viewObservation(req, res) {
         const id = req.pathnameParams.observationId;
+        assert(isNonEmptyString(id), 'observationId isNonEmptyString');
         const page = this.#viewObservationPage;
         const requestJSON = req.url.pathname.endsWith('.json');
 

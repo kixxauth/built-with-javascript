@@ -36,7 +36,7 @@ export default class HTMLPage {
 
     handleError(error, req, res) {
         this.#logger.error('caught unexpected error', { error });
-        return res.respondWithText(500, 'Unexpected server error.\n');
+        return res.respondWithPlainText(500, 'Unexpected server error.\n');
     }
 
     async renderPage(req, res, params) {
