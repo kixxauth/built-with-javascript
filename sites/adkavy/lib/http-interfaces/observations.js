@@ -91,6 +91,9 @@ export default class Observations {
             return res.respondWithJSON(json);
         }
 
+        // TODO: Handle HEAD requests.
+        // TODO: Set cache-control header.
+
         const html = await page.generateHTML({ id });
         return res.respondWithHTML(html);
     }

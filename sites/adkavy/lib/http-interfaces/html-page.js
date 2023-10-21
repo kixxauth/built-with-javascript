@@ -40,7 +40,8 @@ export default class HTMLPage {
     }
 
     async renderPage(req, res, params) {
-        const { pageId, templateId } = params;
+        const pageId = params.page;
+        const templateId = params.template;
 
         assert(isNonEmptyString(pageId), 'pageId isNonEmptyString');
         assert(isNonEmptyString(templateId), 'templateId isNonEmptyString');
@@ -53,6 +54,9 @@ export default class HTMLPage {
             const json = await page.generateJSON(req.pathnameParams);
             return res.respondWithJSON(json);
         }
+
+        // TODO: Handle HEAD request.
+        // TODO: Handle cache-control header.
 
         const html = await page.generateHTML(req.pathnameParams);
         return res.respondWithHTML(html);

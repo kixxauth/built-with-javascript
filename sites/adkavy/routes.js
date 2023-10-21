@@ -1,0 +1,204 @@
+export default [
+    {
+        pattern: '/assets/(.*)',
+        HTTPInterface: 'StaticFileServer',
+        methods: {
+            GET: {
+                method: 'serveFile',
+                params: {
+                    cacheControl: 'public, max-age=14400',
+                },
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/',
+        HTTPInterface: 'HTMLPage',
+        methods: {
+            GET: {
+                method: 'renderPage',
+                params: {
+                    page: 'home',
+                    template: 'home.html',
+                    cacheControl: 'public, max-age=129600',
+                },
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/create-observation',
+        HTTPInterface: 'HTMLPage',
+        methods: {
+            GET: {
+                method: 'renderPage',
+                params: {
+                    page: 'observations/create',
+                    template: 'observations/form.html',
+                    cacheControl: 'public, max-age=129600',
+                },
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/observations/',
+        HTTPInterface: 'Observations',
+        methods: {
+            GET: {
+                method: 'listObservations',
+            },
+            HEAD: {},
+            POST: {
+                method: 'createObservation',
+            },
+        },
+    },
+    {
+        pattern: '/observations/:observationId',
+        HTTPInterface: 'Observations',
+        methods: {
+            GET: {
+                method: 'viewObservation',
+            },
+            HEAD: {},
+            PUT: {
+                method: 'updateObservation',
+            },
+        },
+    },
+    {
+        pattern: '/observations/:observationId/photos/',
+        HTTPInterface: 'Observations',
+        methods: {
+            POST: {
+                method: 'addObservationPhoto',
+            },
+        },
+    },
+    {
+        pattern: '/incident-reports/',
+        HTTPInterface: 'IncidentReports',
+        methods: {
+            GET: {
+                method: 'listIncidentReports',
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/incident-reports/:reportId',
+        HTTPInterface: 'IncidentReports',
+        methods: {
+            GET: {
+                method: 'viewIncidentReport',
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/events/',
+        HTTPInterface: 'Events',
+        methods: {
+            GET: {
+                method: 'listEvents',
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/events/:eventId',
+        HTTPInterface: 'Events',
+        methods: {
+            GET: {
+                method: 'viewEvent',
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/weather',
+        HTTPInterface: 'HTMLPage',
+        methods: {
+            GET: {
+                method: 'renderPage',
+                params: {
+                    page: 'weather',
+                    template: 'weather.html',
+                    cacheControl: 'public, max-age=129600',
+                },
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/education',
+        HTTPInterface: 'HTMLPage',
+        methods: {
+            GET: {
+                method: 'renderPage',
+                params: {
+                    page: 'education',
+                    template: 'education.html',
+                    cacheControl: 'public, max-age=129600',
+                },
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/making-observations',
+        HTTPInterface: 'HTMLPage',
+        methods: {
+            GET: {
+                method: 'renderPage',
+                params: {
+                    page: 'education',
+                    template: 'education.html',
+                    cacheControl: 'public, max-age=129600',
+                },
+            },
+            HEAD: {},
+        },
+    },
+    {
+        pattern: '/donate',
+        HTTPInterface: 'HTMLPage',
+        methods: {
+            GET: {
+                method: 'renderPage',
+                params: {
+                    page: 'donate',
+                    template: 'donate.html',
+                    cacheControl: 'public, max-age=129600',
+                },
+            },
+            HEAD: {},
+        },
+    },
+    // Post images to the media server database.
+    {
+        pattern: '/media/',
+        HTTPInterface: 'Media',
+        methods: {
+            POST: {
+                method: 'processMedia',
+            },
+        },
+    },
+    // Static root files. This should always go last in the lookup order.
+    {
+        pattern: '/:basename.(png|ico|svg|xml|webmanifest)',
+        HTTPInterface: 'StaticFileServer',
+        methods: {
+            GET: {
+                method: 'serveFile',
+                params: {
+                    cacheControl: 'public, max-age=14400',
+                },
+            },
+            HEAD: {},
+        },
+    },
+];
