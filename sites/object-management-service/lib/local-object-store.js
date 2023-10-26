@@ -18,6 +18,9 @@ export default class LocalObjectStore {
         this.#directory = config.localObjectStore.getDirectory();
     }
 
+    /**
+     * @public
+     */
     write(obj, sourceStream) {
         return new Promise((resolve, reject) => {
             const { scopeId } = obj;
@@ -26,7 +29,7 @@ export default class LocalObjectStore {
 
             this.#ensureDirectoryFor(filepath);
 
-            const destStream = this.private_createFileWriteStream(filepath);
+            const destStream = this.createFileWriteStream(filepath);
             const hasher = crypto.createHash('md5');
             let md5Hash;
 
@@ -67,39 +70,57 @@ export default class LocalObjectStore {
         });
     }
 
+    /**
+     * @public
+     */
     getObjectReadStream(obj) {
         const { id, scopeId } = obj;
         assert(isNonEmptyString(id));
         assert(isNonEmptyString(scopeId));
         const filepath = path.join(this.#directory, scopeId, id);
-        return this.private_createFileReadStream(filepath);
+        return this.createFileReadStream(filepath);
     }
 
+    /**
+     * @public
+     */
     removeStoredObject(obj) {
         const { filepath } = obj;
-        return this.private_rmfile(filepath);
+        return this.rmfile(filepath);
     }
 
-    // Private - Use public notation for testing.
-    private_createFileWriteStream(filepath) {
+    /**
+     * @private
+     */
+    createFileWriteStream(filepath) {
         return fs.createWriteStream(filepath);
     }
 
-    // Private - Use public notation for testing.
-    private_createFileReadStream(filepath) {
+    /**
+     * @private
+     */
+    createFileReadStream(filepath) {
         return fs.createReadStream(filepath);
     }
 
-    // Private - Use public notation for testing.
-    private_rmfile(filepath) {
+    /**
+     * @private
+     */
+    rmfile(filepath) {
         return fsp.rm(filepath);
     }
 
+    /**
+     * @private
+     */
     #ensureDirectoryFor(filepath) {
         const dirpath = path.dirname(filepath);
         fs.mkdirSync(dirpath, { recursive: true });
     }
 
+    /**
+     * @private
+     */
     #generateObjectId() {
         return crypto.randomUUID();
     }

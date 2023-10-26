@@ -25,5 +25,11 @@ environment = "development"
 accessKeyId = ""
 secretAccessKey = ""
 
+[mediaConvert]
+role = ""
+endpoint = ""
+accessKeyId = ""
+secretAccessKey = ""
+
 [localObjectStore]
 directory = ""

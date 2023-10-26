@@ -33,7 +33,6 @@ function main() {
         id = json.data.id;
         md5Hash = json.data.md5Hash;
 
-        console.log(json);
         assertEqual('remote-object', json.data.type);
         assert(isNonEmptyString(id));
         assert(isNonEmptyString(md5Hash));
@@ -57,7 +56,6 @@ function main() {
             console.log('Uploading the test object for the second time.');
             // eslint-disable-next-line no-shadow
             uploadObject((req, utf8, json) => {
-                console.log(json);
                 assertEqual('remote-object', json.data.type);
                 assertEqual(id, json.data.id);
                 assertEqual(SCOPE_ID, json.data.scopeId);

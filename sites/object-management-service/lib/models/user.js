@@ -27,10 +27,16 @@ export default class User {
         });
     }
 
+    /**
+     * @public
+     */
     isAdminUser() {
         return this.groups.includes('admin');
     }
 
+    /**
+     * @public
+     */
     setScope(scope) {
         // Clone this user first.
         const user = new User(this);
@@ -43,6 +49,9 @@ export default class User {
         });
     }
 
+    /**
+     * @public
+     */
     toJSON() {
         // Only serialize a subset of properties.
         return {

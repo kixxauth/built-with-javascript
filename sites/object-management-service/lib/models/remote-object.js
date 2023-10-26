@@ -64,10 +64,16 @@ export default class RemoteObject {
         });
     }
 
+    /**
+     * @public
+     */
     getEtag() {
         return this.md5Hash;
     }
 
+    /**
+     * @public
+     */
     updateFromS3Head(result) {
         const id = result.Metadata.id;
         const version = result.VersionId;
@@ -85,11 +91,17 @@ export default class RemoteObject {
         return new RemoteObject(spec);
     }
 
+    /**
+     * @public
+     */
     updateFromS3Put(result) {
         const version = result.VersionId;
         return new RemoteObject(Object.assign({}, this, { version }));
     }
 
+    /**
+     * @public
+     */
     incorporateLocalObject(localObject) {
         const spec = Object.assign({}, this);
 
@@ -100,6 +112,9 @@ export default class RemoteObject {
         return new RemoteObject(spec);
     }
 
+    /**
+     * @public
+     */
     createReadStream() {
         assert(
             isNonEmptyString(this.filepath),
@@ -109,6 +124,9 @@ export default class RemoteObject {
         return fs.createReadStream(this.filepath);
     }
 
+    /**
+     * @public
+     */
     setStorageClass(storageClass) {
         const spec = Object.assign({}, this, {
             storageClass: storageClass || ALLOWED_STORAGE_CLASSES[0],
@@ -116,6 +134,9 @@ export default class RemoteObject {
         return new RemoteObject(spec);
     }
 
+    /**
+     * @public
+     */
     validateForFetchHead() {
         const vError = new ValidationError('Invalid RemoteObject');
         this.validateKey(vError);
@@ -125,18 +146,24 @@ export default class RemoteObject {
         }
     }
 
+    /**
+     * @public
+     */
     validateForPut() {
         const vError = new ValidationError('Invalid RemoteObject');
-        this.validateId(vError);
-        this.validateKey(vError);
-        this.validateStorageClass(vError);
+        this.#validateId(vError);
+        this.#validateKey(vError);
+        this.#validateStorageClass(vError);
 
         if (vError.length > 0) {
             throw vError;
         }
     }
 
-    validateId(vError) {
+    /**
+     * @private
+     */
+    #validateId(vError) {
         vError = vError || new ValidationError('Invalid RemoteObject.id');
         if (!isNonEmptyString(this.id)) {
             vError.push('The RemoteObject id must be a non empty string', {
@@ -146,7 +173,10 @@ export default class RemoteObject {
         return vError;
     }
 
-    validateKey(vError) {
+    /**
+     * @private
+     */
+    #validateKey(vError) {
         vError = vError || new ValidationError('Invalid RemoteObject.key');
 
         if (!isNonEmptyString(this.key)) {
@@ -171,7 +201,10 @@ export default class RemoteObject {
         return vError;
     }
 
-    validateStorageClass(vError) {
+    /**
+     * @private
+     */
+    #validateStorageClass(vError) {
         vError = vError || new ValidationError('Invalid RemoteObject.storageClass');
 
         if (!ALLOWED_STORAGE_CLASSES.includes(this.storageClass)) {
@@ -182,6 +215,9 @@ export default class RemoteObject {
         return vError;
     }
 
+    /**
+     * @public
+     */
     toJSON() {
         return {
             type: this.type,

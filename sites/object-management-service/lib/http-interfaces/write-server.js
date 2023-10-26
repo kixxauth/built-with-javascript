@@ -17,14 +17,27 @@ export default class WriteServer {
     #dataStore = null;
     #objectStore = null;
     #localObjectStore = null;
+    #mediaConvert = null;
 
-    constructor({ logger, dataStore, objectStore, localObjectStore }) {
+    constructor(options) {
+        const {
+            logger,
+            dataStore,
+            objectStore,
+            localObjectStore,
+            mediaConvert,
+        } = options;
+
         this.#logger = logger.createChild({ name: 'WriteServer' });
         this.#dataStore = dataStore;
         this.#objectStore = objectStore;
         this.#localObjectStore = localObjectStore;
+        this.#mediaConvert = mediaConvert;
     }
 
+    /**
+     * @public
+     */
     handleError(error, request, response) {
         const jsonResponse = { errors: [] };
 
@@ -89,17 +102,9 @@ export default class WriteServer {
         return response.respondWithJSON(status, jsonResponse);
     }
 
-    authenticateScopeUser(request) {
-        const session = new HTTPRequestSession({
-            dataStore: this.#dataStore,
-            request,
-        });
-
-        // Authenticate and authorize the user.
-        const scopeId = request.params.scope;
-        return session.getScopedUser(scopeId);
-    }
-
+    /**
+     * @public
+     */
     async putObject(request, response) {
         const user = await this.authenticateScopeUser(request);
         const { scope } = user;
@@ -108,6 +113,8 @@ export default class WriteServer {
         const storageClass = request.headers.get('x-kc-storage-class');
 
         assert(Array.isArray(key), 'Request.params.key expected to be an Array');
+
+        // TODO: Refactor this method into a Job class in lib/jobs/
 
         let remoteObject = new RemoteObject({
             scopeId: scope.id,
@@ -139,6 +146,7 @@ export default class WriteServer {
             .setStorageClass(storageClass);
 
         this.#logger.log('putObject; no etag match; uploading', {
+            scopeId: remoteObject.scopeId,
             id: remoteObject.id,
             etag: remoteObject.getEtag(),
             key: remoteObject.key,
@@ -148,17 +156,15 @@ export default class WriteServer {
         this.run_backgroundJob(remoteObject).then((completedRemoteObject) => {
             // TODO: Remove local object.
             this.#logger.log('putObject; background job complete', {
+                scopeId: completedRemoteObject.scopeId,
                 id: completedRemoteObject.id,
-                etag: completedRemoteObject.getEtag(),
                 key: completedRemoteObject.key,
-                storageClass: completedRemoteObject.storageClass,
             });
         }).catch((error) => {
             this.#logger.error('putObject; background job error', {
+                scopeId: remoteObject.scopeId,
                 id: remoteObject.id,
-                etag: remoteObject.getEtag(),
                 key: remoteObject.key,
-                storageClass: remoteObject.storageClass,
                 error,
             });
         });
@@ -166,15 +172,45 @@ export default class WriteServer {
         return response.respondWithJSON(201, { data: remoteObject });
     }
 
-    // Private - Using public notation to enable testing.
+    /**
+     * @private
+     */
+    authenticateScopeUser(request) {
+        const session = new HTTPRequestSession({
+            dataStore: this.#dataStore,
+            request,
+        });
+
+        // Authenticate and authorize the user.
+        const scopeId = request.params.scope;
+        return session.getScopedUser(scopeId);
+    }
+
+    /**
+     * @private
+     */
     async run_backgroundJob(remoteObject) {
         remoteObject.validateForPut();
 
         remoteObject = await this.#objectStore.put(remoteObject);
 
-        console.log('Ready for video transcode:', remoteObject);
+        // TODO: Check content type and video processing instructions before
+        //       making a video transcode request.
+        this.#logger.log('MediaConvert Job; creating', {
+            scopeId: remoteObject.scopeId,
+            id: remoteObject.id,
+            key: remoteObject.key,
+        });
 
-        // TODO: Handle video transcoding request.
+        const job = await this.#mediaConvert.createMediaConvertJob(remoteObject);
+
+        this.#logger.log('MediaConvert Job; created', {
+            scopeId: remoteObject.scopeId,
+            id: remoteObject.id,
+            key: remoteObject.key,
+            jobId: job.id,
+        });
+
         return remoteObject;
     }
 }

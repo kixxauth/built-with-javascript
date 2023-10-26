@@ -29,6 +29,7 @@ export default class Scope {
         });
     }
 
+    // TODO: Add this to proper documentation:
     /*
     #### Design Decisions for generateAuthenticationToken()
     ```js
@@ -54,13 +55,17 @@ export default class Scope {
     ]
 
     // Now the remote service can continue using the first access token until we
-    // can update it to tuse the new access token
+    // can update it to use the new access token
     ```
 
     The *problem* is that we no longer have a way to revoke an access token without
     manually updating the database file. But, this is ok for our minimum viable product.
     We can be more sophisticated later.
     */
+
+    /**
+     * @public
+     */
     generateAuthenticationToken() {
         // Make a copy of the existing tokens.
         const accessTokens = this.accessTokens.slice();
@@ -73,15 +78,22 @@ export default class Scope {
         return new Scope(spec);
     }
 
+    /**
+     * @public
+     */
     isUserAuthorized(user) {
         return this.accessTokens.includes(user.id);
     }
 
-    toPlainObject() {
+    /**
+     * @public
+     */
+    toJSON() {
+        // Only serialize a subset of properties.
         return {
             type: this.type,
             id: this.id,
-            accessTokens: this.accessTokens.slice(),
+            accessTokens: this.accessTokens,
         };
     }
 }

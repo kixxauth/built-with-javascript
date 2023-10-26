@@ -27,6 +27,9 @@ export default class LocalObject {
         });
     }
 
+    /**
+     * @public
+     */
     getEtag() {
         return this.md5Hash;
     }
