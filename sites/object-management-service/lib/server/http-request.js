@@ -35,7 +35,7 @@ export default class HTTPRequest {
         return this.#nodeRequest.method;
     }
 
-    get readStream() {
+    getReadStream() {
         return this.#nodeRequest;
     }
 
