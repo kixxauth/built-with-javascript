@@ -49,8 +49,12 @@ export default class WriteObjectJob {
         ]);
 
         if (nextRemoteObject && nextRemoteObject.getEtag() === nextLocalObject.getEtag()) {
-            this.#logger.log('putObject; etag match; skip upload');
-            // TODO: Remove the local object.
+            this.#logger.log('etag match; skip upload');
+
+            this.#localObjectStore.removeStoredObject(nextLocalObject).catch((error) => {
+                this.#logger.error('error while removing local cached object', { error });
+            });
+
             return [ 200, nextRemoteObject ];
         }
 
@@ -66,7 +70,7 @@ export default class WriteObjectJob {
         // Throws ValidationError
         remoteObject.validateForPut();
 
-        this.#logger.log('putObject; no etag match; will process object', {
+        this.#logger.log('no etag match; will process object', {
             scopeId: remoteObject.scopeId,
             id: remoteObject.id,
             etag: remoteObject.getEtag(),
@@ -74,7 +78,11 @@ export default class WriteObjectJob {
             storageClass: remoteObject.storageClass,
         });
 
-        this.processObject(remoteObject);
+        this.processObject(remoteObject).then(() => {
+            return this.#localObjectStore.removeStoredObject(nextLocalObject);
+        }).catch((error) => {
+            this.#logger.error('error while processing object', { error });
+        });
 
         return [ 201, remoteObject ];
     }
@@ -84,14 +92,13 @@ export default class WriteObjectJob {
      */
     processObject(remoteObject) {
         this.runBackgroundJob(remoteObject).then((completedRemoteObject) => {
-            // TODO: Remove local object.
-            this.#logger.log('putObject; background job complete', {
+            this.#logger.log('background job complete', {
                 scopeId: completedRemoteObject.scopeId,
                 id: completedRemoteObject.id,
                 key: completedRemoteObject.key,
             });
         }).catch((error) => {
-            this.#logger.error('putObject; background job error', {
+            this.#logger.error('background job error', {
                 scopeId: remoteObject.scopeId,
                 id: remoteObject.id,
                 key: remoteObject.key,
