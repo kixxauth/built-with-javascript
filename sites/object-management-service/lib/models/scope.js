@@ -29,40 +29,6 @@ export default class Scope {
         });
     }
 
-    // TODO: Add this to proper documentation:
-    /*
-    #### Design Decisions for generateAuthenticationToken()
-    ```js
-    // Create a single access token for the scoped user.
-    scope.accessToken = "first access token"
-
-    // Then, revoke that access token and create a new one simulaniously:
-    scope.accessToken = "new access token"
-
-    // The remote service which was using the first token will no longer be able
-    // to access the object management service until we can update the token.
-    // This would lead to unwanted down time in our remote service.
-
-    // Instead, we use multiple access tokens:
-    scope.accessTokens = [
-        "first access token"
-    ]
-
-    // Then add the next one:
-    scope.accessTokens = [
-        "first access token",
-        "new access token"
-    ]
-
-    // Now the remote service can continue using the first access token until we
-    // can update it to use the new access token
-    ```
-
-    The *problem* is that we no longer have a way to revoke an access token without
-    manually updating the database file. But, this is ok for our minimum viable product.
-    We can be more sophisticated later.
-    */
-
     /**
      * @public
      */

@@ -122,6 +122,7 @@ export default class WriteServer {
 
         assert(Array.isArray(request.params.key), 'Request.params.key expected to be an Array');
 
+        // TODO: Validate key URL pathname parts to ensure safety and naming rules.
         const key = request.params.key.join('/');
 
         const writeObjectJob = new WriteObjectJob({
@@ -141,6 +142,8 @@ export default class WriteServer {
             readStream: request.getReadStream(),
         });
 
+        // TODO: Include the origin server URLs to the object in the response.
+
         return response.respondWithJSON(status, { data: remoteObject });
     }
 
@@ -154,6 +157,7 @@ export default class WriteServer {
         });
 
         // Authenticate and authorize the user.
+        // TODO: Validate scopeId pathname param to ensure safety and naming rules.
         const scopeId = request.params.scope;
         return session.getScopedUser(scopeId);
     }
