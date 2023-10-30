@@ -74,6 +74,20 @@ export default class RemoteObject {
     /**
      * @public
      */
+    isVideoSource() {
+        switch (this.contentType.toLowerCase()) {
+            case 'video/mp4':
+            case 'video/quicktime':
+            case 'video/3gpp':
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @public
+     */
     updateFromS3Head(result) {
         const id = result.Metadata.id;
         const version = result.VersionId;
@@ -139,7 +153,7 @@ export default class RemoteObject {
      */
     validateForFetchHead() {
         const vError = new ValidationError('Invalid RemoteObject');
-        this.validateKey(vError);
+        this.#validateKey(vError);
 
         if (vError.length > 0) {
             throw vError;

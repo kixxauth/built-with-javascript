@@ -1,9 +1,12 @@
+import ObjectStore from '../object-store.js';
 import { OperationalError } from '../errors.js';
 import { KixxAssert } from '../../dependencies.js';
 import MediaConvertClient from './media-convert-client.js';
 
 
 const { assert, assertFalsy, isNonEmptyString } = KixxAssert;
+
+const S3_STORAGE_CLASS_MAPPING = ObjectStore.STORAGE_CLASS_MAPPING;
 
 
 export default class MediaConvert {
@@ -42,8 +45,8 @@ export default class MediaConvert {
     /**
      * @public
      */
-    async createMediaConvertJob(obj) {
-        const settings = this.createMediaConvertJobSettings(obj);
+    async createMediaConvertJob(obj, params) {
+        const settings = this.createMediaConvertJobSettings(obj, params);
 
         this.#logger.log('create job', {
             scopeId: obj.scopeId,
@@ -77,13 +80,14 @@ export default class MediaConvert {
     /**
      * @private
      */
-    createMediaConvertJobSettings(obj) {
+    createMediaConvertJobSettings(obj, params) {
         assert(isNonEmptyString(obj.scopeId));
         assert(isNonEmptyString(obj.key));
         assertFalsy(obj.key.startsWith('/'));
         assertFalsy(obj.key.endsWith('/'));
 
         const s3BaseUri = `${ this.#objectStoreS3Bucket }/${ this.#objectStoreEnvironment }/${ obj.scopeId }`;
+        const StorageClass = S3_STORAGE_CLASS_MAPPING[obj.storageClass];
 
         return {
             Role: this.#awsMediaConvertRole,
@@ -94,8 +98,7 @@ export default class MediaConvert {
                 Inputs: [
                     {
                         TimecodeSource: 'ZEROBASED',
-                        // TODO: How should we handle mobile camera rotation?
-                        VideoSelector: {/* Rotate: 'AUTO' */},
+                        VideoSelector: { Rotate: 'AUTO' },
                         AudioSelectors: {
                             'Audio Selector 1': { DefaultSelection: 'DEFAULT' },
                         },
@@ -111,17 +114,14 @@ export default class MediaConvert {
                             FileGroupSettings: {
                                 Destination: `s3://${ s3BaseUri }/${ obj.id }/video`,
                                 DestinationSettings: {
-                                    S3Settings: {
-                                        // TODO: Map the S3 StorageClass from the RemoteObject storage class.
-                                        StorageClass: 'STANDARD_IA',
-                                    },
+                                    S3Settings: { StorageClass },
                                 },
                             },
                         },
                         Outputs: [
                             {
                                 VideoDescription: {
-                                    Width: 852, // For 480p resolution.
+                                    Height: params.video.height,
                                     CodecSettings: {
                                         Codec: 'H_264',
                                         H264Settings: {
@@ -131,7 +131,7 @@ export default class MediaConvert {
                                             SceneChangeDetect: 'TRANSITION_DETECTION',
                                             MaxBitrate: 1000000,
                                             QvbrSettings: {
-                                                QvbrQualityLevel: 7,
+                                                QvbrQualityLevel: params.video.qualityLevel,
                                             },
                                         },
                                     },

@@ -127,6 +127,7 @@ export default class WriteServer {
             key,
             contentType,
             storageClass,
+            videoProcessingParams: this.#getVideoProcessingParams(request),
             readStream: request.getReadStream(),
         });
 
@@ -145,5 +146,26 @@ export default class WriteServer {
         // Authenticate and authorize the user.
         const scopeId = request.params.scope;
         return session.getScopedUser(scopeId);
+    }
+
+    /**
+     * @private
+     */
+    #getVideoProcessingParams(request) {
+        const str = request.headers.get('x-kc-video-processing');
+
+        if (str) {
+            try {
+                const buff = Buffer.from(str, 'base64');
+                const utf8 = buff.toString('utf8');
+                return JSON.parse(utf8);
+            } catch (cause) {
+                const error = new ValidationError('Invalid x-kc-video-processing header', { cause });
+                error.push('Invalid x-kc-video-processing header', 'x-kc-video-processing');
+                throw error;
+            }
+        }
+
+        return null;
     }
 }

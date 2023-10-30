@@ -21,7 +21,6 @@ const SCOPE_ID = 'testing-123';
 const AUTH_TOKEN = '37e70d72-39c9-4db4-a61e-c4af20d093cb';
 const WAIT = 90; // Seconds
 
-
 function main() {
     let id;
     let md5Hash;
@@ -82,13 +81,23 @@ function uploadObject(callback) {
     const sourceStream = fs.createReadStream(filepath);
 
     const url = new URL(`/objects/${ SCOPE_ID }/foo/video.mov`, 'http://localhost:3003');
+    const videoProcessingParams = JSON.stringify({
+        type: 'MP4_H264_AAC',
+        video: {
+            height: 360,
+            qualityLevel: 5,
+        },
+        audio: {},
+    });
 
+    // TODO: Try infrequent acess for video processing.
     const reqOptions = {
         method: 'PUT',
         headers: {
             authorization: `Bearer ${ AUTH_TOKEN }`,
             'content-type': 'video/quicktime',
             'content-length': stats.size,
+            'x-kc-video-processing': Buffer.from(videoProcessingParams, 'utf8').toString('base64'),
         },
     };
 

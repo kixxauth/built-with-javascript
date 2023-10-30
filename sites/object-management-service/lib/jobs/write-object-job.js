@@ -1,5 +1,10 @@
+import { KixxAssert } from '../../dependencies.js';
+import { ValidationError } from '../errors.js';
 import LocalObject from '../models/local-object.js';
 import RemoteObject from '../models/remote-object.js';
+
+const { isNumberNotNaN } = KixxAssert;
+
 
 export default class WriteObjectJob {
 
@@ -30,7 +35,15 @@ export default class WriteObjectJob {
     /**
      * @public
      */
-    async putObject({ key, contentType, storageClass, readStream }) {
+    async putObject(args) {
+        const {
+            key,
+            contentType,
+            storageClass,
+            videoProcessingParams,
+            readStream,
+        } = args;
+
         let remoteObject = new RemoteObject({
             scopeId: this.scope.id,
             key,
@@ -39,6 +52,7 @@ export default class WriteObjectJob {
 
         // Throws ValidationError
         remoteObject.validateForFetchHead();
+        this.#validateVideoProcessingParams(videoProcessingParams);
 
         const localObject = new LocalObject({ scopeId: this.scope.id });
 
@@ -78,7 +92,7 @@ export default class WriteObjectJob {
             storageClass: remoteObject.storageClass,
         });
 
-        this.processObject(remoteObject).then(() => {
+        this.processObject(remoteObject, videoProcessingParams).then(() => {
             return this.#localObjectStore.removeStoredObject(nextLocalObject);
         }).catch((error) => {
             this.#logger.error('error while processing object', { error });
@@ -90,38 +104,40 @@ export default class WriteObjectJob {
     /**
      * @private
      */
-    processObject(remoteObject) {
-        this.runBackgroundJob(remoteObject).then((completedRemoteObject) => {
-            this.#logger.log('background job complete', {
-                scopeId: completedRemoteObject.scopeId,
-                id: completedRemoteObject.id,
-                key: completedRemoteObject.key,
+    async processObject(obj, videoProcessingParams) {
+        const remoteObject = await this.#objectStore.put(obj);
+
+        if (remoteObject.isVideoSource() && videoProcessingParams) {
+            // Only create a media processing job if the object represents a video source AND
+            // video processing parameters have been passed.
+            this.createVideoProcessingJob(remoteObject, videoProcessingParams).then((completedRemoteObject) => {
+                this.#logger.log('background job complete', {
+                    scopeId: completedRemoteObject.scopeId,
+                    id: completedRemoteObject.id,
+                    key: completedRemoteObject.key,
+                });
+            }).catch((error) => {
+                this.#logger.error('background job error', {
+                    scopeId: remoteObject.scopeId,
+                    id: remoteObject.id,
+                    key: remoteObject.key,
+                    error,
+                });
             });
-        }).catch((error) => {
-            this.#logger.error('background job error', {
-                scopeId: remoteObject.scopeId,
-                id: remoteObject.id,
-                key: remoteObject.key,
-                error,
-            });
-        });
+        }
     }
 
     /**
      * @private
      */
-    async runBackgroundJob(remoteObject) {
-        remoteObject = await this.#objectStore.put(remoteObject);
-
-        // TODO: Check content type and video processing instructions before
-        //       making a video transcode request.
+    async createVideoProcessingJob(remoteObject, videoProcessingParams) {
         this.#logger.log('MediaConvert Job; creating', {
             scopeId: remoteObject.scopeId,
             id: remoteObject.id,
             key: remoteObject.key,
         });
 
-        const job = await this.#mediaConvert.createMediaConvertJob(remoteObject);
+        const job = await this.#mediaConvert.createMediaConvertJob(remoteObject, videoProcessingParams);
 
         this.#logger.log('MediaConvert Job; created', {
             scopeId: remoteObject.scopeId,
@@ -131,5 +147,51 @@ export default class WriteObjectJob {
         });
 
         return remoteObject;
+    }
+
+    /**
+     * @private
+     */
+    #validateVideoProcessingParams(params) {
+        // Video processing params can be falsy.
+        if (params) {
+            // But if the params object is truthy, then validate the parameters.
+            const error = new ValidationError('Video processing parameters validation error');
+
+            // For now, we only accept 1 video processing type:
+            //   (an MP4 file with H264 video and AAC audio).
+            if (params.type !== 'MP4_H264_AAC') {
+                error.push('Video processing type must be "MP4_H264_AAC"', '.type');
+            }
+
+            if (params.video) {
+                if (params.video.height) {
+                    if (!isNumberNotNaN(params.video.height) || params.video.height < 360 || params.video.height > 2160) {
+                        error.push('Video processing video.height must be a number from 360 to 2160', '.video.height');
+                    }
+                } else {
+                    params.video.height = 480;
+                }
+                if (params.video.qualityLevel) {
+                    if (!isNumberNotNaN(params.video.qualityLevel) || params.video.qualityLevel < 1 || params.video.qualityLevel > 10) {
+                        error.push('Video processing video.qualityLevel must be a number from 1 to 10', '.video.qualityLevel');
+                    }
+                } else {
+                    params.video.qualityLevel = 7;
+                }
+            } else {
+                params.video = {
+                    height: 480,
+                    qualityLevel: 7,
+                };
+            }
+
+            // Throw the ValidationError if we caught any video processing param validation problems.
+            if (error.length > 0) {
+                throw error;
+            }
+        }
+
+        return params;
     }
 }

@@ -31,6 +31,10 @@ export default class ObjectStore {
     #s3BucketName = null;
     #environment = null;
 
+    static get STORAGE_CLASS_MAPPING() {
+        return Object.freeze(S3_STORAGE_CLASS_MAPPING);
+    }
+
     constructor({ logger, config }) {
         const region = config.objectStore.getRegion();
         const bucketName = config.objectStore.getBucketName();
