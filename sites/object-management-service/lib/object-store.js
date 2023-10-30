@@ -31,6 +31,10 @@ export default class ObjectStore {
     #s3BucketName = null;
     #environment = null;
 
+    static get STORAGE_CLASS_MAPPING() {
+        return Object.freeze(S3_STORAGE_CLASS_MAPPING);
+    }
+
     constructor({ logger, config }) {
         const region = config.objectStore.getRegion();
         const bucketName = config.objectStore.getBucketName();
@@ -62,6 +66,9 @@ export default class ObjectStore {
         this.#s3BucketName = bucketName;
     }
 
+    /**
+     * @public
+     */
     async put(obj) {
         const bucket = this.#s3BucketName;
         const key = this.#generateRemoteObjectKey(obj);
@@ -83,7 +90,7 @@ export default class ObjectStore {
             'RemoteObject.storageClass must map to S3 storage class'
         );
 
-        const result = await this.private_awsPutObjectCommand({
+        const result = await this.awsPutObjectCommand({
             Bucket: bucket,
             Key: key,
             Body: obj.createReadStream(),
@@ -97,6 +104,9 @@ export default class ObjectStore {
         return obj.updateFromS3Put(result);
     }
 
+    /**
+     * @public
+     */
     async fetchHead(obj) {
         const bucket = this.#s3BucketName;
         const key = this.#generateRemoteObjectKey(obj);
@@ -105,7 +115,7 @@ export default class ObjectStore {
 
         let result;
         try {
-            result = await this.private_awsHeadObjectCommand({
+            result = await this.awsHeadObjectCommand({
                 Bucket: bucket,
                 Key: key,
             });
@@ -121,18 +131,25 @@ export default class ObjectStore {
         return obj.updateFromS3Head(result);
     }
 
-    // Private - Use public notation for testing.
-    private_awsPutObjectCommand(options) {
+    /**
+     * @private
+     */
+    awsPutObjectCommand(options) {
         const command = new PutObjectCommand(options);
         return this.#s3Client.send(command);
     }
 
-    // Private - Use public notation for testing.
-    private_awsHeadObjectCommand(options) {
+    /**
+     * @private
+     */
+    awsHeadObjectCommand(options) {
         const command = new HeadObjectCommand(options);
         return this.#s3Client.send(command);
     }
 
+    /**
+     * @private
+     */
     #generateRemoteObjectKey(obj) {
         const { key, scopeId } = obj;
 

@@ -1,0 +1,88 @@
+{
+  "Queue": "arn:aws:mediaconvert:us-east-2:159720545559:queues/Default",
+  "Role": "arn:aws:iam::159720545559:role/service-role/MediaConvert_POC_Role",
+  "Settings": {
+    "TimecodeConfig": {
+      "Source": "ZEROBASED"
+    },
+    "OutputGroups": [
+      {
+        "CustomName": "foo-bar-baz",
+        "Name": "File Group",
+        "Outputs": [
+          {
+            "ContainerSettings": {
+              "Container": "MP4",
+              "Mp4Settings": {}
+            },
+            "VideoDescription": {
+              "Width": 852,
+              "CodecSettings": {
+                "Codec": "H_264",
+                "H264Settings": {
+                  "MaxBitrate": 1000000,
+                  "RateControlMode": "QVBR",
+                  "QvbrSettings": {
+                    "QvbrQualityLevel": 7
+                  },
+                  "SceneChangeDetect": "TRANSITION_DETECTION",
+                  "QualityTuningLevel": "SINGLE_PASS"
+                }
+              }
+            },
+            "AudioDescriptions": [
+              {
+                "AudioSourceName": "Audio Selector 1",
+                "CodecSettings": {
+                  "Codec": "AAC",
+                  "AacSettings": {
+                    "Bitrate": 96000,
+                    "CodingMode": "CODING_MODE_2_0",
+                    "SampleRate": 48000
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "OutputGroupSettings": {
+          "Type": "FILE_GROUP_SETTINGS",
+          "FileGroupSettings": {
+            "Destination": "s3://object-management-service-objects/development/testing-123/foo-bar-baz/",
+            "DestinationSettings": {
+              "S3Settings": {
+                "StorageClass": "STANDARD_IA"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "Inputs": [
+      {
+        "AudioSelectors": {
+          "Audio Selector 1": {
+            "DefaultSelection": "DEFAULT"
+          }
+        },
+        "AudioSelectorGroups": {
+          "Audio Selector Group 1": {
+            "AudioSelectorNames": [
+              "Audio Selector 1"
+            ]
+          }
+        },
+        "VideoSelector": {
+          "Rotate": "AUTO"
+        },
+        "TimecodeSource": "ZEROBASED",
+        "FileInput": "s3://object-management-service-objects/development/testing-123/foo/video.mov"
+      }
+    ]
+  },
+  "AccelerationSettings": {
+    "Mode": "DISABLED"
+  },
+  "StatusUpdateInterval": "SECONDS_60",
+  "Priority": 0
+}

@@ -1,8 +1,8 @@
 /**
  * This script requires:
  * - The database to be seeded to allow authentication to the write server.
- * - A file in `./tmp/image.jpg` to be uploaded to S3.
- * - The testing-123/foo/video.jpg object must be removed from S3.
+ * - A file in `./tmp/video.mov` to be uploaded to S3.
+ * - The testing-123/video.mov object must be removed from S3.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -19,7 +19,6 @@ const {
 
 const SCOPE_ID = 'testing-123';
 const AUTH_TOKEN = '37e70d72-39c9-4db4-a61e-c4af20d093cb';
-const WAIT = 20; // Seconds
 
 function main() {
     let id;
@@ -27,8 +26,13 @@ function main() {
 
     // Upload the object the first time, before it exists in S3.
     // eslint-disable-next-line no-console
-    console.log('Uploading the test object for the first time.');
+    console.log('Uploading the test video.');
     uploadObject((req, utf8, json) => {
+        if (!json.data) {
+            // eslint-disable-next-line no-console
+            console.log('Response JSON => ', json);
+        }
+
         id = json.data.id;
         md5Hash = json.data.md5Hash;
 
@@ -36,58 +40,42 @@ function main() {
         assert(isNonEmptyString(id));
         assert(isNonEmptyString(md5Hash));
         assertEqual(SCOPE_ID, json.data.scopeId);
-        assertEqual('foo/image.jpg', json.data.key);
-        assertEqual('image/jpeg', json.data.contentType);
+        assertEqual('video.mov', json.data.key);
+        assertEqual('video/quicktime', json.data.contentType);
         assertEqual('STANDARD', json.data.storageClass);
         assertEmpty(json.data.filepath);
 
         /* eslint-disable no-console */
-        console.log('First upload test complete');
+        console.log('Upload complete');
         console.log('');
-        console.log('Waiting for', WAIT, 'seconds before next test to avoid race condition.');
+        console.log('Test Pass :D (But, watch the server logs to ensure the video processing job completes ;-)');
         /* eslint-enable no-console */
-
-        // Upload the object the second time, when it already exists in S3.
-        // Use the setTimeout to avoid a race condition where we try to upload the object and immediately
-        // upload it again before it has been saved to S3.
-        setTimeout(() => {
-            // eslint-disable-next-line no-console
-            console.log('Uploading the test object for the second time.');
-            // eslint-disable-next-line no-shadow
-            uploadObject((req, utf8, json) => {
-                assertEqual('remote-object', json.data.type);
-                assertEqual(id, json.data.id);
-                assertEqual(SCOPE_ID, json.data.scopeId);
-                assertEqual(md5Hash, json.data.md5Hash);
-                assertEqual('foo/image.jpg', json.data.key);
-                assertEqual('image/jpeg', json.data.contentType);
-                assert(isNonEmptyString(json.data.version));
-                assert(isNonEmptyString(json.data.lastModifiedDate));
-                assertEmpty(json.data.filepath);
-
-                /* eslint-disable no-console */
-                console.log('Second upload test complete');
-                console.log('');
-                console.log('Test Pass :D');
-                /* eslint-enable no-console */
-            });
-        }, WAIT * 1000);
     });
 }
 
 function uploadObject(callback) {
-    const filepath = path.resolve('./tmp/image.jpg');
+    const filepath = path.resolve('./tmp/video.mov');
     const stats = fs.statSync(filepath);
     const sourceStream = fs.createReadStream(filepath);
 
-    const url = new URL(`/objects/${ SCOPE_ID }/foo/image.jpg`, 'http://localhost:3003');
+    const url = new URL(`/objects/${ SCOPE_ID }/video.mov`, 'http://localhost:3003');
+    const videoProcessingParams = JSON.stringify({
+        type: 'MP4_H264_AAC',
+        video: {
+            height: 360,
+            qualityLevel: 7,
+        },
+        audio: {},
+    });
 
     const reqOptions = {
         method: 'PUT',
         headers: {
             authorization: `Bearer ${ AUTH_TOKEN }`,
-            'content-type': 'image/jpeg',
+            'content-type': 'video/quicktime',
             'content-length': stats.size,
+            'x-kc-video-processing': Buffer.from(videoProcessingParams, 'utf8').toString('base64'),
+            'x-kc-storage-class': 'STANDARD',
         },
     };
 

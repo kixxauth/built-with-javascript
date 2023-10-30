@@ -1,11 +1,11 @@
 import { KixxAssert } from '../../dependencies.js';
+import HTTPRequestSession from '../models/http-request-session.js';
+import WriteObjectJob from '../jobs/write-object-job.js';
 import {
     UnauthorizedError,
     ForbiddenError,
-    ValidationError } from '../errors.js';
-import HTTPRequestSession from '../models/http-request-session.js';
-import LocalObject from '../models/local-object.js';
-import RemoteObject from '../models/remote-object.js';
+    ValidationError,
+    UnprocessableError } from '../errors.js';
 
 
 const { assert } = KixxAssert;
@@ -17,17 +17,31 @@ export default class WriteServer {
     #dataStore = null;
     #objectStore = null;
     #localObjectStore = null;
+    #mediaConvert = null;
 
-    constructor({ logger, dataStore, objectStore, localObjectStore }) {
+    constructor(options) {
+        const {
+            logger,
+            dataStore,
+            objectStore,
+            localObjectStore,
+            mediaConvert,
+        } = options;
+
         this.#logger = logger.createChild({ name: 'WriteServer' });
         this.#dataStore = dataStore;
         this.#objectStore = objectStore;
         this.#localObjectStore = localObjectStore;
+        this.#mediaConvert = mediaConvert;
     }
 
+    /**
+     * @public
+     */
     handleError(error, request, response) {
         const jsonResponse = { errors: [] };
 
+        const { requestId } = request;
         let status = 500;
 
         switch (error.code) {
@@ -44,6 +58,15 @@ export default class WriteServer {
                 status = 403;
                 jsonResponse.errors.push({
                     status: 403,
+                    code: error.code,
+                    title: error.name,
+                    detail: error.message,
+                });
+                break;
+            case UnprocessableError.CODE:
+                status = 422;
+                jsonResponse.errors.push({
+                    status: 422,
                     code: error.code,
                     title: error.name,
                     detail: error.message,
@@ -76,7 +99,7 @@ export default class WriteServer {
                 }
                 break;
             default:
-                this.#logger.error('caught error', { error });
+                this.#logger.error('caught error', { requestId, error });
                 // Do not return the error.message for privacy and security reasons.
                 jsonResponse.errors.push({
                     status: 500,
@@ -89,6 +112,47 @@ export default class WriteServer {
         return response.respondWithJSON(status, jsonResponse);
     }
 
+    /**
+     * @public
+     */
+    async putObject(request, response) {
+        const user = await this.authenticateScopeUser(request);
+        const { requestId } = request;
+        const { scope } = user;
+        const contentType = request.headers.get('content-type');
+        const storageClass = request.headers.get('x-kc-storage-class');
+
+        assert(Array.isArray(request.params.key), 'Request.params.key expected to be an Array');
+
+        // TODO: Validate key URL pathname parts to ensure safety and naming rules.
+        const key = request.params.key.join('/');
+
+        const writeObjectJob = new WriteObjectJob({
+            logger: this.#logger,
+            localObjectStore: this.#localObjectStore,
+            objectStore: this.#objectStore,
+            mediaConvert: this.#mediaConvert,
+            requestId,
+            scope,
+        });
+
+        // Throws ValidationError, UnprocessableError
+        const [ status, remoteObject ] = await writeObjectJob.putObject({
+            key,
+            contentType,
+            storageClass,
+            videoProcessingParams: this.#getVideoProcessingParams(request),
+            readStream: request.getReadStream(),
+        });
+
+        // TODO: Include the origin server URLs to the object in the response.
+
+        return response.respondWithJSON(status, { data: remoteObject });
+    }
+
+    /**
+     * @private
+     */
     authenticateScopeUser(request) {
         const session = new HTTPRequestSession({
             dataStore: this.#dataStore,
@@ -96,85 +160,29 @@ export default class WriteServer {
         });
 
         // Authenticate and authorize the user.
+        // TODO: Validate scopeId pathname param to ensure safety and naming rules.
         const scopeId = request.params.scope;
         return session.getScopedUser(scopeId);
     }
 
-    async putObject(request, response) {
-        const user = await this.authenticateScopeUser(request);
-        const { scope } = user;
-        const { key } = request.params;
-        const contentType = request.headers.get('content-type');
-        const storageClass = request.headers.get('x-kc-storage-class');
+    /**
+     * @private
+     */
+    #getVideoProcessingParams(request) {
+        const str = request.headers.get('x-kc-video-processing');
 
-        assert(Array.isArray(key), 'Request.params.key expected to be an Array');
-
-        let remoteObject = new RemoteObject({
-            scopeId: scope.id,
-            key: key.join('/'),
-            contentType,
-        });
-
-        // Throws ValidationError
-        remoteObject.validateForFetchHead();
-
-        const localObject = new LocalObject({ scopeId: scope.id });
-
-        // Stream the object content in parallel (don't await these Promises seperately).
-        const [ nextRemoteObject, nextLocalObject ] = await Promise.all([
-            this.#objectStore.fetchHead(remoteObject),
-            this.#localObjectStore.write(localObject, request.readStream),
-        ]);
-
-        if (nextRemoteObject && nextRemoteObject.getEtag() === nextLocalObject.getEtag()) {
-            this.#logger.log('putObject; etag match; skip upload');
-            return response.respondWithJSON(200, { data: nextRemoteObject });
+        if (str) {
+            try {
+                const buff = Buffer.from(str, 'base64');
+                const utf8 = buff.toString('utf8');
+                return JSON.parse(utf8);
+            } catch (cause) {
+                const error = new ValidationError('Invalid x-kc-video-processing header', { cause });
+                error.push('Invalid x-kc-video-processing header', 'x-kc-video-processing');
+                throw error;
+            }
         }
 
-        // eslint-disable-next-line require-atomic-updates
-        remoteObject = nextRemoteObject || remoteObject;
-
-        remoteObject = remoteObject
-            .incorporateLocalObject(nextLocalObject)
-            .setStorageClass(storageClass);
-
-        this.#logger.log('putObject; no etag match; uploading', {
-            id: remoteObject.id,
-            etag: remoteObject.getEtag(),
-            key: remoteObject.key,
-            storageClass: remoteObject.storageClass,
-        });
-
-        this.run_backgroundJob(remoteObject).then((completedRemoteObject) => {
-            // TODO: Remove local object.
-            this.#logger.log('putObject; background job complete', {
-                id: completedRemoteObject.id,
-                etag: completedRemoteObject.getEtag(),
-                key: completedRemoteObject.key,
-                storageClass: completedRemoteObject.storageClass,
-            });
-        }).catch((error) => {
-            this.#logger.error('putObject; background job error', {
-                id: remoteObject.id,
-                etag: remoteObject.getEtag(),
-                key: remoteObject.key,
-                storageClass: remoteObject.storageClass,
-                error,
-            });
-        });
-
-        return response.respondWithJSON(201, { data: remoteObject });
-    }
-
-    // Private - Using public notation to enable testing.
-    async run_backgroundJob(remoteObject) {
-        remoteObject.validateForPut();
-
-        remoteObject = await this.#objectStore.put(remoteObject);
-
-        console.log('Ready for video transcode:', remoteObject);
-
-        // TODO: Handle video transcoding request.
-        return remoteObject;
+        return null;
     }
 }

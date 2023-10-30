@@ -59,6 +59,9 @@ export default class DataStore {
         this.#s3BucketName = bucketName;
     }
 
+    /**
+     * @public
+     */
     async fetch({ type, id }) {
         const itemKey = this.#createItemKey(type, id);
         const doc = await this.#fetchDocument();
@@ -72,6 +75,9 @@ export default class DataStore {
         return null;
     }
 
+    /**
+     * @public
+     */
     async fetchBatch(specs) {
         const doc = await this.#fetchDocument();
 
@@ -88,11 +94,17 @@ export default class DataStore {
         });
     }
 
+    /**
+     * @public
+     */
     async write(record) {
         const itemKey = this.#createItemKey(record.type, record.id);
         await this.#updateDocument(itemKey, record);
     }
 
+    /**
+     * @private
+     */
     async #fetchDocument() {
         let response;
         try {
@@ -112,6 +124,9 @@ export default class DataStore {
         return this.#bufferAwsResponseJSON(response.Body);
     }
 
+    /**
+     * @private
+     */
     async #updateDocument(key, record) {
         const doc = await this.#fetchDocument();
 
@@ -135,6 +150,9 @@ export default class DataStore {
         }
     }
 
+    /**
+     * @private
+     */
     #bufferAwsResponseJSON(body) {
         return new Promise((resolve, reject) => {
             const chunks = [];
@@ -171,6 +189,9 @@ export default class DataStore {
         });
     }
 
+    /**
+     * @private
+     */
     #getModel(type) {
         if (ModelsByType.has(type)) {
             return ModelsByType.get(type);
@@ -179,6 +200,9 @@ export default class DataStore {
         throw new Error(`Model "${ type }" has not been registered`);
     }
 
+    /**
+     * @private
+     */
     #createItemKey(type, id) {
         return `${ type }:${ id }`;
     }

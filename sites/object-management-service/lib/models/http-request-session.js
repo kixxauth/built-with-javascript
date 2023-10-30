@@ -17,6 +17,9 @@ export default class HTTPRequestSession {
         this.#request = request;
     }
 
+    /**
+     * @public
+     */
     async getUserAndScope(scopeId) {
         // Will throw UnauthorizedError if the token does not exist.
         const token = this.#getAuthorizationToken();
@@ -44,6 +47,9 @@ export default class HTTPRequestSession {
         return [ user, scope ];
     }
 
+    /**
+     * @public
+     */
     async getAdminUser() {
         const [ user ] = await this.getUserAndScope();
 
@@ -54,6 +60,9 @@ export default class HTTPRequestSession {
         return user;
     }
 
+    /**
+     * @public
+     */
     async getScopedUser(scopeId) {
         assert(isNonEmptyString(scopeId), ': A non empty string is required as scopeId');
 
@@ -75,6 +84,9 @@ export default class HTTPRequestSession {
         return user.setScope(scope);
     }
 
+    /**
+     * @private
+     */
     #getAuthorizationToken() {
         const authHeader = this.#request.headers.get('authorization');
 

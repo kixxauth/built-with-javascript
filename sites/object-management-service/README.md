@@ -21,12 +21,12 @@ Use cases and requirements which should be considered design constraints from th
 Approach
 --------
 - Use AWS S3 for all data storage, including structured data.
+    - The entire admin database is stored as a JSON object in S3
     - This leads to an inneficient admin API, but is a trade-off we should make for simplicity.
     - Use the built in S3 versioning mechanism to store multiple versions of the same object which achieves the itempotency design goal.
 - Use a single server as both the origin, write, and admin APIs. The write and admin APIs *must* redirect to HTTPS.
 - Use the [imgIX](https://imgix.com/) service to process images on-demand.
 - Use AWS MediaConvert to process video before it is stored.
-- The entire admin database is stored as a JSON object in S3
 
 ### S3 Storage Classes
 The following storage classes are supported and can be specified when an object is put to the store. For now, the service does not support changing the storage class of an object after it is stored.

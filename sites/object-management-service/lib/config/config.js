@@ -16,6 +16,9 @@ export default class Config {
         this.dataStore = null;
     }
 
+    /**
+     * @public
+     */
     async load(environment) {
         const fileName = `${ environment }.toml`;
         const config = await this.#loadFile(fileName);
@@ -37,6 +40,10 @@ export default class Config {
                 enumerable: true,
                 value: new ObjectStoreConfig(config.objectStore),
             },
+            mediaConvert: {
+                enumerable: true,
+                value: new MediaConvertConfig(config.mediaConvert),
+            },
             localObjectStore: {
                 enumerable: true,
                 value: new LocalObjectStoreConfig(config.localObjectStore),
@@ -44,6 +51,9 @@ export default class Config {
         });
     }
 
+    /**
+     * @private
+     */
     async #loadFile(fileName) {
         const url = new URL(fileName, this.#rootConfigDir);
         const utf8 = await fsp.readFile(url, { encoding: 'utf8' });
@@ -135,6 +145,30 @@ class DataStoreConfig {
     }
 }
 
+class MediaConvertConfig {
+    #config = null;
+
+    constructor(config = {}) {
+        this.#config = config;
+    }
+
+    getAccessKeyId() {
+        return this.#config.accessKeyId;
+    }
+
+    getSecretAccessKey() {
+        return this.#config.secretAccessKey;
+    }
+
+    getEndpoint() {
+        return this.#config.endpoint;
+    }
+
+    getRole() {
+        return this.#config.role;
+    }
+}
+
 class LocalObjectStoreConfig {
     #config = null;
 
@@ -146,6 +180,9 @@ class LocalObjectStoreConfig {
         return this.#config.directory || this.#getDefaultDirectory();
     }
 
+    /**
+     * @private
+     */
     #getDefaultDirectory() {
         return path.join(
             os.tmpdir(),

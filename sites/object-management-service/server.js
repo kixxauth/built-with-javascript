@@ -3,6 +3,7 @@ import Config from './lib/config/config.js';
 import { createLogger } from './lib/logger.js';
 import DataStore from './lib/datastore.js';
 import ObjectStore from './lib/object-store.js';
+import MediaConvert from './lib/aws-media-convert/media-convert.js';
 import LocalObjectStore from './lib/local-object-store.js';
 import RoutingTable from './lib/server/routing-table.js';
 import HTTPRequestTarget from './lib/server/http-request-target.js';
@@ -46,6 +47,11 @@ async function start() {
         logger,
     });
 
+    const mediaConvert = new MediaConvert({
+        config,
+        logger,
+    });
+
     const localObjectStore = new LocalObjectStore({
         config,
         logger,
@@ -63,6 +69,7 @@ async function start() {
         logger,
         dataStore,
         objectStore,
+        mediaConvert,
         localObjectStore,
     }));
 

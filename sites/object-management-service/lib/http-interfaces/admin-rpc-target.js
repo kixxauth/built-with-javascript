@@ -27,9 +27,13 @@ export default class AdminRPCTarget {
         this.#dataStore = dataStore;
     }
 
+    /**
+     * @public
+     */
     handleError(error, request, response, jsonResponse) {
         jsonResponse = jsonResponse || { jsonrpc: '2.0', id: null };
 
+        const { requestId } = request;
         let message;
         let code;
 
@@ -54,7 +58,7 @@ export default class AdminRPCTarget {
                     message = error.message;
                 } else {
                     // Assume an unexpected internal error:
-                    this.#logger.error('caught error', { error });
+                    this.#logger.error('caught error', { requestId, error });
                 }
         }
 
@@ -63,16 +67,9 @@ export default class AdminRPCTarget {
         return response.respondWithJSON(200, jsonResponse);
     }
 
-    authenticateAdminUser(request) {
-        const session = new HTTPRequestSession({
-            dataStore: this.#dataStore,
-            request,
-        });
-
-        // Authenticate and authorize the user.
-        return session.getAdminUser();
-    }
-
+    /**
+     * @public
+     */
     async remoteProcedureCall(request, response) {
         await this.authenticateAdminUser(request);
 
@@ -132,6 +129,10 @@ export default class AdminRPCTarget {
         return response.respondWithJSON(200, jsonResponse);
     }
 
+    /**
+     * Public remote procedure call (RPC) method.
+     * @public
+     */
     async createScopedToken(params) {
         if (!isPlainObject(params)) {
             const error = new Error(`Invalid params; expects plain object not ${ toFriendlyString(params) }`);
@@ -159,5 +160,18 @@ export default class AdminRPCTarget {
 
         const { accessTokens } = newScope;
         return { scopeId, accessTokens };
+    }
+
+    /**
+     * @private
+     */
+    authenticateAdminUser(request) {
+        const session = new HTTPRequestSession({
+            dataStore: this.#dataStore,
+            request,
+        });
+
+        // Authenticate and authorize the user.
+        return session.getAdminUser();
     }
 }

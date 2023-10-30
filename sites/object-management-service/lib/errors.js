@@ -45,6 +45,10 @@ export class NotFoundError extends StackedError {
     static CODE = 'NOT_FOUND_ERROR';
 }
 
+export class UnprocessableError extends StackedError {
+    static CODE = 'UNPROCESSABLE_ERROR';
+}
+
 export class ValidationError extends StackedError {
     static CODE = 'VALIDATION_ERROR';
 

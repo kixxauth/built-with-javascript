@@ -17,13 +17,13 @@ export default class HTTPRequestTarget {
     }
 
     async handleRequest(req, res) {
-        const id = this.#getRequestId();
+        const requestId = this.#getRequestId();
         const { method } = req;
         const fullURL = req.url;
         const contentLength = req.headers['content-length'] ? parseInt(req.headers['content-length'], 10) : 0;
 
         this.#logger.log('http request', {
-            id,
+            requestId,
             method,
             url:
             fullURL,
@@ -32,7 +32,7 @@ export default class HTTPRequestTarget {
 
         const url = new URL(req.url, `${ this.#getProtocol(req) }//${ this.#getHostname(req) }:${ this.#getPort(req) }`);
 
-        const request = new HTTPRequest({ req, url });
+        const request = new HTTPRequest({ req, url, requestId });
         let response = new HTTPResponse();
 
         response = await this.#routingTable.routeRequest(request, response);
@@ -47,7 +47,7 @@ export default class HTTPRequestTarget {
         const responseContentLength = headers.has('content-length') ? parseInt(headers.get('content-length'), 10) : 0;
 
         this.#logger.log('http response', {
-            id,
+            requestId,
             status,
             method,
             url: fullURL,
