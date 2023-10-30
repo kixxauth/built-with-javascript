@@ -4,7 +4,8 @@ import WriteObjectJob from '../jobs/write-object-job.js';
 import {
     UnauthorizedError,
     ForbiddenError,
-    ValidationError } from '../errors.js';
+    ValidationError,
+    UnprocessableError } from '../errors.js';
 
 
 const { assert } = KixxAssert;
@@ -56,6 +57,15 @@ export default class WriteServer {
                 status = 403;
                 jsonResponse.errors.push({
                     status: 403,
+                    code: error.code,
+                    title: error.name,
+                    detail: error.message,
+                });
+                break;
+            case UnprocessableError.CODE:
+                status = 422;
+                jsonResponse.errors.push({
+                    status: 422,
                     code: error.code,
                     title: error.name,
                     detail: error.message,
@@ -122,7 +132,7 @@ export default class WriteServer {
             scope,
         });
 
-        // Throws ValidationError
+        // Throws ValidationError, UnprocessableError
         const [ status, remoteObject ] = await writeObjectJob.putObject({
             key,
             contentType,

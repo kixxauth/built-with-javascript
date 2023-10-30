@@ -1,5 +1,5 @@
 import { KixxAssert } from '../../dependencies.js';
-import { ValidationError } from '../errors.js';
+import { ValidationError, UnprocessableError } from '../errors.js';
 import LocalObject from '../models/local-object.js';
 import RemoteObject from '../models/remote-object.js';
 
@@ -72,6 +72,7 @@ export default class WriteObjectJob {
             return [ 200, nextRemoteObject ];
         }
 
+        // eslint-disable-next-line require-atomic-updates
         remoteObject = nextRemoteObject || remoteObject;
 
         remoteObject = remoteObject
@@ -81,8 +82,24 @@ export default class WriteObjectJob {
             // here, after fetching the head, instead of earlier, before fetching the head.
             .setStorageClass(storageClass);
 
-        // Throws ValidationError
-        remoteObject.validateForPut();
+        // Only create a media processing job if the object represents a video source AND
+        // video processing parameters have been passed.
+        const processVideo = remoteObject.isVideoSource() && videoProcessingParams;
+
+        try {
+            // Throws ValidationError
+            remoteObject.validateForPut();
+
+            // Cannot process video stored with anything other than the STANDARD storage class.
+            if (processVideo && remoteObject.storageClass !== 'STANDARD') {
+                throw new UnprocessableError(
+                    `Cannot process video for storage class: ${ remoteObject.storageClass }`
+                );
+            }
+        } catch (error) {
+            await this.#localObjectStore.removeStoredObject(nextLocalObject);
+            throw error;
+        }
 
         this.#logger.log('no etag match; will process object', {
             scopeId: remoteObject.scopeId,
@@ -92,39 +109,36 @@ export default class WriteObjectJob {
             storageClass: remoteObject.storageClass,
         });
 
-        this.processObject(remoteObject, videoProcessingParams).then(() => {
-            return this.#localObjectStore.removeStoredObject(nextLocalObject);
-        }).catch((error) => {
-            this.#logger.error('error while processing object', { error });
-        });
+        // Upload and process the video asynchronously in the background.
+        // Return the HTTP response after saving the object to disk (above in localObjectStore).
+        this.#objectStore.put(remoteObject)
+            .then((completedRemoteObject) => {
+                if (processVideo) {
+                    return this.createVideoProcessingJob(completedRemoteObject, videoProcessingParams);
+                }
 
-        return [ 201, remoteObject ];
-    }
-
-    /**
-     * @private
-     */
-    async processObject(obj, videoProcessingParams) {
-        const remoteObject = await this.#objectStore.put(obj);
-
-        if (remoteObject.isVideoSource() && videoProcessingParams) {
-            // Only create a media processing job if the object represents a video source AND
-            // video processing parameters have been passed.
-            this.createVideoProcessingJob(remoteObject, videoProcessingParams).then((completedRemoteObject) => {
+                return completedRemoteObject;
+            })
+            .then((completedRemoteObject) => {
                 this.#logger.log('background job complete', {
                     scopeId: completedRemoteObject.scopeId,
                     id: completedRemoteObject.id,
                     key: completedRemoteObject.key,
                 });
-            }).catch((error) => {
+            })
+            .catch((error) => {
                 this.#logger.error('background job error', {
                     scopeId: remoteObject.scopeId,
                     id: remoteObject.id,
                     key: remoteObject.key,
                     error,
                 });
+            })
+            .finally(() => {
+                return this.#localObjectStore.removeStoredObject(nextLocalObject);
             });
-        }
+
+        return [ 201, remoteObject ];
     }
 
     /**
