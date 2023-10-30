@@ -13,6 +13,11 @@ export default class HTTPRequest {
         const headers = objectToHeaders(this.#nodeRequest.headers);
 
         Object.defineProperties(this, {
+            requestId: {
+                enumerable: true,
+                writable: false,
+                value: spec.requestId,
+            },
             headers: {
                 enumerable: true,
                 writable: false,

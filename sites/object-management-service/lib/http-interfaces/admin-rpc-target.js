@@ -33,6 +33,7 @@ export default class AdminRPCTarget {
     handleError(error, request, response, jsonResponse) {
         jsonResponse = jsonResponse || { jsonrpc: '2.0', id: null };
 
+        const { requestId } = request;
         let message;
         let code;
 
@@ -57,7 +58,7 @@ export default class AdminRPCTarget {
                     message = error.message;
                 } else {
                     // Assume an unexpected internal error:
-                    this.#logger.error('caught error', { error });
+                    this.#logger.error('caught error', { requestId, error });
                 }
         }
 

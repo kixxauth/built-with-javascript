@@ -22,9 +22,11 @@ export default class WriteObjectJob {
             localObjectStore,
             mediaConvert,
             scope,
+            requestId,
         } = options;
 
         this.scope = scope;
+        this.requestId = requestId;
 
         this.#logger = logger.createChild({ name: 'WriteObjectJob' });
         this.#objectStore = objectStore;
@@ -44,8 +46,10 @@ export default class WriteObjectJob {
             readStream,
         } = args;
 
+        const { requestId, scope } = this;
+
         let remoteObject = new RemoteObject({
-            scopeId: this.scope.id,
+            scopeId: scope.id,
             key,
             contentType,
         });
@@ -63,7 +67,7 @@ export default class WriteObjectJob {
         ]);
 
         if (nextRemoteObject && nextRemoteObject.getEtag() === nextLocalObject.getEtag()) {
-            this.#logger.log('etag match; skip upload');
+            this.#logger.log('etag match; skip upload', { requestId });
 
             this.#localObjectStore.removeStoredObject(nextLocalObject).catch((error) => {
                 this.#logger.error('error while removing local cached object', { error });
@@ -102,6 +106,7 @@ export default class WriteObjectJob {
         }
 
         this.#logger.log('no etag match; will process object', {
+            requestId,
             scopeId: remoteObject.scopeId,
             id: remoteObject.id,
             etag: remoteObject.getEtag(),
@@ -121,6 +126,7 @@ export default class WriteObjectJob {
             })
             .then((completedRemoteObject) => {
                 this.#logger.log('background job complete', {
+                    requestId,
                     scopeId: completedRemoteObject.scopeId,
                     id: completedRemoteObject.id,
                     key: completedRemoteObject.key,
@@ -128,6 +134,7 @@ export default class WriteObjectJob {
             })
             .catch((error) => {
                 this.#logger.error('background job error', {
+                    requestId,
                     scopeId: remoteObject.scopeId,
                     id: remoteObject.id,
                     key: remoteObject.key,
@@ -145,7 +152,10 @@ export default class WriteObjectJob {
      * @private
      */
     async createVideoProcessingJob(remoteObject, videoProcessingParams) {
+        const { requestId } = this;
+
         this.#logger.log('MediaConvert Job; creating', {
+            requestId,
             scopeId: remoteObject.scopeId,
             id: remoteObject.id,
             key: remoteObject.key,
@@ -154,6 +164,7 @@ export default class WriteObjectJob {
         const job = await this.#mediaConvert.createMediaConvertJob(remoteObject, videoProcessingParams);
 
         this.#logger.log('MediaConvert Job; created', {
+            requestId,
             scopeId: remoteObject.scopeId,
             id: remoteObject.id,
             key: remoteObject.key,

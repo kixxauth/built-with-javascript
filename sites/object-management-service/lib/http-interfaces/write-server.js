@@ -41,6 +41,7 @@ export default class WriteServer {
     handleError(error, request, response) {
         const jsonResponse = { errors: [] };
 
+        const { requestId } = request;
         let status = 500;
 
         switch (error.code) {
@@ -98,7 +99,7 @@ export default class WriteServer {
                 }
                 break;
             default:
-                this.#logger.error('caught error', { error });
+                this.#logger.error('caught error', { requestId, error });
                 // Do not return the error.message for privacy and security reasons.
                 jsonResponse.errors.push({
                     status: 500,
@@ -116,6 +117,7 @@ export default class WriteServer {
      */
     async putObject(request, response) {
         const user = await this.authenticateScopeUser(request);
+        const { requestId } = request;
         const { scope } = user;
         const contentType = request.headers.get('content-type');
         const storageClass = request.headers.get('x-kc-storage-class');
@@ -130,6 +132,7 @@ export default class WriteServer {
             localObjectStore: this.#localObjectStore,
             objectStore: this.#objectStore,
             mediaConvert: this.#mediaConvert,
+            requestId,
             scope,
         });
 
