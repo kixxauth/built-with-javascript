@@ -32,6 +32,10 @@ export default class Config {
                 enumerable: true,
                 value: new ServerConfig(config.server),
             },
+            application: {
+                enumerable: true,
+                value: new ApplicationConfig(config.application),
+            },
             dataStore: {
                 enumerable: true,
                 value: new DataStoreConfig(config.dataStore),
@@ -61,6 +65,18 @@ export default class Config {
     }
 }
 
+class ServerConfig {
+    #config = null;
+
+    constructor(config) {
+        this.#config = config;
+    }
+
+    getPort() {
+        return this.#config.port || 3003;
+    }
+}
+
 class LoggerConfig {
     #config = null;
 
@@ -77,15 +93,15 @@ class LoggerConfig {
     }
 }
 
-class ServerConfig {
+class ApplicationConfig {
     #config = null;
 
     constructor(config) {
         this.#config = config;
     }
 
-    getPort() {
-        return this.#config.port || 3003;
+    getImgixBaseURL() {
+        return this.#config.imgixBaseURL || 'http://www.example.com';
     }
 }
 

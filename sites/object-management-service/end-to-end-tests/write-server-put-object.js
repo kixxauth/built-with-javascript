@@ -29,6 +29,11 @@ function main() {
     // eslint-disable-next-line no-console
     console.log('Uploading the test object for the first time.');
     uploadObject((req, utf8, json) => {
+        /* eslint-disable no-console */
+        console.log('Response JSON:');
+        console.log(JSON.stringify(json, null, 4));
+        /* eslint-enable no-console */
+
         id = json.data.id;
         md5Hash = json.data.md5Hash;
 
@@ -39,6 +44,8 @@ function main() {
         assertEqual('foo/image.jpg', json.data.key);
         assertEqual('image/jpeg', json.data.contentType);
         assertEqual('STANDARD', json.data.storageClass);
+        assertEqual('http://localhost:3003/origin/testing-123/foo/latest/image.jpg', json.data.links.origin);
+        assertEqual('https://kixx-stage.imgix.net/testing-123/foo/latest/image.jpg', json.data.links.cdn);
         assertEmpty(json.data.filepath);
 
         /* eslint-disable no-console */
@@ -55,6 +62,11 @@ function main() {
             console.log('Uploading the test object for the second time.');
             // eslint-disable-next-line no-shadow
             uploadObject((req, utf8, json) => {
+                /* eslint-disable no-console */
+                console.log('Response JSON:');
+                console.log(JSON.stringify(json, null, 4));
+                /* eslint-enable no-console */
+
                 assertEqual('remote-object', json.data.type);
                 assertEqual(id, json.data.id);
                 assertEqual(SCOPE_ID, json.data.scopeId);
@@ -63,6 +75,8 @@ function main() {
                 assertEqual('image/jpeg', json.data.contentType);
                 assert(isNonEmptyString(json.data.version));
                 assert(isNonEmptyString(json.data.lastModifiedDate));
+                assertEqual('http://localhost:3003/origin/testing-123/foo/latest/image.jpg', json.data.links.origin);
+                assertEqual('https://kixx-stage.imgix.net/testing-123/foo/latest/image.jpg', json.data.links.cdn);
                 assertEmpty(json.data.filepath);
 
                 /* eslint-disable no-console */

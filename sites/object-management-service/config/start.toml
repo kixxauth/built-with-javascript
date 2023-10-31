@@ -11,6 +11,9 @@ port = 3003
 level = "trace"
 makePretty = true
 
+[application]
+imgixBaseURL = ""
+
 [dataStore]
 region = ""
 bucketName = ""

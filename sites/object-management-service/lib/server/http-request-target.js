@@ -5,13 +5,11 @@ import { headersToObject } from './http-headers.js';
 
 export default class HTTPRequestTarget {
 
-    #config = null;
     #logger = null;
     #routingTable = null;
     #requestId = 0;
 
     constructor(spec) {
-        this.#config = spec.config;
         this.#logger = spec.logger.createChild({ name: 'HTTPRequestTarget' });
         this.#routingTable = spec.routingTable;
     }
@@ -30,7 +28,7 @@ export default class HTTPRequestTarget {
             contentLength,
         });
 
-        const url = new URL(req.url, `${ this.#getProtocol(req) }//${ this.#getHostname(req) }:${ this.#getPort(req) }`);
+        const url = new URL(req.url, `${ this.#getProtocol(req) }://${ this.#getHost(req) }`);
 
         const request = new HTTPRequest({ req, url, requestId });
         let response = new HTTPResponse();
@@ -58,23 +56,12 @@ export default class HTTPRequestTarget {
         res.end(body);
     }
 
-    #getProtocol() {
-        return 'http:';
+    #getProtocol(req) {
+        return req.headers['x-forwarded-proto'] || 'http';
     }
 
-    #getHostname(req) {
-        const host = req.headers.host;
-
-        if (host) {
-            const { hostname } = new URL(`http://${ host }`);
-            return hostname;
-        }
-
-        return 'localhost';
-    }
-
-    #getPort() {
-        return this.#config.server.getPort();
+    #getHost(req) {
+        return req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
     }
 
     #getRequestId() {

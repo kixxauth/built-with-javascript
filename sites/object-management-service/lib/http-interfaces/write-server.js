@@ -13,6 +13,7 @@ const { assert } = KixxAssert;
 
 export default class WriteServer {
 
+    #config = null;
     #logger = null;
     #dataStore = null;
     #objectStore = null;
@@ -21,6 +22,7 @@ export default class WriteServer {
 
     constructor(options) {
         const {
+            config,
             logger,
             dataStore,
             objectStore,
@@ -28,6 +30,7 @@ export default class WriteServer {
             mediaConvert,
         } = options;
 
+        this.#config = config;
         this.#logger = logger.createChild({ name: 'WriteServer' });
         this.#dataStore = dataStore;
         this.#objectStore = objectStore;
@@ -145,9 +148,19 @@ export default class WriteServer {
             readStream: request.getReadStream(),
         });
 
-        // TODO: Include the origin server URLs to the object in the response.
+        const data = remoteObject.toJSON();
+        const { protocol, host } = request.url;
+        const keyParts = data.key.split('/');
+        const filename = keyParts.pop();
+        const pathname = keyParts.join('/');
+        const imgixBaseURL = this.#config.application.getImgixBaseURL();
 
-        return response.respondWithJSON(status, { data: remoteObject });
+        data.links = {
+            origin: `${ protocol }//${ host }/origin/${ scope.id }/${ pathname }/latest/${ filename }`,
+            cdn: `${ imgixBaseURL }/${ scope.id }/${ pathname }/latest/${ filename }`,
+        };
+
+        return response.respondWithJSON(status, { data });
     }
 
     /**

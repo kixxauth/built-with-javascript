@@ -60,12 +60,12 @@ async function start() {
     const routingTable = new RoutingTable({ logger });
 
     const httpRequestTarget = new HTTPRequestTarget({
-        config,
         logger,
         routingTable,
     });
 
     routingTable.registerHTTPInterface('WriteServer', new WriteServer({
+        config,
         logger,
         dataStore,
         objectStore,

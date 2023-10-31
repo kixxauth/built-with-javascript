@@ -3,8 +3,9 @@ TODO
 
 - [x] Mark public methods on all classes. Assume unmarked methods should be considered private.
 - [x] In AdminRPCTarget:createScopedToken(), if the requested scope does not exist, then create it.
-- [ ] Record HTTP request ID in logs when applicable.
-- [ ] Include the origin server URLs in the write object response.
+- [x] Record HTTP request ID in logs when applicable.
+- [x] Include the origin server URLs in the write object response.
+- [x] Include the imgIX URLs in the write object response.
 - [x] Update the API docs.
 - [ ] Redirect admin and write server API endpoints to https:
 - [ ] Implement the origin server endpoint.
