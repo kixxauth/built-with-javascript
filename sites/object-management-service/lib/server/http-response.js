@@ -32,6 +32,16 @@ export default class HTTPResponse {
         });
     }
 
+    respondWithRedirect(statusCode, newLocation) {
+        assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
+        this.status = statusCode;
+        this.statusMessage = statusMessagesByCode.get(statusCode);
+
+        this.headers.set('location', newLocation);
+
+        return this;
+    }
+
     respondWithJSON(statusCode, obj) {
         assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
         this.status = statusCode;

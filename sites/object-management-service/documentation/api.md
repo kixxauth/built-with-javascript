@@ -50,6 +50,27 @@ Base64 encode the JSON string. These are the defaults:
 
 For more information about resolution and QVBR see the [MediaConvert documentation](https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html).
 
+### PutObject Response
+When a new object is first created or an existing object is updated:
+
+```json
+{
+    "data": {
+        "type": "remote-object",
+        "id": "55be03c5-e3da-479f-8e39-3403c35910f9",
+        "scopeId": "testing-123",
+        "key": "foo/image.jpg",
+        "contentType": "image/jpeg",
+        "storageClass": "STANDARD",
+        "md5Hash": "0f36d4c3822d68f56f88fe595ab9ef87",
+        "links": {
+            "origin": "http://localhost:3003/origin/testing-123/foo/latest/image.jpg",
+            "cdn": "https://kixx-stage.imgix.net/testing-123/foo/latest/image.jpg"
+        }
+    }
+}
+```
+
 
 Admin Server API
 ----------------

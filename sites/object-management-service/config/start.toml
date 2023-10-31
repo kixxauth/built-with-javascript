@@ -12,6 +12,7 @@ level = "trace"
 makePretty = true
 
 [application]
+environment = "development"
 imgixBaseURL = ""
 
 [dataStore]

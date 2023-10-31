@@ -100,6 +100,10 @@ class ApplicationConfig {
         this.#config = config;
     }
 
+    getEnvironment() {
+        return this.#config.environment;
+    }
+
     getImgixBaseURL() {
         return this.#config.imgixBaseURL || 'http://www.example.com';
     }

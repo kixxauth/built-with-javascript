@@ -7,7 +7,7 @@ TODO
 - [x] Include the origin server URLs in the write object response.
 - [x] Include the imgIX URLs in the write object response.
 - [x] Update the API docs.
-- [ ] Redirect admin and write server API endpoints to https:
+- [x] Redirect admin and write server API endpoints to https:
 - [ ] Implement the origin server endpoint.
 - [ ] Validate the scope and key URL pathname parts to ensure safety and naming rules.
 - [ ] Solve race condition when uploading an object: Avoid writing an object while a current write is in progress to the same object.

@@ -119,6 +119,15 @@ export default class WriteServer {
      * @public
      */
     async putObject(request, response) {
+        const { href, protocol } = request.url;
+        const env = this.#config.application.getEnvironment();
+
+        // Redirect http: to https: (NOT in the development environment)
+        if (protocol !== 'https:' && env !== 'development') {
+            const newLocation = href.replace(/^http:/, 'https:');
+            return response.respondWithRedirect(301, newLocation);
+        }
+
         const user = await this.authenticateScopeUser(request);
         const { requestId } = request;
         const { scope } = user;
@@ -149,7 +158,7 @@ export default class WriteServer {
         });
 
         const data = remoteObject.toJSON();
-        const { protocol, host } = request.url;
+        const { host } = request.url;
         const keyParts = data.key.split('/');
         const filename = keyParts.pop();
         const pathname = keyParts.join('/');
