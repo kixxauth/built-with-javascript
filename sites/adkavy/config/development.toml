@@ -1,0 +1,29 @@
+[logger]
+#  TRACE: 'trace',
+#  DEBUG: 'debug',
+#  INFO: 'info',
+#  WARN: 'warn',
+#  ERROR: 'error',
+#  FATAL: 'fatal'
+level = "trace"
+makePretty = true
+
+[server]
+port = 3033
+
+[dynamoDB]
+region = "us-east-2"
+applicationName = "adkavy"
+environment = "development"
+accessKeyId = ""
+secretAccessKey = ""
+
+[objectStore]
+region = "us-east-2"
+bucketName = ""
+environment = "development"
+accessKeyId = ""
+secretAccessKey = ""
+
+[localObjectStore]
+directory = ""

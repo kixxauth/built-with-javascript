@@ -1,0 +1,21 @@
+{
+    "certDirectory": "/Users/kwalker/Projects/Kris/bwj/edge-server/test-configs/certificates",
+    "encryptedServer": {
+        "port": 3443
+    },
+    "unencryptedServer": {
+        "port": 3080
+    },
+    "virtualHosts": [
+        {
+            "port": 8001,
+            "command": "node test-configs/servers/request-error-server.js",
+            "hostnames": [
+                {
+                    "hostname": "localhost",
+                    "certname": "self-signed"
+                }
+            ]
+        }
+    ]
+}
