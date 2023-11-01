@@ -181,11 +181,7 @@ function startEncryptedServer(config) {
             return;
         }
 
-        proxyRequest(req, res, 'https', vhost.port, (err) => {
-            if (err) {
-                closeServersAndExit();
-            }
-        });
+        proxyRequest(req, res, 'https', vhost.port);
     }
 
     server.on('error', (error) => {
@@ -238,11 +234,7 @@ function startUencryptedServer(config) {
             return;
         }
 
-        proxyRequest(req, res, 'http', vhost.port, (err) => {
-            if (err) {
-                closeServersAndExit();
-            }
-        });
+        proxyRequest(req, res, 'http', vhost.port);
     }
 
     server.on('error', (error) => {
@@ -273,7 +265,7 @@ function createFullUrl(protocol, host, pathname) {
     return new URL(pathname, `${ protocol }://${ host }`);
 }
 
-function proxyRequest(req, res, protocol, port, callback) {
+function proxyRequest(req, res, protocol, port) {
 
     const headers = Object.assign({}, req.headers);
 
@@ -289,30 +281,30 @@ function proxyRequest(req, res, protocol, port, callback) {
 
     req.once('error', (error) => {
         logger.error('edge request error event', { error });
-        callback(error);
     });
 
     res.once('error', (error) => {
         logger.error('edge response error event', { error });
-        callback(error);
     });
 
     const request = http.request(options, (response) => {
         response.once('error', (error) => {
             logger.error('proxy response error event', { error });
-            callback(error);
+            if (!res.headersSent) {
+                sendBadGateway(req, res);
+            }
         });
 
         res.writeHead(response.statusCode, response.statusMessage, response.headers);
-
-        callback();
 
         response.pipe(res);
     });
 
     request.once('error', (error) => {
         logger.error('proxy request error event', { error });
-        callback(error);
+        if (!res.headersSent) {
+            sendGatewayTimeout(req, res);
+        }
     });
 
     req.pipe(request);
@@ -344,6 +336,28 @@ function sendNotFoundHostResponse(req, res) {
     const body = 'Not Found: Host not found\n';
 
     res.writeHead(404, 'Not Found', {
+        'content-type': 'text/plain; charset=UTF-8',
+        'content-length': Buffer.byteLength(body),
+    });
+
+    res.end(body);
+}
+
+function sendGatewayTimeout(req, res) {
+    const body = 'No response from origin server\n';
+
+    res.writeHead(504, 'Gateway Timeout', {
+        'content-type': 'text/plain; charset=UTF-8',
+        'content-length': Buffer.byteLength(body),
+    });
+
+    res.end(body);
+}
+
+function sendBadGateway(req, res) {
+    const body = 'Error from origin server\n';
+
+    res.writeHead(502, 'Bad Gateway', {
         'content-type': 'text/plain; charset=UTF-8',
         'content-length': Buffer.byteLength(body),
     });
