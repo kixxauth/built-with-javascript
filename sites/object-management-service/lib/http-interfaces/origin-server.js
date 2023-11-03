@@ -65,8 +65,23 @@ export default class OriginServer {
     /**
      * @public
      */
-    serveObjectMetadata() {
-        // TODO: Fetch the object head information.
+    async serveObjectMetadata(request, response) {
+        const obj = this.createRemoteObjectFromRequest(request);
+
+        this.#logger.log('serve object head', { scopeId: obj.scopeId, key: obj.key });
+
+        const remoteObjectHead = await this.#objectStore.fetchHead(obj);
+
+        if (!remoteObjectHead) {
+            return response.respondWithPlainText(404, `URL ${ request.url.pathname } not found on this server.\n`);
+        }
+
+        response.headers.set('content-length', remoteObjectHead.contentLength);
+        response.headers.set('content-type', remoteObjectHead.contentType);
+        response.headers.set('cache-control', CACHE_CONTROL_VALUE);
+        response.headers.set('etag', remoteObjectHead.getEtag());
+
+        return response;
     }
 
     /**
