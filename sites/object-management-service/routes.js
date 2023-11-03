@@ -1,12 +1,12 @@
 export default [
-    // {
-    //     pattern: '/origin/:scope/:pathname+',
-    //     HTTPInterface: 'OriginServer',
-    //     methods: {
-    //         GET: 'serveObject',
-    //         HEAD: 'serveObjectMetadata',
-    //     },
-    // },
+    {
+        pattern: '/origin/:scope/:pathparts+',
+        HTTPInterface: 'OriginServer',
+        methods: {
+            GET: 'serveObject',
+            HEAD: 'serveObjectMetadata',
+        },
+    },
     {
         pattern: '/objects/:scope/:key+',
         HTTPInterface: 'WriteServer',

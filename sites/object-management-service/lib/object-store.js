@@ -127,8 +127,38 @@ export default class ObjectStore {
             throw error;
         }
 
-        this.#logger.log('fetch object head; found', { bucket, key });
         return obj.updateFromS3Head(result);
+    }
+
+    async fetchObject(obj) {
+        const bucket = this.#s3BucketName;
+        const key = this.#generateRemoteObjectKey(obj);
+
+        this.#logger.log('fetch object', { bucket, key });
+
+        const options = {
+            Bucket: bucket,
+            Key: key,
+        };
+
+        if (obj.version) {
+            options.VersionId = obj.version;
+        }
+
+        let result;
+        try {
+            result = await this.awsGetObjectCommand(options);
+        } catch (error) {
+            if (error.name === '403') {
+                this.#logger.log('fetch object; not found', { bucket, key });
+                return null;
+            }
+            throw error;
+        }
+
+        const newObject = obj.updateFromS3Object(result);
+
+        return [ newObject, result.Body ];
     }
 
     /**

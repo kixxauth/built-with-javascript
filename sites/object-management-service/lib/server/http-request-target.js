@@ -1,6 +1,9 @@
+import { KixxAssert } from '../../dependencies.js';
 import HTTPRequest from './http-request.js';
 import HTTPResponse from './http-response.js';
 import { headersToObject } from './http-headers.js';
+
+const { isFunction } = KixxAssert;
 
 
 export default class HTTPRequestTarget {
@@ -53,7 +56,13 @@ export default class HTTPRequestTarget {
         });
 
         res.writeHead(status, statusMessage, headersToObject(headers));
-        res.end(body);
+
+        // If the body is a stream which can be piped, then pipe it.
+        if (isFunction(body.pipe)) {
+            body.pipe(res);
+        } else {
+            res.end(body);
+        }
     }
 
     #getProtocol(req) {

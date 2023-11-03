@@ -68,4 +68,15 @@ export default class HTTPResponse {
 
         return this;
     }
+
+    respondNotModified() {
+        const statusCode = 304;
+
+        this.status = statusCode;
+        this.statusMessage = statusMessagesByCode.get(statusCode);
+
+        this.headers.set('content-length', '0');
+
+        return this;
+    }
 }

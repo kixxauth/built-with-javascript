@@ -8,6 +8,7 @@ import LocalObjectStore from './lib/local-object-store.js';
 import RoutingTable from './lib/server/routing-table.js';
 import HTTPRequestTarget from './lib/server/http-request-target.js';
 import routes from './routes.js';
+import OriginServer from './lib/http-interfaces/origin-server.js';
 import WriteServer from './lib/http-interfaces/write-server.js';
 import AdminRPCTarget from './lib/http-interfaces/admin-rpc-target.js';
 
@@ -63,6 +64,12 @@ async function start() {
         logger,
         routingTable,
     });
+
+    routingTable.registerHTTPInterface('OriginServer', new OriginServer({
+        config,
+        logger,
+        objectStore,
+    }));
 
     routingTable.registerHTTPInterface('WriteServer', new WriteServer({
         config,

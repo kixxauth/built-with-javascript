@@ -41,6 +41,10 @@ export default class RemoteObject {
                 enumerable: true,
                 value: spec.contentType,
             },
+            contentLength: {
+                enumerable: true,
+                value: spec.contentLength,
+            },
             storageClass: {
                 enumerable: true,
                 value: spec.storageClass,
@@ -94,12 +98,16 @@ export default class RemoteObject {
         // Remove the double quotes if they exist.
         const md5Hash = result.ETag.replace(/^"|"$/g, '');
         const lastModifiedDate = result.LastModified.toISOString();
+        const contentType = result.ContentType;
+        const contentLength = result.ContentLength;
 
         const spec = Object.assign({}, this, {
             id,
             md5Hash,
             version,
             lastModifiedDate,
+            contentType,
+            contentLength,
         });
 
         return new RemoteObject(spec);
@@ -108,9 +116,25 @@ export default class RemoteObject {
     /**
      * @public
      */
+    updateFromS3Object(result) {
+        return this.updateFromS3Head(result);
+    }
+
+    /**
+     * @public
+     */
     updateFromS3Put(result) {
         const version = result.VersionId;
-        return new RemoteObject(Object.assign({}, this, { version }));
+        const contentType = result.ContentType;
+        const contentLength = result.ContentLength;
+        const lastModifiedDate = result.LastModified.toISOString();
+
+        return new RemoteObject(Object.assign({}, this, {
+            version,
+            contentType,
+            contentLength,
+            lastModifiedDate,
+        }));
     }
 
     /**
@@ -168,6 +192,18 @@ export default class RemoteObject {
         this.#validateId(vError);
         this.#validateKey(vError);
         this.#validateStorageClass(vError);
+
+        if (vError.length > 0) {
+            throw vError;
+        }
+    }
+
+    /**
+     * @public
+     */
+    validateForFetch() {
+        const vError = new ValidationError('Invalid RemoteObject');
+        this.#validateKey(vError);
 
         if (vError.length > 0) {
             throw vError;
