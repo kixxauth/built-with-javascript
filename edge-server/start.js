@@ -136,6 +136,8 @@ function startEncryptedServer(config) {
 
     // In a Server Name Indication scheme (SNI) the servername is the hostname on the request.
     function sniCallback(servername, callback) {
+        logger.log('server name indication callback', { servername });
+
         let context;
         try {
             const cert = getSslCertForServername(servername);
