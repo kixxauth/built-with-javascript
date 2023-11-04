@@ -51,6 +51,8 @@ function getSslKeyForServername(servername) {
     if (!buff) {
         throw new Error(`Missing key for SNI servername "${ servername }" certname "${ certname }"`);
     }
+
+    return buff;
 }
 
 function getSslCertForServername(servername) {
@@ -65,6 +67,8 @@ function getSslCertForServername(servername) {
     if (!buff) {
         throw new Error(`Missing cert for SNI servername "${ servername }" certname "${ certname }"`);
     }
+
+    return buff;
 }
 
 async function loadConfig(filepath) {
