@@ -3,6 +3,13 @@ import http from 'node:http';
 const args = process.argv.slice(2);
 
 const server = http.createServer((req, res) => {
+    // Ensure logging will work:
+
+    // eslint-disable-next-line no-console
+    console.log('STDOUT argv', args.join());
+    // eslint-disable-next-line no-console
+    console.log('STDERR argv', args.join());
+
     const responseData = {
         args,
         method: req.method,

@@ -4,17 +4,19 @@ import http from 'node:http';
 import tls from 'node:tls';
 import childProcesses from 'node:child_process';
 import Logger from './lib/logger.js';
-import { isNonEmptyString, readBufferFile, readJsonFile } from './lib/utils.js';
+import { createHttpRequestHandler } from './lib/http-request-handler.js';
+import { isNonEmptyString, readBufferFile, readJsonFile, createCounter } from './lib/utils.js';
 
 if (!isNonEmptyString(process.argv[2])) {
     throw new Error('Expected a config file path as commmand line argument');
 }
 
-// The "^" symbol within "[^]" means one NOT of the following set of characters.
-// eslint-disable-next-line no-useless-escape
-const DISALLOWED_URL_CHARACTERS = /[^a-z0-9_\.\:\-\/\&\?\=%]/i;
-
 const CONFIG_FILEPATH = path.resolve(process.argv[2]);
+
+// Allowed restarts for a sub process before no further restarts will be attempted.
+const SUBPROCESS_RESTART_LIMIT = 5;
+// Amount of time before a sub process is considered mature and can be restarted.
+const SUBPROCESS_MATURITY_MS = 15 * 1000;
 
 const VHOSTS_BY_HOSTNAME = new Map();
 const CERTNAME_BY_SERVERNAME = new Map();
@@ -24,19 +26,42 @@ const SSL_KEY_CACHE = new Map();
 
 const logger = new Logger({ name: 'EdgeServer' });
 
-let encryptedServer;
-let unencryptedServer;
+const servers = [];
+const subProcesses = [];
+const openSockets = new Set();
+
+const getSocketId = createCounter(1);
+
+let destroyed = false;
 
 
 async function main() {
     const config = await loadConfig(CONFIG_FILEPATH);
 
     VHOSTS_BY_HOSTNAME.forEach(({ command }) => {
-        startSubProcess(command);
+        subProcesses.push(startSubProcess(command));
     });
 
-    encryptedServer = startEncryptedServer(config);
-    unencryptedServer = startUencryptedServer(config);
+    servers.push(startEncryptedServer(config));
+    servers.push(startUencryptedServer(config));
+
+    // Track open socket connections so we can close the server when needed.
+    servers.forEach((server) => {
+        const { port } = server.address();
+
+        server.on('connection', (socket) => {
+            openSockets.add(socket);
+
+            const id = getSocketId();
+
+            logger.log('new connection', { port, id, connections: openSockets.size });
+
+            socket.on('close', () => {
+                logger.log('closed connection', { port, id, connections: openSockets.size });
+                openSockets.delete(socket);
+            });
+        });
+    });
 }
 
 function getSslKeyForServername(servername) {
@@ -117,14 +142,53 @@ async function loadConfig(filepath) {
     return config;
 }
 
-function startSubProcess(command) {
-    logger.log('starting sub process', { command });
+function startSubProcess(command, restartCount = 0) {
+    logger.log('starting child process', { command });
 
-    const cp = childProcesses.exec(command);
+    const maturityTime = Date.now() + SUBPROCESS_MATURITY_MS;
+    const cp = childProcesses.exec(command, { detached: true });
 
-    cp.on('exit', () => {
-        logger.warn('child process exited', { command });
+    cp.on('spawn', () => {
+        logger.log('child process spawned', { command });
     });
+
+    cp.on('exit', (exitCode = null, signal = null) => {
+        logger.warn('child process exited', { exitCode, signal, command });
+
+        if (signal === null) {
+            if (Date.now() > maturityTime) {
+                restartCount += 1;
+                if (restartCount <= SUBPROCESS_RESTART_LIMIT) {
+                    logger.log('will restart child process', { command });
+                    startSubProcess(command, restartCount);
+                } else {
+                    // Need to limit the number of allowed restarts to avoid infinite recursion.
+                    logger.log(
+                        'will not restart child process; reached restart limit',
+                        { command, limit: SUBPROCESS_RESTART_LIMIT }
+                    );
+                }
+            } else {
+                // Need to limit the number of allowed restarts to avoid infinite recursion.
+                logger.log(
+                    'will not restart child process; process did not reach maturity',
+                    { command, maturityThreshold: SUBPROCESS_MATURITY_MS }
+                );
+            }
+        } else if (destroyed) {
+            logger.log(
+                'will not restart child process; parent process destroyed',
+                { command, signal, exitCode }
+            );
+        } else {
+            logger.log(
+                'will not restart child process; killed with signal',
+                { command, signal, exitCode }
+            );
+        }
+    });
+
+    // Pipe child process stdout and stderr to this process stdout and stderr.
 
     cp.stdout.on('data', (chunk) => {
         process.stdout.write(chunk);
@@ -133,14 +197,29 @@ function startSubProcess(command) {
     cp.stderr.on('data', (chunk) => {
         process.stderr.write(chunk);
     });
+
+    return cp;
 }
 
 function startEncryptedServer(config) {
     const server = https.createServer({ SNICallback: sniCallback });
 
+    const handleRequest = createHttpRequestHandler({
+        logger,
+        vhostsByHostname: VHOSTS_BY_HOSTNAME,
+    });
+
     // In a Server Name Indication scheme (SNI) the servername is the hostname on the request.
     function sniCallback(servername, callback) {
         logger.log('server name indication callback', { servername });
+
+        // Uncomment for testing.
+        // An Error here, without using the provided callback, will crash the server.
+        // throw new Error('Test SNI Error');
+
+        // Uncomment for testing.
+        // It is possible to exit the process from here. The following call will succeed:
+        // closeServersAndExit();
 
         let context;
         try {
@@ -155,39 +234,6 @@ function startEncryptedServer(config) {
         if (context) {
             callback(null, context);
         }
-    }
-
-    function handleRequest(req, res) {
-        const { method } = req;
-        const host = req.headers.host;
-        const href = `https://${ host }${ req.url }`;
-
-        logger.log('request', { method, href });
-
-        if (!isNonEmptyString(host)) {
-            logger.log('invalid request host', { host });
-            sendInvalidHostResponse(req, res);
-            return;
-        }
-
-        let url;
-        try {
-            url = createFullUrl('https', host, req.url);
-        } catch (error) {
-            logger.debug('invalid request url', { url: req.url, error });
-            sendInvalidUrlResponse(req, res);
-            return;
-        }
-
-        const vhost = VHOSTS_BY_HOSTNAME.get(url.hostname);
-
-        if (!vhost) {
-            logger.log('host not available', { hostname: url.hostname });
-            sendNotFoundHostResponse(req, res);
-            return;
-        }
-
-        proxyRequest(req, res, 'https', vhost.port);
     }
 
     server.on('error', (error) => {
@@ -210,38 +256,10 @@ function startEncryptedServer(config) {
 function startUencryptedServer(config) {
     const server = http.createServer();
 
-    function handleRequest(req, res) {
-        const { method } = req;
-        const host = req.headers.host;
-        const href = `http://${ host }${ req.url }`;
-
-        logger.log('request', { method, href });
-
-        if (!isNonEmptyString(host)) {
-            logger.log('invalid request host', { host });
-            sendInvalidHostResponse(req, res);
-            return;
-        }
-
-        let url;
-        try {
-            url = createFullUrl('http', host, req.url);
-        } catch (error) {
-            logger.debug('invalid request url', { url: req.url, error });
-            sendInvalidUrlResponse(req, res);
-            return;
-        }
-
-        const vhost = VHOSTS_BY_HOSTNAME.get(url.hostname);
-
-        if (!vhost) {
-            logger.log('host not available', { hostname: url.hostname });
-            sendNotFoundHostResponse(req, res);
-            return;
-        }
-
-        proxyRequest(req, res, 'http', vhost.port);
-    }
+    const handleRequest = createHttpRequestHandler({
+        logger,
+        vhostsByHostname: VHOSTS_BY_HOSTNAME,
+    });
 
     server.on('error', (error) => {
         logger.error('unencrypted server error event', { error });
@@ -260,149 +278,37 @@ function startUencryptedServer(config) {
     return server;
 }
 
-function createFullUrl(protocol, host, pathname) {
-    decodeURIComponent(pathname);
-
-    if (DISALLOWED_URL_CHARACTERS.test(pathname)) {
-        throw new TypeError('Disallowed characters in request URL');
-    }
-
-    // Parse the URL.
-    return new URL(pathname, `${ protocol }://${ host }`);
-}
-
-function proxyRequest(req, res, protocol, port) {
-
-    const headers = Object.assign({}, req.headers);
-
-    headers['x-forwarded-host'] = headers.host;
-    headers['x-forwarded-proto'] = protocol;
-
-    const options = {
-        method: req.method,
-        port,
-        path: req.url,
-        headers,
-    };
-
-    req.once('error', (error) => {
-        logger.error('edge request error event', { error });
-    });
-
-    res.once('error', (error) => {
-        logger.error('edge response error event', { error });
-    });
-
-    const request = http.request(options, (response) => {
-        response.once('error', (error) => {
-            logger.error('proxy response error event', { error });
-            if (!res.headersSent) {
-                sendBadGateway(req, res);
-            }
-        });
-
-        res.writeHead(response.statusCode, response.statusMessage, response.headers);
-
-        response.pipe(res);
-    });
-
-    request.once('error', (error) => {
-        logger.error('proxy request error event', { error });
-        if (!res.headersSent) {
-            sendGatewayTimeout(req, res);
-        }
-    });
-
-    req.pipe(request);
-}
-
-function sendInvalidHostResponse(req, res) {
-    const body = 'Bad Request: Invalid host request header\n';
-
-    res.writeHead(400, 'Bad Request', {
-        'content-type': 'text/plain; charset=UTF-8',
-        'content-length': Buffer.byteLength(body),
-    });
-
-    res.end(body);
-}
-
-function sendInvalidUrlResponse(req, res) {
-    const body = 'Bad Request: Invalid URL\n';
-
-    res.writeHead(400, 'Bad Request', {
-        'content-type': 'text/plain; charset=UTF-8',
-        'content-length': Buffer.byteLength(body),
-    });
-
-    res.end(body);
-}
-
-function sendNotFoundHostResponse(req, res) {
-    const body = 'Not Found: Host not found\n';
-
-    res.writeHead(404, 'Not Found', {
-        'content-type': 'text/plain; charset=UTF-8',
-        'content-length': Buffer.byteLength(body),
-    });
-
-    res.end(body);
-}
-
-function sendGatewayTimeout(req, res) {
-    const body = 'No response from origin server\n';
-
-    res.writeHead(504, 'Gateway Timeout', {
-        'content-type': 'text/plain; charset=UTF-8',
-        'content-length': Buffer.byteLength(body),
-    });
-
-    res.end(body);
-}
-
-function sendBadGateway(req, res) {
-    const body = 'Error from origin server\n';
-
-    res.writeHead(502, 'Bad Gateway', {
-        'content-type': 'text/plain; charset=UTF-8',
-        'content-length': Buffer.byteLength(body),
-    });
-
-    res.end(body);
-}
-
 function closeServersAndExit() {
     logger.log('closing servers and exiting');
 
-    const closed = Promise.all([
-        closeServer(encryptedServer),
-        closeServer(unencryptedServer),
-    ]);
+    // Set the `destroyed` flag to prevent any other processes or operations from starting.
+    destroyed = true;
 
-    closed.finally(() => {
-        process.exit(1);
+    servers.forEach((server) => {
+        server.close();
+        server.closeAllConnections();
     });
+
+    for (const proc of subProcesses) {
+        proc.kill();
+    }
+
+    // Even though we call .closeAllConnections() on the servers, we still need to
+    // destroy open sockets. This seems contrary to expectations, but have not
+    // dug into the details of why it is required.
+    for (const socket of openSockets.values()) {
+        socket.destroy();
+    }
+
+    // If everything is shut down and destroyed properly, we should
+    // not need to call process.exit().
+    // process.exit(1);
 }
 
-function closeServer(server) {
-    return new Promise((resolve, reject) => {
-
-        server.on('error', (error) => {
-            reject(error);
-        });
-
-        server.on('close', () => {
-            // Allow some time for the server to shut down.
-            setTimeout(() => {
-                resolve(true);
-            }, 100);
-        });
-
-        server.close(() => {
-            server.closeAllConnections();
-        });
-    });
-}
+process.on('uncaughtException', (error, origin) => {
+    logger.error('uncaught exception', { origin, error });
+    closeServersAndExit();
+});
 
 main().catch((error) => {
     console.log('Error starting servers:');// eslint-disable-line no-console
