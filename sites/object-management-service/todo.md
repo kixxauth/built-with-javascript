@@ -10,7 +10,7 @@ TODO
 - [x] Redirect admin and write server API endpoints to https:
 - [x] Implement the origin server endpoint.
 - [x] Use default LastModified date in RemoteObject.updateFromS3Put()
-- [ ] Handle written objects with no key (only a filename).
+- [x] Handle written objects with no key (only a filename).
 - [ ] Include processed video endpoints in WriteServer response.
 - [ ] Set the environment when starting the server.
 - [ ] Validate the scope and key URL pathname parts to ensure safety and naming rules.

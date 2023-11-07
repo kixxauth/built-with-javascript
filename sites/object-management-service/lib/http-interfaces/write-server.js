@@ -11,6 +11,11 @@ import {
 const { assert } = KixxAssert;
 
 
+function filterFalsy(x) {
+    return Boolean(x);
+}
+
+
 export default class WriteServer {
 
     #config = null;
@@ -164,9 +169,25 @@ export default class WriteServer {
         const pathname = keyParts.join('/');
         const imgixBaseURL = this.#config.application.getImgixBaseURL();
 
+        const originPath = [
+            host,
+            'origin',
+            scope.id,
+            pathname,
+            'latest',
+            filename,
+        ].filter(filterFalsy).join('/');
+
+        const cdnPath = [
+            scope.id,
+            pathname,
+            'latest',
+            filename,
+        ].filter(filterFalsy).join('/');
+
         data.links = {
-            origin: `${ protocol }//${ host }/origin/${ scope.id }/${ pathname }/latest/${ filename }`,
-            cdn: `${ imgixBaseURL }/${ scope.id }/${ pathname }/latest/${ filename }`,
+            origin: `${ protocol }//${ originPath }`,
+            cdn: `${ imgixBaseURL }/${ cdnPath }`,
         };
 
         return response.respondWithJSON(status, { data });
