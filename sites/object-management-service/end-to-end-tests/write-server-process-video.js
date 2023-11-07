@@ -28,10 +28,10 @@ function main() {
     // eslint-disable-next-line no-console
     console.log('Uploading the test video.');
     uploadObject((req, utf8, json) => {
-        if (!json.data) {
-            // eslint-disable-next-line no-console
-            console.log('Response JSON => ', json);
-        }
+        /* eslint-disable no-console */
+        console.log('Response JSON:');
+        console.log(JSON.stringify(json, null, 4));
+        /* eslint-enable no-console */
 
         id = json.data.id;
         md5Hash = json.data.md5Hash;

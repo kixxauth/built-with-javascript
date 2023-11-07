@@ -127,7 +127,9 @@ export default class RemoteObject {
         const version = result.VersionId;
         const contentType = result.ContentType;
         const contentLength = result.ContentLength;
-        const lastModifiedDate = result.LastModified.toISOString();
+
+        const date = result.LastModified || new Date();
+        const lastModifiedDate = date.toISOString();
 
         return new RemoteObject(Object.assign({}, this, {
             version,
