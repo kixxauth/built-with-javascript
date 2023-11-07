@@ -2,7 +2,7 @@
  * This script requires:
  * - The database to be seeded to allow authentication to the write server.
  * - A file in `./tmp/image.jpg` to be uploaded to S3.
- * - The testing-123/foo/video.jpg object must be removed from S3.
+ * - The testing-123/foo/image.jpg object must be removed from S3.
  */
 import fs from 'node:fs';
 import path from 'node:path';

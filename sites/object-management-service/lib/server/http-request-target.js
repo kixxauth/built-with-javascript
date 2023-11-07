@@ -57,11 +57,15 @@ export default class HTTPRequestTarget {
 
         res.writeHead(status, statusMessage, headersToObject(headers));
 
-        // If the body is a stream which can be piped, then pipe it.
-        if (isFunction(body.pipe)) {
-            body.pipe(res);
+        if (body) {
+            // If the body is a stream which can be piped, then pipe it.
+            if (isFunction(body.pipe)) {
+                body.pipe(res);
+            } else {
+                res.end(body);
+            }
         } else {
-            res.end(body);
+            res.end();
         }
     }
 

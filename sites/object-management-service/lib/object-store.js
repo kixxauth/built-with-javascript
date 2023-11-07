@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import {
+    S3Client,
+    GetObjectCommand,
+    PutObjectCommand,
+    HeadObjectCommand } from '@aws-sdk/client-s3';
 import { KixxAssert } from '../dependencies.js';
 
 
@@ -120,7 +124,7 @@ export default class ObjectStore {
                 Key: key,
             });
         } catch (error) {
-            if (error.name === '403') {
+            if (error.name === '403' || error.name === 'AccessDenied') {
                 this.#logger.log('fetch object head; not found', { bucket, key });
                 return null;
             }
@@ -149,7 +153,7 @@ export default class ObjectStore {
         try {
             result = await this.awsGetObjectCommand(options);
         } catch (error) {
-            if (error.name === '403') {
+            if (error.name === '403' || error.name === 'AccessDenied') {
                 this.#logger.log('fetch object; not found', { bucket, key });
                 return null;
             }
@@ -159,6 +163,14 @@ export default class ObjectStore {
         const newObject = obj.updateFromS3Object(result);
 
         return [ newObject, result.Body ];
+    }
+
+    /**
+     * @private
+     */
+    awsGetObjectCommand(options) {
+        const command = new GetObjectCommand(options);
+        return this.#s3Client.send(command);
     }
 
     /**
