@@ -105,7 +105,7 @@ export default class ObjectStore {
 
         this.#logger.log('put object; uploaded', { bucket, key, id });
 
-        return obj.updateFromS3Put(result);
+        return obj.updateFromS3(result);
     }
 
     /**
@@ -131,7 +131,7 @@ export default class ObjectStore {
             throw error;
         }
 
-        return obj.updateFromS3Head(result);
+        return obj.updateFromS3(result);
     }
 
     async fetchObject(obj) {
@@ -160,7 +160,7 @@ export default class ObjectStore {
             throw error;
         }
 
-        const newObject = obj.updateFromS3Object(result);
+        const newObject = obj.updateFromS3(result);
 
         return [ newObject, result.Body ];
     }

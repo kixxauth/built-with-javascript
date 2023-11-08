@@ -65,6 +65,14 @@ export default class RemoteObject {
                 enumerable: true,
                 value: spec.filepath,
             },
+            mediaOutputFormat: {
+                enumerable: true,
+                value: spec.mediaOutputFormat || null,
+            },
+            mediaOutputResourceKey: {
+                enumerable: true,
+                value: spec.mediaOutputResourceKey || null,
+            },
         });
     }
 
@@ -92,14 +100,36 @@ export default class RemoteObject {
     /**
      * @public
      */
-    updateFromS3Head(result) {
-        const id = result.Metadata.id;
-        const version = result.VersionId;
+    setStorageClass(storageClass) {
+        const spec = Object.assign({}, this, {
+            storageClass: storageClass || ALLOWED_STORAGE_CLASSES[0],
+        });
+        return new RemoteObject(spec);
+    }
+
+    /**
+     * @public
+     */
+    setContentType(contentType) {
+        const spec = Object.assign({}, this, { contentType });
+        return new RemoteObject(spec);
+    }
+
+    /**
+     * @public
+     */
+    updateFromS3(result) {
+        const id = (result.Metadata || {}).id || this.id;
+        const version = result.VersionId || this.version;
+
         // Remove the double quotes if they exist.
-        const md5Hash = result.ETag.replace(/^"|"$/g, '');
-        const lastModifiedDate = result.LastModified.toISOString();
-        const contentType = result.ContentType;
-        const contentLength = result.ContentLength;
+        const md5Hash = (result.ETag || '').replace(/^"|"$/g, '') || this.md5Hash;
+
+        const contentType = result.ContentType || this.contentType;
+        const contentLength = parseInt(result.ContentLength || this.contentLength, 10) || null;
+
+        const date = result.LastModified || new Date();
+        const lastModifiedDate = date.toISOString();
 
         const spec = Object.assign({}, this, {
             id,
@@ -116,26 +146,12 @@ export default class RemoteObject {
     /**
      * @public
      */
-    updateFromS3Object(result) {
-        return this.updateFromS3Head(result);
-    }
-
-    /**
-     * @public
-     */
-    updateFromS3Put(result) {
-        const version = result.VersionId;
-        const contentType = result.ContentType;
-        const contentLength = result.ContentLength;
-
-        const date = result.LastModified || new Date();
-        const lastModifiedDate = date.toISOString();
+    updateFromMediaConvertJob(job) {
+        const { mediaOutputFormat, mediaOutputResourceKey } = job;
 
         return new RemoteObject(Object.assign({}, this, {
-            version,
-            contentType,
-            contentLength,
-            lastModifiedDate,
+            mediaOutputFormat,
+            mediaOutputResourceKey,
         }));
     }
 
@@ -162,16 +178,6 @@ export default class RemoteObject {
         );
 
         return fs.createReadStream(this.filepath);
-    }
-
-    /**
-     * @public
-     */
-    setStorageClass(storageClass) {
-        const spec = Object.assign({}, this, {
-            storageClass: storageClass || ALLOWED_STORAGE_CLASSES[0],
-        });
-        return new RemoteObject(spec);
     }
 
     /**
@@ -275,12 +281,14 @@ export default class RemoteObject {
             type: this.type,
             id: this.id,
             scopeId: this.scopeId,
-            key: this.key,
-            contentType: this.contentType,
-            storageClass: this.storageClass,
-            md5Hash: this.md5Hash,
-            version: this.version,
-            lastModifiedDate: this.lastModifiedDate,
+            key: this.key || null,
+            contentType: this.contentType || null,
+            storageClass: this.storageClass || null,
+            md5Hash: this.md5Hash || null,
+            version: this.version || null,
+            lastModifiedDate: this.lastModifiedDate || null,
+            mediaOutputFormat: this.mediaOutputFormat || null,
+            mediaOutputResourceKey: this.mediaOutputResourceKey || null,
             // Ignore the filepath property for better security.
         };
     }

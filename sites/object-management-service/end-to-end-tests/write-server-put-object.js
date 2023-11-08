@@ -19,7 +19,6 @@ const {
 
 const SCOPE_ID = 'testing-123';
 const AUTH_TOKEN = '37e70d72-39c9-4db4-a61e-c4af20d093cb';
-const WAIT = 20; // Seconds
 
 function main() {
     let id;
@@ -43,49 +42,55 @@ function main() {
         assertEqual(SCOPE_ID, json.data.scopeId);
         assertEqual('foo/image.jpg', json.data.key);
         assertEqual('image/jpeg', json.data.contentType);
+        assert(isNonEmptyString(json.data.version));
+        assert(isNonEmptyString(json.data.lastModifiedDate));
         assertEqual('STANDARD', json.data.storageClass);
-        assertEqual('http://localhost:3003/origin/testing-123/foo/latest/image.jpg', json.data.links.origin);
-        assertEqual('https://kixx-stage.imgix.net/testing-123/foo/latest/image.jpg', json.data.links.cdn);
+        assertEqual(null, json.data.mediaOutputFormat);
+
         assertEmpty(json.data.filepath);
+
+        assertEqual('http://localhost:3003/origin/testing-123/foo/latest/image.jpg', json.data.links.object.origin);
+        assertEqual('https://kixx-stage.imgix.net/testing-123/foo/latest/image.jpg', json.data.links.object.cdns[0]);
+        assertEqual(null, json.data.links.mediaOutput.origin);
+        assertEmpty(json.data.links.mediaOutput.cdns);
 
         /* eslint-disable no-console */
         console.log('First upload test complete');
         console.log('');
-        console.log('Waiting for', WAIT, 'seconds before next test to avoid race condition.');
         /* eslint-enable no-console */
 
-        // Upload the object the second time, when it already exists in S3.
-        // Use the setTimeout to avoid a race condition where we try to upload the object and immediately
-        // upload it again before it has been saved to S3.
-        setTimeout(() => {
-            // eslint-disable-next-line no-console
-            console.log('Uploading the test object for the second time.');
-            // eslint-disable-next-line no-shadow
-            uploadObject((req, utf8, json) => {
-                /* eslint-disable no-console */
-                console.log('Response JSON:');
-                console.log(JSON.stringify(json, null, 4));
-                /* eslint-enable no-console */
+        // eslint-disable-next-line no-console
+        console.log('Uploading the test object for the second time.');
+        // eslint-disable-next-line no-shadow
+        uploadObject((req, utf8, json) => {
+            /* eslint-disable no-console */
+            console.log('Response JSON:');
+            console.log(JSON.stringify(json, null, 4));
+            /* eslint-enable no-console */
 
-                assertEqual('remote-object', json.data.type);
-                assertEqual(id, json.data.id);
-                assertEqual(SCOPE_ID, json.data.scopeId);
-                assertEqual(md5Hash, json.data.md5Hash);
-                assertEqual('foo/image.jpg', json.data.key);
-                assertEqual('image/jpeg', json.data.contentType);
-                assert(isNonEmptyString(json.data.version));
-                assert(isNonEmptyString(json.data.lastModifiedDate));
-                assertEqual('http://localhost:3003/origin/testing-123/foo/latest/image.jpg', json.data.links.origin);
-                assertEqual('https://kixx-stage.imgix.net/testing-123/foo/latest/image.jpg', json.data.links.cdn);
-                assertEmpty(json.data.filepath);
+            assertEqual('remote-object', json.data.type);
+            assertEqual(id, json.data.id);
+            assertEqual(SCOPE_ID, json.data.scopeId);
+            assertEqual(md5Hash, json.data.md5Hash);
+            assertEqual('foo/image.jpg', json.data.key);
+            assertEqual('image/jpeg', json.data.contentType);
+            assert(isNonEmptyString(json.data.version));
+            assert(isNonEmptyString(json.data.lastModifiedDate));
+            assertEqual(null, json.data.mediaOutputFormat);
 
-                /* eslint-disable no-console */
-                console.log('Second upload test complete');
-                console.log('');
-                console.log('Test Pass :D');
-                /* eslint-enable no-console */
-            });
-        }, WAIT * 1000);
+            assertEmpty(json.data.filepath);
+
+            assertEqual('http://localhost:3003/origin/testing-123/foo/latest/image.jpg', json.data.links.object.origin);
+            assertEqual('https://kixx-stage.imgix.net/testing-123/foo/latest/image.jpg', json.data.links.object.cdns[0]);
+            assertEqual(null, json.data.links.mediaOutput.origin);
+            assertEmpty(json.data.links.mediaOutput.cdns);
+
+            /* eslint-disable no-console */
+            console.log('Second upload test complete');
+            console.log('');
+            console.log('Test Pass :D');
+            /* eslint-enable no-console */
+        });
     });
 }
 

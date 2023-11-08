@@ -11,7 +11,8 @@ TODO
 - [x] Implement the origin server endpoint.
 - [x] Use default LastModified date in RemoteObject.updateFromS3Put()
 - [x] Handle written objects with no key (only a filename).
-- [ ] Include processed video endpoints in WriteServer response.
+- [x] Include processed video endpoints in WriteServer response.
+- [ ] Process a poster thumbnail image for processed videos.
 - [ ] Set the environment when starting the server.
 - [ ] Validate the scope and key URL pathname parts to ensure safety and naming rules.
-- [ ] Solve race condition when uploading an object: Avoid writing an object while a current write is in progress to the same object.
+- [x] Solve race condition when uploading an object: Avoid writing an object while a current write is in progress to the same object.

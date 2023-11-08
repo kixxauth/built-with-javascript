@@ -163,6 +163,8 @@ export default class WriteServer {
         });
 
         const data = remoteObject.toJSON();
+
+        // Create the resource links for this object.
         const { host } = request.url;
         const keyParts = data.key.split('/');
         const filename = keyParts.pop();
@@ -185,9 +187,42 @@ export default class WriteServer {
             filename,
         ].filter(filterFalsy).join('/');
 
+        let mediaOriginPath;
+        let mediaCDNPath;
+
+        // Create the resource links for the output media if applicable.
+        if (data.mediaOutputFormat && data.mediaOutputResourceKey) {
+            const mediaOutputResourceKeyParts = data.mediaOutputResourceKey.split('/');
+            const mediaFilename = mediaOutputResourceKeyParts.pop();
+            const mediaPathname = mediaOutputResourceKeyParts.join('/');
+
+            mediaOriginPath = [
+                host,
+                'origin',
+                scope.id,
+                mediaPathname,
+                'latest',
+                mediaFilename,
+            ].filter(filterFalsy).join('/');
+
+            mediaCDNPath = [
+                scope.id,
+                mediaPathname,
+                'latest',
+                mediaFilename,
+            ].filter(filterFalsy).join('/');
+        }
+
+        // Return the applicable resource links.
         data.links = {
-            origin: `${ protocol }//${ originPath }`,
-            cdn: `${ imgixBaseURL }/${ cdnPath }`,
+            object: {
+                origin: `${ protocol }//${ originPath }`,
+                cdns: [ `${ imgixBaseURL }/${ cdnPath }` ],
+            },
+            mediaOutput: {
+                origin: mediaOriginPath ? `${ protocol }//${ mediaOriginPath }` : null,
+                cdns: mediaCDNPath ? [ `${ imgixBaseURL }/${ mediaCDNPath }` ] : [],
+            },
         };
 
         return response.respondWithJSON(status, { data });

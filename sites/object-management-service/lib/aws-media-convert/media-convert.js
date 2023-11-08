@@ -46,7 +46,11 @@ export default class MediaConvert {
      * @public
      */
     async createMediaConvertJob(obj, params) {
-        const settings = this.createMediaConvertJobSettings(obj, params);
+        const {
+            mediaOutputFormat,
+            mediaOutputResourceKey,
+            settings,
+        } = this.createMediaConvertJobSettings(obj, params);
 
         this.#logger.log('create job', {
             scopeId: obj.scopeId,
@@ -74,6 +78,8 @@ export default class MediaConvert {
             );
         }
 
+        response.job.mediaOutputFormat = mediaOutputFormat;
+        response.job.mediaOutputResourceKey = mediaOutputResourceKey;
         return response.job;
     }
 
@@ -86,10 +92,15 @@ export default class MediaConvert {
         assertFalsy(obj.key.startsWith('/'));
         assertFalsy(obj.key.endsWith('/'));
 
+        const outputKey = `${ obj.id }/video`;
         const s3BaseUri = `${ this.#objectStoreS3Bucket }/${ this.#objectStoreEnvironment }/${ obj.scopeId }`;
         const StorageClass = S3_STORAGE_CLASS_MAPPING[obj.storageClass];
 
-        return {
+        // For now we assume we only support MP4 output. In the future this may also be HLS (m3u8).
+        const mediaOutputFormat = 'MP4_H264_AAC';
+        const mediaOutputResourceKey = `${ outputKey }.mp4`;
+
+        const settings = {
             Role: this.#awsMediaConvertRole,
             Settings: {
                 TimecodeConfig: {
@@ -112,7 +123,7 @@ export default class MediaConvert {
                         OutputGroupSettings: {
                             Type: 'FILE_GROUP_SETTINGS',
                             FileGroupSettings: {
-                                Destination: `s3://${ s3BaseUri }/${ obj.id }/video`,
+                                Destination: `s3://${ s3BaseUri }/${ outputKey }`,
                                 DestinationSettings: {
                                     S3Settings: { StorageClass },
                                 },
@@ -159,5 +170,7 @@ export default class MediaConvert {
                 ],
             },
         };
+
+        return { mediaOutputFormat, mediaOutputResourceKey, settings };
     }
 }

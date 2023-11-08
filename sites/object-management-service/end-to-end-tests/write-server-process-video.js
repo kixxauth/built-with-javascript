@@ -43,7 +43,14 @@ function main() {
         assertEqual('video.mov', json.data.key);
         assertEqual('video/quicktime', json.data.contentType);
         assertEqual('STANDARD', json.data.storageClass);
+        assertEqual('MP4_H264_AAC', json.data.mediaOutputFormat);
+
         assertEmpty(json.data.filepath);
+
+        assertEqual('http://localhost:3003/origin/testing-123/latest/video.mov', json.data.links.object.origin);
+        assertEqual('https://kixx-stage.imgix.net/testing-123/latest/video.mov', json.data.links.object.cdns[0]);
+        assertEqual(`http://localhost:3003/origin/testing-123/${ id }/latest/video.mp4`, json.data.links.mediaOutput.origin);
+        assertEqual(`https://kixx-stage.imgix.net/testing-123/${ id }/latest/video.mp4`, json.data.links.mediaOutput.cdns[0]);
 
         /* eslint-disable no-console */
         console.log('Upload complete');

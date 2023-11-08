@@ -81,10 +81,11 @@ export default class WriteObjectJob {
 
         remoteObject = remoteObject
             .incorporateLocalObject(nextLocalObject)
-            // The storage class is not returned as part of an AWS S3 head request, so
-            // the nextRemoteObject will not have it. Therefore, we set storageClass
+            // The contentType and storage class is not returned as part of an AWS S3 head request, so
+            // the nextRemoteObject will not have it. Therefore, we set contentType and storageClass
             // here, after fetching the head, instead of earlier, before fetching the head.
-            .setStorageClass(storageClass);
+            .setStorageClass(storageClass)
+            .setContentType(contentType);
 
         // Only create a media processing job if the object represents a video source AND
         // video processing parameters have been passed.
@@ -114,36 +115,30 @@ export default class WriteObjectJob {
             storageClass: remoteObject.storageClass,
         });
 
-        // Upload and process the video asynchronously in the background.
-        // Return the HTTP response after saving the object to disk (above in localObjectStore).
-        this.#objectStore.put(remoteObject)
-            .then((completedRemoteObject) => {
-                if (processVideo) {
-                    return this.createVideoProcessingJob(completedRemoteObject, videoProcessingParams);
-                }
+        // Uploading the object to S3 and creating the MediaConvert job does take some time, making
+        // this request/response cycle a long one. However, running the request as a complete
+        // transaction simplifies the logic for both the server and clients.
+        //
+        // Also, note that we don't wait for the MediaConvert job to complete.
 
-                return completedRemoteObject;
-            })
-            .then((completedRemoteObject) => {
-                this.#logger.log('background job complete', {
-                    requestId,
-                    scopeId: completedRemoteObject.scopeId,
-                    id: completedRemoteObject.id,
-                    key: completedRemoteObject.key,
-                });
-            })
-            .catch((error) => {
-                this.#logger.error('background job error', {
-                    requestId,
-                    scopeId: remoteObject.scopeId,
-                    id: remoteObject.id,
-                    key: remoteObject.key,
-                    error,
-                });
-            })
-            .finally(() => {
-                return this.#localObjectStore.removeStoredObject(nextLocalObject);
+        // Upload the object to S3.
+        // eslint-disable-next-line require-atomic-updates
+        remoteObject = await this.#objectStore.put(remoteObject);
+
+        // Remove the locally stored object after it has been uploaded.
+        await this.#localObjectStore.removeStoredObject(nextLocalObject);
+
+        if (processVideo) {
+            this.#logger.log('process object as video', {
+                requestId,
+                scopeId: remoteObject.scopeId,
+                id: remoteObject.id,
+                key: remoteObject.key,
             });
+
+            // eslint-disable-next-line require-atomic-updates
+            remoteObject = await this.createVideoProcessingJob(remoteObject, videoProcessingParams);
+        }
 
         return [ 201, remoteObject ];
     }
@@ -171,7 +166,7 @@ export default class WriteObjectJob {
             jobId: job.id,
         });
 
-        return remoteObject;
+        return remoteObject.updateFromMediaConvertJob(job);
     }
 
     /**
