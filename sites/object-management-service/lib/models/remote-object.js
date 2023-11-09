@@ -65,13 +65,9 @@ export default class RemoteObject {
                 enumerable: true,
                 value: spec.filepath,
             },
-            mediaOutputFormat: {
+            mediaOutput: {
                 enumerable: true,
-                value: spec.mediaOutputFormat || null,
-            },
-            mediaOutputResourceKey: {
-                enumerable: true,
-                value: spec.mediaOutputResourceKey || null,
+                value: spec.mediaOutput,
             },
         });
     }
@@ -147,12 +143,7 @@ export default class RemoteObject {
      * @public
      */
     updateFromMediaConvertJob(job) {
-        const { mediaOutputFormat, mediaOutputResourceKey } = job;
-
-        return new RemoteObject(Object.assign({}, this, {
-            mediaOutputFormat,
-            mediaOutputResourceKey,
-        }));
+        return new RemoteObject(Object.assign({}, this, { mediaOutput: job.output }));
     }
 
     /**
@@ -287,8 +278,7 @@ export default class RemoteObject {
             md5Hash: this.md5Hash || null,
             version: this.version || null,
             lastModifiedDate: this.lastModifiedDate || null,
-            mediaOutputFormat: this.mediaOutputFormat || null,
-            mediaOutputResourceKey: this.mediaOutputResourceKey || null,
+            mediaOutput: this.mediaOutput || null,
             // Ignore the filepath property for better security.
         };
     }

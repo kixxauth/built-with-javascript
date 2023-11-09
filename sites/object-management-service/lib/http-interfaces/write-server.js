@@ -189,27 +189,44 @@ export default class WriteServer {
 
         let mediaOriginPath;
         let mediaCDNPath;
+        let mediaPosterOriginPath;
+        let mediaPosterCDNPath;
+
+        const { mediaOutput } = data;
 
         // Create the resource links for the output media if applicable.
-        if (data.mediaOutputFormat && data.mediaOutputResourceKey) {
-            const mediaOutputResourceKeyParts = data.mediaOutputResourceKey.split('/');
-            const mediaFilename = mediaOutputResourceKeyParts.pop();
-            const mediaPathname = mediaOutputResourceKeyParts.join('/');
-
+        if (mediaOutput) {
             mediaOriginPath = [
                 host,
                 'origin',
                 scope.id,
-                mediaPathname,
+                mediaOutput.pathname,
                 'latest',
-                mediaFilename,
+                mediaOutput.videoFilename,
             ].filter(filterFalsy).join('/');
 
             mediaCDNPath = [
                 scope.id,
-                mediaPathname,
+                mediaOutput.pathname,
                 'latest',
-                mediaFilename,
+                mediaOutput.videoFilename,
+            ].filter(filterFalsy).join('/');
+
+            // Assume that if there is media output there is also a media poster output (JPEG image).
+            mediaPosterOriginPath = [
+                host,
+                'origin',
+                scope.id,
+                mediaOutput.pathname,
+                'latest',
+                mediaOutput.posterFilename,
+            ].filter(filterFalsy).join('/');
+
+            mediaPosterCDNPath = [
+                scope.id,
+                mediaOutput.pathname,
+                'latest',
+                mediaOutput.posterFilename,
             ].filter(filterFalsy).join('/');
         }
 
@@ -219,9 +236,13 @@ export default class WriteServer {
                 origin: `${ protocol }//${ originPath }`,
                 cdns: [ `${ imgixBaseURL }/${ cdnPath }` ],
             },
-            mediaOutput: {
+            mediaResource: {
                 origin: mediaOriginPath ? `${ protocol }//${ mediaOriginPath }` : null,
                 cdns: mediaCDNPath ? [ `${ imgixBaseURL }/${ mediaCDNPath }` ] : [],
+            },
+            mediaPoster: {
+                origin: mediaPosterOriginPath ? `${ protocol }//${ mediaPosterOriginPath }` : null,
+                cdns: mediaPosterCDNPath ? [ `${ imgixBaseURL }/${ mediaPosterCDNPath }` ] : [],
             },
         };
 

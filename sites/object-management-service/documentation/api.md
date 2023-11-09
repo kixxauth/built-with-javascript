@@ -42,7 +42,8 @@ Base64 encode the JSON string. These are the defaults:
     "type": "MP4_H264_AAC", // Required
     "video": {
         "height": 480, // Default
-        "qualityLevel": 7 // Default
+        "qualityLevel": 7, // Default
+        "maxBitrate": 1000000 // Default
     },
     "audio": {}
 }

@@ -199,10 +199,16 @@ export default class WriteObjectJob {
                 } else {
                     params.video.qualityLevel = 7;
                 }
+                if (params.video.maxBitrate) {
+                    if (!isNumberNotNaN(params.video.maxBitrate) || params.video.maxBitrate < 100000 || params.video.maxBitrate > 9000000) {
+                        error.push('Video processing video.maxBitrate must be a number from 100,000 to 9,000,000', '.video.maxBitrate');
+                    }
+                }
             } else {
                 params.video = {
                     height: 480,
                     qualityLevel: 7,
+                    maxBitrate: 1000000,
                 };
             }
 

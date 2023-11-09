@@ -47,8 +47,7 @@ export default class MediaConvert {
      */
     async createMediaConvertJob(obj, params) {
         const {
-            mediaOutputFormat,
-            mediaOutputResourceKey,
+            output,
             settings,
         } = this.createMediaConvertJobSettings(obj, params);
 
@@ -78,8 +77,7 @@ export default class MediaConvert {
             );
         }
 
-        response.job.mediaOutputFormat = mediaOutputFormat;
-        response.job.mediaOutputResourceKey = mediaOutputResourceKey;
+        response.job.output = output;
         return response.job;
     }
 
@@ -92,13 +90,18 @@ export default class MediaConvert {
         assertFalsy(obj.key.startsWith('/'));
         assertFalsy(obj.key.endsWith('/'));
 
-        const outputKey = `${ obj.id }/video`;
         const s3BaseUri = `${ this.#objectStoreS3Bucket }/${ this.#objectStoreEnvironment }/${ obj.scopeId }`;
         const StorageClass = S3_STORAGE_CLASS_MAPPING[obj.storageClass];
+        // The output object will be stored at `${object.id}/${filename}`
+        const pathname = obj.id;
+        const filename = 'video';
 
-        // For now we assume we only support MP4 output. In the future this may also be HLS (m3u8).
-        const mediaOutputFormat = 'MP4_H264_AAC';
-        const mediaOutputResourceKey = `${ outputKey }.mp4`;
+        const output = {
+            format: params.type,
+            pathname,
+            videoFilename: `${ filename }.mp4`,
+            posterFilename: `${ filename }.0000000.jpg`,
+        };
 
         const settings = {
             Role: this.#awsMediaConvertRole,
@@ -122,7 +125,7 @@ export default class MediaConvert {
                         OutputGroupSettings: {
                             Type: 'FILE_GROUP_SETTINGS',
                             FileGroupSettings: {
-                                Destination: `s3://${ s3BaseUri }/${ outputKey }`,
+                                Destination: `s3://${ s3BaseUri }/${ pathname }/${ filename }`,
                                 DestinationSettings: {
                                     S3Settings: { StorageClass },
                                 },
@@ -140,7 +143,7 @@ export default class MediaConvert {
                                             //   https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html#qvbr-guidelines
                                             RateControlMode: 'QVBR',
                                             SceneChangeDetect: 'TRANSITION_DETECTION',
-                                            MaxBitrate: 1000000,
+                                            MaxBitrate: params.video.maxBitrate,
                                             QvbrSettings: {
                                                 QvbrQualityLevel: params.video.qualityLevel,
                                             },
@@ -186,6 +189,6 @@ export default class MediaConvert {
             },
         };
 
-        return { mediaOutputFormat, mediaOutputResourceKey, settings };
+        return { settings, output };
     }
 }

@@ -45,14 +45,14 @@ function main() {
         assert(isNonEmptyString(json.data.version));
         assert(isNonEmptyString(json.data.lastModifiedDate));
         assertEqual('STANDARD', json.data.storageClass);
-        assertEqual(null, json.data.mediaOutputFormat);
+        assertEqual(null, json.data.mediaOutput);
 
         assertEmpty(json.data.filepath);
 
         assertEqual('http://localhost:3003/origin/testing-123/foo/latest/image.jpg', json.data.links.object.origin);
         assertEqual('https://kixx-stage.imgix.net/testing-123/foo/latest/image.jpg', json.data.links.object.cdns[0]);
-        assertEqual(null, json.data.links.mediaOutput.origin);
-        assertEmpty(json.data.links.mediaOutput.cdns);
+        assertEqual(null, json.data.links.mediaResource.origin);
+        assertEmpty(json.data.links.mediaResource.cdns);
 
         /* eslint-disable no-console */
         console.log('First upload test complete');
@@ -76,14 +76,14 @@ function main() {
             assertEqual('image/jpeg', json.data.contentType);
             assert(isNonEmptyString(json.data.version));
             assert(isNonEmptyString(json.data.lastModifiedDate));
-            assertEqual(null, json.data.mediaOutputFormat);
+            assertEqual(null, json.data.mediaOutput);
 
             assertEmpty(json.data.filepath);
 
             assertEqual('http://localhost:3003/origin/testing-123/foo/latest/image.jpg', json.data.links.object.origin);
             assertEqual('https://kixx-stage.imgix.net/testing-123/foo/latest/image.jpg', json.data.links.object.cdns[0]);
-            assertEqual(null, json.data.links.mediaOutput.origin);
-            assertEmpty(json.data.links.mediaOutput.cdns);
+            assertEqual(null, json.data.links.mediaResource.origin);
+            assertEmpty(json.data.links.mediaResource.cdns);
 
             /* eslint-disable no-console */
             console.log('Second upload test complete');
