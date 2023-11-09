@@ -119,7 +119,6 @@ export default class MediaConvert {
                 OutputGroups: [
                     {
                         Name: 'File Group',
-                        CustomName: obj.id,
                         OutputGroupSettings: {
                             Type: 'FILE_GROUP_SETTINGS',
                             FileGroupSettings: {
@@ -131,6 +130,7 @@ export default class MediaConvert {
                         },
                         Outputs: [
                             {
+                                Extension: 'mp4',
                                 VideoDescription: {
                                     Height: params.video.height,
                                     CodecSettings: {
@@ -163,6 +163,21 @@ export default class MediaConvert {
                                 ContainerSettings: {
                                     Container: 'MP4',
                                     Mp4Settings: {},
+                                },
+                            },
+                            {
+                                Extension: 'jpg',
+                                VideoDescription: {
+                                    CodecSettings: {
+                                        Codec: 'FRAME_CAPTURE',
+                                        FrameCaptureSettings: {
+                                            // Captures the first frame of video.
+                                            MaxCaptures: 1,
+                                        },
+                                    },
+                                },
+                                ContainerSettings: {
+                                    Container: 'RAW',
                                 },
                             },
                         ],
