@@ -41,6 +41,10 @@ export default class RemoteObject {
                 enumerable: true,
                 value: spec.contentType,
             },
+            contentLength: {
+                enumerable: true,
+                value: spec.contentLength,
+            },
             storageClass: {
                 enumerable: true,
                 value: spec.storageClass,
@@ -60,6 +64,10 @@ export default class RemoteObject {
             filepath: {
                 enumerable: true,
                 value: spec.filepath,
+            },
+            mediaOutput: {
+                enumerable: true,
+                value: spec.mediaOutput,
             },
         });
     }
@@ -88,18 +96,44 @@ export default class RemoteObject {
     /**
      * @public
      */
-    updateFromS3Head(result) {
-        const id = result.Metadata.id;
-        const version = result.VersionId;
+    setStorageClass(storageClass) {
+        const spec = Object.assign({}, this, {
+            storageClass: storageClass || ALLOWED_STORAGE_CLASSES[0],
+        });
+        return new RemoteObject(spec);
+    }
+
+    /**
+     * @public
+     */
+    setContentType(contentType) {
+        const spec = Object.assign({}, this, { contentType });
+        return new RemoteObject(spec);
+    }
+
+    /**
+     * @public
+     */
+    updateFromS3(result) {
+        const id = (result.Metadata || {}).id || this.id;
+        const version = result.VersionId || this.version;
+
         // Remove the double quotes if they exist.
-        const md5Hash = result.ETag.replace(/^"|"$/g, '');
-        const lastModifiedDate = result.LastModified.toISOString();
+        const md5Hash = (result.ETag || '').replace(/^"|"$/g, '') || this.md5Hash;
+
+        const contentType = result.ContentType || this.contentType;
+        const contentLength = parseInt(result.ContentLength || this.contentLength, 10) || null;
+
+        const date = result.LastModified || new Date();
+        const lastModifiedDate = date.toISOString();
 
         const spec = Object.assign({}, this, {
             id,
             md5Hash,
             version,
             lastModifiedDate,
+            contentType,
+            contentLength,
         });
 
         return new RemoteObject(spec);
@@ -108,9 +142,8 @@ export default class RemoteObject {
     /**
      * @public
      */
-    updateFromS3Put(result) {
-        const version = result.VersionId;
-        return new RemoteObject(Object.assign({}, this, { version }));
+    updateFromMediaConvertJob(job) {
+        return new RemoteObject(Object.assign({}, this, { mediaOutput: job.output }));
     }
 
     /**
@@ -141,16 +174,6 @@ export default class RemoteObject {
     /**
      * @public
      */
-    setStorageClass(storageClass) {
-        const spec = Object.assign({}, this, {
-            storageClass: storageClass || ALLOWED_STORAGE_CLASSES[0],
-        });
-        return new RemoteObject(spec);
-    }
-
-    /**
-     * @public
-     */
     validateForFetchHead() {
         const vError = new ValidationError('Invalid RemoteObject');
         this.#validateKey(vError);
@@ -168,6 +191,18 @@ export default class RemoteObject {
         this.#validateId(vError);
         this.#validateKey(vError);
         this.#validateStorageClass(vError);
+
+        if (vError.length > 0) {
+            throw vError;
+        }
+    }
+
+    /**
+     * @public
+     */
+    validateForFetch() {
+        const vError = new ValidationError('Invalid RemoteObject');
+        this.#validateKey(vError);
 
         if (vError.length > 0) {
             throw vError;
@@ -237,12 +272,13 @@ export default class RemoteObject {
             type: this.type,
             id: this.id,
             scopeId: this.scopeId,
-            key: this.key,
-            contentType: this.contentType,
-            storageClass: this.storageClass,
-            md5Hash: this.md5Hash,
-            version: this.version,
-            lastModifiedDate: this.lastModifiedDate,
+            key: this.key || null,
+            contentType: this.contentType || null,
+            storageClass: this.storageClass || null,
+            md5Hash: this.md5Hash || null,
+            version: this.version || null,
+            lastModifiedDate: this.lastModifiedDate || null,
+            mediaOutput: this.mediaOutput || null,
             // Ignore the filepath property for better security.
         };
     }

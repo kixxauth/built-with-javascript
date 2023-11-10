@@ -19,10 +19,12 @@ export default class AdminRPCTarget {
 
     allowedRPCMethods = Object.freeze([ 'createScopedToken' ]);
 
+    #config = null;
     #logger = null;
     #dataStore = null;
 
-    constructor({ logger, dataStore }) {
+    constructor({ config, logger, dataStore }) {
+        this.#config = config;
         this.#logger = logger.createChild({ name: 'AdminRPCTarget' });
         this.#dataStore = dataStore;
     }
@@ -71,6 +73,15 @@ export default class AdminRPCTarget {
      * @public
      */
     async remoteProcedureCall(request, response) {
+        const { href, protocol } = request.url;
+        const env = this.#config.application.getEnvironment();
+
+        // Redirect http: to https: (NOT in the development environment)
+        if (protocol !== 'https:' && env !== 'development') {
+            const newLocation = href.replace(/^http:/, 'https:');
+            return response.respondWithRedirect(301, newLocation);
+        }
+
         await this.authenticateAdminUser(request);
 
         const jsonResponse = { jsonrpc: '2.0', id: null };

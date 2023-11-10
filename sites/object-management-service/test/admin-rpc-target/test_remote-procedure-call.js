@@ -8,7 +8,52 @@ import { FakeLoggerWrapper } from '../testing-utils.js';
 const { assert, assertEqual } = KixxAssert;
 
 
+class ApplicationConfig {
+    getEnvironment() {
+        return 'testing';
+    }
+}
+
+
 export default async function test_remoteProcedureCall() {
+
+    async function withHTTP() {
+        // Create a Sinon sandbox for stubs isolated to this test.
+        const sandbox = sinon.createSandbox();
+
+        const fakeLoggerWrapper = new FakeLoggerWrapper();
+        const dataStore = {};
+
+        const request = {
+            url: new URL('http://object-management-service.net/admin-rpc'),
+            json: sandbox.stub().throws(new JSONParsingError('TEST_ERROR')),
+        };
+
+        let response = {
+            respondWithRedirect: sandbox.stub().returnsThis(),
+        };
+
+        const subject = new AdminRPCTarget({
+            config: { application: new ApplicationConfig() },
+            logger: fakeLoggerWrapper,
+            dataStore,
+        });
+
+        const { logger } = fakeLoggerWrapper;
+        sandbox.stub(logger, 'error');
+
+        sandbox.stub(subject, 'authenticateAdminUser').returns(Promise.resolve(null));
+        sandbox.stub(subject, 'createScopedToken').returns(Promise.resolve(null));
+
+        response = await subject.remoteProcedureCall(request, response);
+
+        assertEqual(1, response.respondWithRedirect.callCount);
+
+        const [ statusCode, newLocation ] = response.respondWithRedirect.firstCall.args;
+
+        assertEqual(301, statusCode);
+        assertEqual('https://object-management-service.net/admin-rpc', newLocation);
+    }
 
     async function withInvalidJSON() {
         // Create a Sinon sandbox for stubs isolated to this test.
@@ -18,6 +63,7 @@ export default async function test_remoteProcedureCall() {
         const dataStore = {};
 
         const request = {
+            url: new URL('https://object-management-service.net/admin-rpc'),
             json: sandbox.stub().throws(new JSONParsingError('TEST_ERROR')),
         };
 
@@ -26,6 +72,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const subject = new AdminRPCTarget({
+            config: { application: new ApplicationConfig() },
             logger: fakeLoggerWrapper,
             dataStore,
         });
@@ -70,6 +117,7 @@ export default async function test_remoteProcedureCall() {
         const dataStore = {};
 
         const request = {
+            url: new URL('https://object-management-service.net/admin-rpc'),
             json: sandbox.stub().throws(error),
         };
 
@@ -78,6 +126,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const subject = new AdminRPCTarget({
+            config: { application: new ApplicationConfig() },
             logger: fakeLoggerWrapper,
             dataStore,
         });
@@ -129,6 +178,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const request = {
+            url: new URL('https://object-management-service.net/admin-rpc'),
             json: sandbox.stub().returns(Promise.resolve(json)),
         };
 
@@ -137,6 +187,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const subject = new AdminRPCTarget({
+            config: { application: new ApplicationConfig() },
             logger: fakeLoggerWrapper,
             dataStore,
         });
@@ -186,6 +237,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const request = {
+            url: new URL('https://object-management-service.net/admin-rpc'),
             json: sandbox.stub().returns(Promise.resolve(json)),
         };
 
@@ -194,6 +246,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const subject = new AdminRPCTarget({
+            config: { application: new ApplicationConfig() },
             logger: fakeLoggerWrapper,
             dataStore,
         });
@@ -243,6 +296,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const request = {
+            url: new URL('https://object-management-service.net/admin-rpc'),
             json: sandbox.stub().returns(Promise.resolve(json)),
         };
 
@@ -251,6 +305,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const subject = new AdminRPCTarget({
+            config: { application: new ApplicationConfig() },
             logger: fakeLoggerWrapper,
             dataStore,
         });
@@ -302,6 +357,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const request = {
+            url: new URL('https://object-management-service.net/admin-rpc'),
             json: sandbox.stub().returns(Promise.resolve(json)),
         };
 
@@ -310,6 +366,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const subject = new AdminRPCTarget({
+            config: { application: new ApplicationConfig() },
             logger: fakeLoggerWrapper,
             dataStore,
         });
@@ -362,6 +419,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const request = {
+            url: new URL('https://object-management-service.net/admin-rpc'),
             json: sandbox.stub().returns(Promise.resolve(json)),
         };
 
@@ -370,6 +428,7 @@ export default async function test_remoteProcedureCall() {
         };
 
         const subject = new AdminRPCTarget({
+            config: { application: new ApplicationConfig() },
             logger: fakeLoggerWrapper,
             dataStore,
         });
@@ -408,6 +467,7 @@ export default async function test_remoteProcedureCall() {
         sandbox.restore();
     }
 
+    await withHTTP();
     await withInvalidJSON();
     await withJSONBufferingError();
     await withInvalidId();

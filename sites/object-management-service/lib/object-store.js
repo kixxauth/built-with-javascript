@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import {
+    S3Client,
+    GetObjectCommand,
+    PutObjectCommand,
+    HeadObjectCommand } from '@aws-sdk/client-s3';
 import { KixxAssert } from '../dependencies.js';
 
 
@@ -101,7 +105,7 @@ export default class ObjectStore {
 
         this.#logger.log('put object; uploaded', { bucket, key, id });
 
-        return obj.updateFromS3Put(result);
+        return obj.updateFromS3(result);
     }
 
     /**
@@ -120,15 +124,53 @@ export default class ObjectStore {
                 Key: key,
             });
         } catch (error) {
-            if (error.name === '403') {
+            if (error.name === '403' || error.name === 'AccessDenied') {
                 this.#logger.log('fetch object head; not found', { bucket, key });
                 return null;
             }
             throw error;
         }
 
-        this.#logger.log('fetch object head; found', { bucket, key });
-        return obj.updateFromS3Head(result);
+        return obj.updateFromS3(result);
+    }
+
+    async fetchObject(obj) {
+        const bucket = this.#s3BucketName;
+        const key = this.#generateRemoteObjectKey(obj);
+
+        this.#logger.log('fetch object', { bucket, key });
+
+        const options = {
+            Bucket: bucket,
+            Key: key,
+        };
+
+        if (obj.version) {
+            options.VersionId = obj.version;
+        }
+
+        let result;
+        try {
+            result = await this.awsGetObjectCommand(options);
+        } catch (error) {
+            if (error.name === '403' || error.name === 'AccessDenied') {
+                this.#logger.log('fetch object; not found', { bucket, key });
+                return null;
+            }
+            throw error;
+        }
+
+        const newObject = obj.updateFromS3(result);
+
+        return [ newObject, result.Body ];
+    }
+
+    /**
+     * @private
+     */
+    awsGetObjectCommand(options) {
+        const command = new GetObjectCommand(options);
+        return this.#s3Client.send(command);
     }
 
     /**

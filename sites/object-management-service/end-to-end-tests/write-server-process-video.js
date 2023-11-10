@@ -28,10 +28,10 @@ function main() {
     // eslint-disable-next-line no-console
     console.log('Uploading the test video.');
     uploadObject((req, utf8, json) => {
-        if (!json.data) {
-            // eslint-disable-next-line no-console
-            console.log('Response JSON => ', json);
-        }
+        /* eslint-disable no-console */
+        console.log('Response JSON:');
+        console.log(JSON.stringify(json, null, 4));
+        /* eslint-enable no-console */
 
         id = json.data.id;
         md5Hash = json.data.md5Hash;
@@ -43,7 +43,16 @@ function main() {
         assertEqual('video.mov', json.data.key);
         assertEqual('video/quicktime', json.data.contentType);
         assertEqual('STANDARD', json.data.storageClass);
+        assertEqual('MP4_H264_AAC', json.data.mediaOutput.format);
+
         assertEmpty(json.data.filepath);
+
+        assertEqual('http://localhost:3003/origin/testing-123/latest/video.mov', json.data.links.object.origin);
+        assertEqual('https://kixx-stage.imgix.net/testing-123/latest/video.mov', json.data.links.object.cdns[0]);
+        assertEqual(`http://localhost:3003/origin/testing-123/${ id }/latest/video.mp4`, json.data.links.mediaResource.origin);
+        assertEqual(`https://kixx-stage.imgix.net/testing-123/${ id }/latest/video.mp4`, json.data.links.mediaResource.cdns[0]);
+        assertEqual(`http://localhost:3003/origin/testing-123/${ id }/latest/video.0000000.jpg`, json.data.links.mediaPoster.origin);
+        assertEqual(`https://kixx-stage.imgix.net/testing-123/${ id }/latest/video.0000000.jpg`, json.data.links.mediaPoster.cdns[0]);
 
         /* eslint-disable no-console */
         console.log('Upload complete');
@@ -62,8 +71,9 @@ function uploadObject(callback) {
     const videoProcessingParams = JSON.stringify({
         type: 'MP4_H264_AAC',
         video: {
-            height: 360,
-            qualityLevel: 7,
+            height: 720,
+            qualityLevel: 8,
+            maxBitrate: 4000000,
         },
         audio: {},
     });
