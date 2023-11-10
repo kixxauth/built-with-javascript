@@ -1,6 +1,3 @@
-[server]
-port = 3003
-
 [logger]
 #  TRACE: 'trace',
 #  DEBUG: 'debug',
@@ -11,27 +8,20 @@ port = 3003
 level = "trace"
 makePretty = true
 
-[application]
-environment = "development"
-imgixBaseURL = ""
+[server]
+port = 3033
 
-[dataStore]
-region = ""
-bucketName = ""
+[dynamoDB]
+region = "us-east-2"
+applicationName = "adkavy"
 environment = "development"
 accessKeyId = ""
 secretAccessKey = ""
 
 [objectStore]
-region = ""
+region = "us-east-2"
 bucketName = ""
 environment = "development"
-accessKeyId = ""
-secretAccessKey = ""
-
-[mediaConvert]
-role = ""
-endpoint = ""
 accessKeyId = ""
 secretAccessKey = ""
 

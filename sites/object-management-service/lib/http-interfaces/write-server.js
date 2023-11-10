@@ -11,8 +11,14 @@ import {
 const { assert } = KixxAssert;
 
 
+function filterFalsy(x) {
+    return Boolean(x);
+}
+
+
 export default class WriteServer {
 
+    #config = null;
     #logger = null;
     #dataStore = null;
     #objectStore = null;
@@ -21,6 +27,7 @@ export default class WriteServer {
 
     constructor(options) {
         const {
+            config,
             logger,
             dataStore,
             objectStore,
@@ -28,6 +35,7 @@ export default class WriteServer {
             mediaConvert,
         } = options;
 
+        this.#config = config;
         this.#logger = logger.createChild({ name: 'WriteServer' });
         this.#dataStore = dataStore;
         this.#objectStore = objectStore;
@@ -116,6 +124,15 @@ export default class WriteServer {
      * @public
      */
     async putObject(request, response) {
+        const { href, protocol } = request.url;
+        const env = this.#config.application.getEnvironment();
+
+        // Redirect http: to https: (NOT in the development environment)
+        if (protocol !== 'https:' && env !== 'development') {
+            const newLocation = href.replace(/^http:/, 'https:');
+            return response.respondWithRedirect(301, newLocation);
+        }
+
         const user = await this.authenticateScopeUser(request);
         const { requestId } = request;
         const { scope } = user;
@@ -145,9 +162,91 @@ export default class WriteServer {
             readStream: request.getReadStream(),
         });
 
-        // TODO: Include the origin server URLs to the object in the response.
+        const data = remoteObject.toJSON();
 
-        return response.respondWithJSON(status, { data: remoteObject });
+        // Create the resource links for this object.
+        const { host } = request.url;
+        const keyParts = data.key.split('/');
+        const filename = keyParts.pop();
+        const pathname = keyParts.join('/');
+        const imgixBaseURL = this.#config.application.getImgixBaseURL();
+
+        const originPath = [
+            host,
+            'origin',
+            scope.id,
+            pathname,
+            'latest',
+            filename,
+        ].filter(filterFalsy).join('/');
+
+        const cdnPath = [
+            scope.id,
+            pathname,
+            'latest',
+            filename,
+        ].filter(filterFalsy).join('/');
+
+        let mediaOriginPath;
+        let mediaCDNPath;
+        let mediaPosterOriginPath;
+        let mediaPosterCDNPath;
+
+        const { mediaOutput } = data;
+
+        // Create the resource links for the output media if applicable.
+        if (mediaOutput) {
+            mediaOriginPath = [
+                host,
+                'origin',
+                scope.id,
+                mediaOutput.pathname,
+                'latest',
+                mediaOutput.videoFilename,
+            ].filter(filterFalsy).join('/');
+
+            mediaCDNPath = [
+                scope.id,
+                mediaOutput.pathname,
+                'latest',
+                mediaOutput.videoFilename,
+            ].filter(filterFalsy).join('/');
+
+            // Assume that if there is media output there is also a media poster output (JPEG image).
+            mediaPosterOriginPath = [
+                host,
+                'origin',
+                scope.id,
+                mediaOutput.pathname,
+                'latest',
+                mediaOutput.posterFilename,
+            ].filter(filterFalsy).join('/');
+
+            mediaPosterCDNPath = [
+                scope.id,
+                mediaOutput.pathname,
+                'latest',
+                mediaOutput.posterFilename,
+            ].filter(filterFalsy).join('/');
+        }
+
+        // Return the applicable resource links.
+        data.links = {
+            object: {
+                origin: `${ protocol }//${ originPath }`,
+                cdns: [ `${ imgixBaseURL }/${ cdnPath }` ],
+            },
+            mediaResource: {
+                origin: mediaOriginPath ? `${ protocol }//${ mediaOriginPath }` : null,
+                cdns: mediaCDNPath ? [ `${ imgixBaseURL }/${ mediaCDNPath }` ] : [],
+            },
+            mediaPoster: {
+                origin: mediaPosterOriginPath ? `${ protocol }//${ mediaPosterOriginPath }` : null,
+                cdns: mediaPosterCDNPath ? [ `${ imgixBaseURL }/${ mediaPosterCDNPath }` ] : [],
+            },
+        };
+
+        return response.respondWithJSON(status, { data });
     }
 
     /**

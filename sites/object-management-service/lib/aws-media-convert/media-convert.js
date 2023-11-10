@@ -46,7 +46,10 @@ export default class MediaConvert {
      * @public
      */
     async createMediaConvertJob(obj, params) {
-        const settings = this.createMediaConvertJobSettings(obj, params);
+        const {
+            output,
+            settings,
+        } = this.createMediaConvertJobSettings(obj, params);
 
         this.#logger.log('create job', {
             scopeId: obj.scopeId,
@@ -74,6 +77,7 @@ export default class MediaConvert {
             );
         }
 
+        response.job.output = output;
         return response.job;
     }
 
@@ -88,8 +92,18 @@ export default class MediaConvert {
 
         const s3BaseUri = `${ this.#objectStoreS3Bucket }/${ this.#objectStoreEnvironment }/${ obj.scopeId }`;
         const StorageClass = S3_STORAGE_CLASS_MAPPING[obj.storageClass];
+        // The output object will be stored at `${object.id}/${filename}`
+        const pathname = obj.id;
+        const filename = 'video';
 
-        return {
+        const output = {
+            format: params.type,
+            pathname,
+            videoFilename: `${ filename }.mp4`,
+            posterFilename: `${ filename }.0000000.jpg`,
+        };
+
+        const settings = {
             Role: this.#awsMediaConvertRole,
             Settings: {
                 TimecodeConfig: {
@@ -108,11 +122,10 @@ export default class MediaConvert {
                 OutputGroups: [
                     {
                         Name: 'File Group',
-                        CustomName: obj.id,
                         OutputGroupSettings: {
                             Type: 'FILE_GROUP_SETTINGS',
                             FileGroupSettings: {
-                                Destination: `s3://${ s3BaseUri }/${ obj.id }/video`,
+                                Destination: `s3://${ s3BaseUri }/${ pathname }/${ filename }`,
                                 DestinationSettings: {
                                     S3Settings: { StorageClass },
                                 },
@@ -120,6 +133,7 @@ export default class MediaConvert {
                         },
                         Outputs: [
                             {
+                                Extension: 'mp4',
                                 VideoDescription: {
                                     Height: params.video.height,
                                     CodecSettings: {
@@ -129,7 +143,7 @@ export default class MediaConvert {
                                             //   https://docs.aws.amazon.com/mediaconvert/latest/ug/cbr-vbr-qvbr.html#qvbr-guidelines
                                             RateControlMode: 'QVBR',
                                             SceneChangeDetect: 'TRANSITION_DETECTION',
-                                            MaxBitrate: 1000000,
+                                            MaxBitrate: params.video.maxBitrate,
                                             QvbrSettings: {
                                                 QvbrQualityLevel: params.video.qualityLevel,
                                             },
@@ -154,10 +168,27 @@ export default class MediaConvert {
                                     Mp4Settings: {},
                                 },
                             },
+                            {
+                                Extension: 'jpg',
+                                VideoDescription: {
+                                    CodecSettings: {
+                                        Codec: 'FRAME_CAPTURE',
+                                        FrameCaptureSettings: {
+                                            // Captures the first frame of video.
+                                            MaxCaptures: 1,
+                                        },
+                                    },
+                                },
+                                ContainerSettings: {
+                                    Container: 'RAW',
+                                },
+                            },
                         ],
                     },
                 ],
             },
         };
+
+        return { settings, output };
     }
 }

@@ -32,6 +32,16 @@ export default class HTTPResponse {
         });
     }
 
+    respondWithRedirect(statusCode, newLocation) {
+        assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
+        this.status = statusCode;
+        this.statusMessage = statusMessagesByCode.get(statusCode);
+
+        this.headers.set('location', newLocation);
+
+        return this;
+    }
+
     respondWithJSON(statusCode, obj) {
         assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
         this.status = statusCode;
@@ -55,6 +65,17 @@ export default class HTTPResponse {
 
         this.headers.set('content-type', 'text/plain');
         this.headers.set('content-length', Buffer.byteLength(this.body));
+
+        return this;
+    }
+
+    respondNotModified() {
+        const statusCode = 304;
+
+        this.status = statusCode;
+        this.statusMessage = statusMessagesByCode.get(statusCode);
+
+        this.headers.set('content-length', '0');
 
         return this;
     }
