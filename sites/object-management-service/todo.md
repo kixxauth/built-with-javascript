@@ -14,6 +14,6 @@ TODO
 - [x] Include processed video endpoints in WriteServer response.
 - [x] Process a poster thumbnail image for processed videos.
 - [x] Allow users to set MaxBitrate on video transcode.
-- [ ] Set the environment when starting the server.
+- [x] Set the environment when starting the server.
 - [ ] Validate the scope and key URL pathname parts to ensure safety and naming rules.
 - [x] Solve race condition when uploading an object: Avoid writing an object while a current write is in progress to the same object.
