@@ -52,16 +52,20 @@ export default class RoutingTable {
             );
 
             for (const httpMethodName of Object.keys(methods)) {
-                const methodName = methods[httpMethodName];
+                // The GET method configuration should override HEAD. The "HEAD" method is only
+                // available for readability.
+                const key = httpMethodName === 'HEAD' ? 'GET' : httpMethodName;
+
+                const { method } = methods[key];
 
                 assert(
-                    isNonEmptyString(methodName),
+                    isNonEmptyString(method),
                     `Missing HTTP Interface method name in pattern ${ pattern }`
                 );
 
                 assert(
-                    isFunction(httpInterface[methodName]),
-                    `Invalid HTTP Interface method "${ httpInterfaceName }.${ methodName }"`
+                    isFunction(httpInterface[method]),
+                    `Invalid HTTP Interface method "${ httpInterfaceName }.${ method }"`
                 );
             }
 
@@ -74,7 +78,7 @@ export default class RoutingTable {
                     return {
                         httpInterface,
                         methods,
-                        params: patternMatch.params,
+                        pathnameParams: patternMatch.params,
                     };
                 }
 

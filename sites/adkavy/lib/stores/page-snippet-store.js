@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import marked from 'marked';
+import { marked } from 'marked';
 
 
 marked.use({
@@ -25,6 +25,11 @@ export default class PageSnippetStore {
     initialize() {
         const onFileChange = this.#onFileChange.bind(this);
         const options = { persistant: false };
+        // TODO: There is some concern that watching files in a production environment may
+        //       create performance issues. The long term solution is to replace this
+        //       flat file database with a content management admin panel using an
+        //       object store. The short term solution could be to only watch files in the
+        //       development environment and not the production environment.
         fs.watch(this.#directory, options, onFileChange);
     }
 

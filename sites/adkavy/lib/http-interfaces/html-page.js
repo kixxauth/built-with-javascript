@@ -1,4 +1,4 @@
-import { KixxAssert } from '../dependencies.js';
+import { KixxAssert } from '../../dependencies.js';
 import BasePage from '../pages/base-page.js';
 
 const { isNonEmptyString, isPlainObject, assert } = KixxAssert;

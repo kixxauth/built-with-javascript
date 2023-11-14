@@ -19,6 +19,12 @@ export default class PageDataStore {
     initialize() {
         const onFileChange = this.#onFileChange.bind(this);
         const options = { persistant: false };
+
+        // TODO: There is some concern that watching files in a production environment may
+        //       create performance issues. The long term solution is to replace this
+        //       flat file database with a content management admin panel using a structured
+        //       database. The short term solution could be to only watch files in the
+        //       development environment and not the production environment.
         fs.watch(this.#directory, options, onFileChange);
     }
 

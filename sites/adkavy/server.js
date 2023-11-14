@@ -1,12 +1,18 @@
 import http from 'node:http';
 import path from 'node:path';
+import { parseArgs } from 'node:util';
 import { EventEmitter } from 'node:events';
-import Config from './lib/config/config.js';
+import Config from './lib/config/mod.js';
 import { createLogger } from './lib/logger.js';
 import RoutingTable from './lib/server/routing-table.js';
 import HTTPRequestTarget from './lib/server/http-request-target.js';
+import StaticFileServer from './lib/http-interfaces/static-file-server.js';
 import HTMLPage from './lib/http-interfaces/html-page.js';
 import Observations from './lib/http-interfaces/observations.js';
+import Events from './lib/http-interfaces/events.js';
+import IncidentReports from './lib/http-interfaces/incident-reports.js';
+import Media from './lib/http-interfaces/media.js';
+import DataStore from './lib/stores/data-store.js';
 import PageDataStore from './lib/stores/page-data-store.js';
 import PageSnippetStore from './lib/stores/page-snippet-store.js';
 import TemplateStore from './lib/stores/template-store.js';
@@ -16,20 +22,43 @@ import { fromFileUrl } from './lib/utils.js';
 
 const ROOT_DIR = fromFileUrl(new URL('./', import.meta.url));
 
+const ALLOWED_ENVIRONMENTS = [
+    'development',
+    'production',
+];
+
 
 async function start() {
+    const args = parseArgs({
+        args: process.argv.slice(2),
+        options: {
+            environment: {
+                type: 'string',
+                short: 'e',
+                default: 'development',
+            },
+        },
+    });
+
+    const { environment } = args.values;
+
+    if (!ALLOWED_ENVIRONMENTS.includes(environment)) {
+        throw new Error(`Invalid environment argument: "${ environment }"`);
+    }
+
     const config = new Config({
         rootConfigDir: path.join(ROOT_DIR, 'config'),
     });
 
-    // TODO: Specify the config environment with a command line parameter.
-    await config.load('development');
+    await config.load(environment);
 
     const logger = createLogger({
         name: 'server',
         level: config.logger.getLevel(),
         makePretty: config.logger.getMakePretty(),
     });
+
+    logger.log('starting server', { environment });
 
     const eventBus = new EventEmitter();
 
@@ -45,6 +74,8 @@ async function start() {
             process.exit(1);
         }, 200);
     }
+
+    const datastore = new DataStore();
 
     const pageDataStore = new PageDataStore({
         directory: path.join('ROOT_DIR', 'pages'),
@@ -67,6 +98,10 @@ async function start() {
     const routingTable = new RoutingTable({ logger });
     const httpRequestTarget = new HTTPRequestTarget({ logger, routingTable });
 
+    routingTable.registerHTTPInterface('StaticFileServer', new StaticFileServer({
+        logger,
+    }));
+
     routingTable.registerHTTPInterface('HTMLPage', new HTMLPage({
         logger,
         eventBus,
@@ -82,6 +117,18 @@ async function start() {
         pageSnippetStore,
         templateStore,
         datastore,
+    }));
+
+    routingTable.registerHTTPInterface('Events', new Events({
+        logger,
+    }));
+
+    routingTable.registerHTTPInterface('IncidentReports', new IncidentReports({
+        logger,
+    }));
+
+    routingTable.registerHTTPInterface('Media', new Media({
+        logger,
     }));
 
     routingTable.registerRoutes(routes);

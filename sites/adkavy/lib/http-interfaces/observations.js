@@ -1,4 +1,4 @@
-import { KixxAssert } from '../dependencies.js';
+import { KixxAssert } from '../../dependencies.js';
 import { ValidationError } from '../errors.js';
 import ViewObservationPage from '../pages/view-observation-page.js';
 
@@ -96,5 +96,17 @@ export default class Observations {
 
         const html = await page.generateHTML({ id });
         return res.respondWithHTML(html);
+    }
+
+    listObservations() {
+    }
+
+    createObservation() {
+    }
+
+    updateObservation() {
+    }
+
+    addObservationPhoto() {
     }
 }

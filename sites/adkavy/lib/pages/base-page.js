@@ -106,7 +106,7 @@ export default class BasePage {
         const name = this.constructor.name;
         const pageId = this.#pageId;
 
-        this.#logger.info('regnerating page cache', { name, pageId });
+        this.#logger.info('regenerating page cache', { name, pageId });
 
         try {
             this.#cachedHTML = null;

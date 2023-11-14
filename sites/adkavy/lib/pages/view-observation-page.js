@@ -1,4 +1,5 @@
 import BasePage from './base-page.js';
+import Observation from '../models/observation.js';
 
 
 export default class ViewObservation extends BasePage {
@@ -23,9 +24,8 @@ export default class ViewObservation extends BasePage {
     async getDynamicData(params) {
         const id = params.observationId;
 
-        let observation = new Observation({ id });
-        observation = await observation.load(this.#datastore);
+        const observation = await this.#datastore.load(new Observation({ id }));
 
-        return { observation: observation.flatten() };
+        return { observation: observation.toObject() };
     }
 }
