@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { parseArgs } from 'node:util';
 import Config from './lib/config/config.js';
 import { createLogger } from './lib/logger.js';
 import DataStore from './lib/datastore.js';
@@ -15,19 +16,43 @@ import AdminRPCTarget from './lib/http-interfaces/admin-rpc-target.js';
 
 const ROOT_DIR_FILE_URL = new URL('./', import.meta.url);
 
+const ALLOWED_ENVIRONMENTS = [
+    'development',
+    'production',
+];
+
 
 async function start() {
+    const args = parseArgs({
+        args: process.argv.slice(2),
+        options: {
+            environment: {
+                type: 'string',
+                short: 'e',
+                default: 'development',
+            },
+        },
+    });
+
+    const { environment } = args.values;
+
+    if (!ALLOWED_ENVIRONMENTS.includes(environment)) {
+        throw new Error(`Invalid environment argument: "${ environment }"`);
+    }
+
     const config = new Config({
         rootConfigDir: new URL('config/', ROOT_DIR_FILE_URL),
     });
 
-    await config.load('development');
+    await config.load(environment);
 
     const logger = createLogger({
         name: 'server',
         level: config.logger.getLevel(),
         makePretty: config.logger.getMakePretty(),
     });
+
+    logger.log('reading config and starting servers', { environment });
 
     function printErrorAndExit(message, error) {
         logger.error(message, { error });
