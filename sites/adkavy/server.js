@@ -100,6 +100,7 @@ async function start() {
 
     routingTable.registerHTTPInterface('StaticFileServer', new StaticFileServer({
         logger,
+        publicDirectory: path.join(ROOT_DIR, 'public'),
     }));
 
     routingTable.registerHTTPInterface('HTMLPage', new HTMLPage({

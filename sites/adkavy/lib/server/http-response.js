@@ -42,6 +42,16 @@ export default class HTTPResponse {
         return this;
     }
 
+    respondWithStream(statusCode, readStream) {
+        assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
+        this.status = statusCode;
+        this.statusMessage = statusMessagesByCode.get(statusCode);
+
+        this.body = readStream;
+
+        return this;
+    }
+
     respondWithJSON(statusCode, obj) {
         assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
         this.status = statusCode;

@@ -6,6 +6,7 @@ export default [
             GET: {
                 method: 'serveFile',
                 options: {
+                    folder: '',
                     cacheControl: 'public, max-age=14400',
                 },
             },
@@ -195,6 +196,7 @@ export default [
             GET: {
                 method: 'serveFile',
                 options: {
+                    folder: '/root',
                     cacheControl: 'public, max-age=14400',
                 },
             },
