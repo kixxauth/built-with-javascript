@@ -5,7 +5,7 @@ export default [
         methods: {
             GET: {
                 method: 'serveFile',
-                params: {
+                options: {
                     cacheControl: 'public, max-age=14400',
                 },
             },
@@ -18,7 +18,7 @@ export default [
         methods: {
             GET: {
                 method: 'renderPage',
-                params: {
+                options: {
                     page: 'home',
                     template: 'home.html',
                     cacheControl: 'public, max-age=129600',
@@ -33,7 +33,7 @@ export default [
         methods: {
             GET: {
                 method: 'renderPage',
-                params: {
+                options: {
                     page: 'observations/create',
                     template: 'observations/form.html',
                     cacheControl: 'public, max-age=129600',
@@ -123,7 +123,7 @@ export default [
         methods: {
             GET: {
                 method: 'renderPage',
-                params: {
+                options: {
                     page: 'weather',
                     template: 'weather.html',
                     cacheControl: 'public, max-age=129600',
@@ -138,7 +138,7 @@ export default [
         methods: {
             GET: {
                 method: 'renderPage',
-                params: {
+                options: {
                     page: 'education',
                     template: 'education.html',
                     cacheControl: 'public, max-age=129600',
@@ -153,7 +153,7 @@ export default [
         methods: {
             GET: {
                 method: 'renderPage',
-                params: {
+                options: {
                     page: 'education',
                     template: 'education.html',
                     cacheControl: 'public, max-age=129600',
@@ -168,7 +168,7 @@ export default [
         methods: {
             GET: {
                 method: 'renderPage',
-                params: {
+                options: {
                     page: 'donate',
                     template: 'donate.html',
                     cacheControl: 'public, max-age=129600',
@@ -194,7 +194,7 @@ export default [
         methods: {
             GET: {
                 method: 'serveFile',
-                params: {
+                options: {
                     cacheControl: 'public, max-age=14400',
                 },
             },

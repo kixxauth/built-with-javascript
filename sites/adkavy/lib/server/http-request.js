@@ -14,6 +14,11 @@ export default class HTTPRequest {
         const headers = objectToHeaders(this.#nodeRequest.headers);
 
         Object.defineProperties(this, {
+            requestId: {
+                enumerable: true,
+                writable: false,
+                value: spec.requestId,
+            },
             headers: {
                 enumerable: true,
                 writable: false,
@@ -31,7 +36,7 @@ export default class HTTPRequest {
         return this.#nodeRequest.method;
     }
 
-    get readStream() {
+    getReadStream() {
         return this.#nodeRequest;
     }
 

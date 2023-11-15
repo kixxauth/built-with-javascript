@@ -32,15 +32,14 @@ export default class Route {
     }
 
     handleRequest(request, response) {
-        const { method } = request;
-        const methodName = this.#methods[method];
+        const { method, options } = this.#methods[request.method];
 
-        const handler = this.#httpInterface[methodName].bind(this.#httpInterface);
+        const handler = this.#httpInterface[method].bind(this.#httpInterface);
 
-        request.params = this.#params;
+        request.setPathnameParams(this.#params);
 
         // May not always return a Promise!
-        return handler(request, response);
+        return handler(request, response, options);
     }
 
     canHandleError() {
