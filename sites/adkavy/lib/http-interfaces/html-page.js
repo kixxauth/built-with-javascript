@@ -1,5 +1,6 @@
 import { KixxAssert } from '../../dependencies.js';
 import BasePage from '../pages/base-page.js';
+import { NotFoundError } from '../errors.js';
 
 const { isNonEmptyString, isPlainObject, assert } = KixxAssert;
 
@@ -34,9 +35,16 @@ export default class HTMLPage {
         this.#templateStore = templateStore;
     }
 
-    handleError(error, req, res) {
-        this.#logger.error('caught unexpected error', { error });
-        return res.respondWithPlainText(500, 'Unexpected server error.\n');
+    handleError(error, request, response) {
+        const { requestId } = request;
+
+        switch (error.code) {
+            case NotFoundError.CODE:
+                return response.respondWithPlainText(404, 'Page not found\n');
+            default:
+                this.#logger.error('caught unexpected error', { requestId, error });
+                return response.respondWithPlainText(500, 'Unexpected server error\n');
+        }
     }
 
     async renderPage(req, res, params) {
@@ -51,15 +59,15 @@ export default class HTMLPage {
         const requestJSON = req.url.pathname.endsWith('.json');
 
         if (requestJSON) {
-            const json = await page.generateJSON(req.pathnameParams);
-            return res.respondWithJSON(json);
+            const json = await page.generateJSON(req);
+            return res.respondWithJSON(200, json, { whiteSpace: true });
         }
 
         // TODO: Handle HEAD request.
         // TODO: Handle cache-control header.
 
-        const html = await page.generateHTML(req.pathnameParams);
-        return res.respondWithHTML(html);
+        const html = await page.generateHTML(req);
+        return res.respondWithHTML(200, html);
     }
 
     #getPageInstance(pageId, templateId) {

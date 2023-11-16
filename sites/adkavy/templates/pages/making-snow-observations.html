@@ -1,0 +1,42 @@
+{{> site_head }}
+{{> header }}
+<article id="page-making-snow-observations" class="page-article">
+<section class="hero-section">
+	<img src="{{ hero_image.url }}?ar=2:1&fit=crop&w=600"
+		srcset="{{ hero_image.url }}?ar=2:1&fit=crop&w=600 600w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1000 1000w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1500 1500w, {{ hero_image.url }}?ar=2:1&fit=crop&w=3000 3000w" 
+		sizes="100vw"
+		alt="A skier carving turns through powder snow in back country mountains">
+	<div class="hero-section__scrim">
+		<div class="width-wrapper">
+			<div class="hero-section__content">
+				<h2>Making Observations</h2>
+				<p>Tips to help you make observations in the field which are most useful to other backcountry users.</p>
+			</div>
+		</div>
+	</div>
+</section>
+<nav class="post-hero-navigation">
+	<div class="post-hero-navigation__links width-wrapper">
+		<a href="/observations" class="button button--secondary button--outlined button--icon-start">
+			<i class="button__icon material-symbols-outlined">dynamic_feed</i>
+			<span class="button__label">View Observations</span>
+		</a>
+		<a href="/create-observation" class="button button--secondary button--filled button--icon-start">
+			<i class="button__icon material-symbols-outlined">edit_square</i>
+			<span class="button__label">Post Observation</span>
+		</a>
+	</div>
+</nav>
+<section id="making-snow-observations__intro" class="width-wrapper article-text">
+	<p>The video below from the <a href="https://www.mountwashingtonavalanchecenter.org/" target="_blank">Mount Washington Avalanche Center</a> contains some helpful hints for making observations in the field.</p>
+	<p>Use this video as a general guide to <a href="/create-observation">submitting your own observations</a>.</p>
+</section>
+<section id="making-snow-observations__video" class="width-wrapper">
+	<div style="padding:56.25% 0 0 0;position:relative;">
+		<iframe src="https://player.vimeo.com/video/533126233?h=4e22845549&color=ffffff&title=0&byline=0&portrait=0" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+	</div>
+	<script src="https://player.vimeo.com/api/player.js"></script>
+</section>
+</article>
+{{> footer }}
+{{> site_foot }}

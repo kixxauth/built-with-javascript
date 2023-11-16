@@ -1,6 +1,7 @@
 import { KixxAssert } from '../../dependencies.js';
 import PathToRegexp from 'path-to-regexp';
 import Route from './route.js';
+import { StackedError } from '../errors.js';
 
 const {
     isFunction,
@@ -109,10 +110,14 @@ export default class RoutingTable {
         try {
             res = await route.handleRequest(request, response);
         } catch (error) {
-            if (route.canHandleError()) {
-                res = await route.handleError(error, request, response);
+            if (error instanceof StackedError && !error.fatal) {
+                if (route.canHandleError()) {
+                    res = await route.handleError(error, request, response);
+                } else {
+                    res = await this.#handleError(error, request, response);
+                }
             } else {
-                res = await this.#handleError(error, request, response);
+                throw error;
             }
         }
 

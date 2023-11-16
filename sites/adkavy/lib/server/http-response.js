@@ -52,12 +52,16 @@ export default class HTTPResponse {
         return this;
     }
 
-    respondWithJSON(statusCode, obj) {
+    respondWithJSON(statusCode, obj, options) {
         assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
         this.status = statusCode;
         this.statusMessage = statusMessagesByCode.get(statusCode);
 
-        this.body = JSON.stringify(obj);
+        if (options && options.whiteSpace) {
+            this.body = JSON.stringify(obj, null, 4) + '\n';
+        } else {
+            this.body = JSON.stringify(obj) + '\n';
+        }
 
         this.headers.set('content-type', 'application/json');
         this.headers.set('content-length', Buffer.byteLength(this.body));

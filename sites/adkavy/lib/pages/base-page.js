@@ -1,5 +1,5 @@
 import { KixxAssert } from '../../dependencies.js';
-import { OperationalError } from '../errors.js';
+import { OperationalError, NotFoundError } from '../errors.js';
 
 const {
     isPlainObject,
@@ -70,27 +70,38 @@ export default class BasePage {
         return this.#caching && !this.#isDynamic;
     }
 
-    async generateJSON(params) {
+    /**
+     * @public
+     */
+    async generateJSON(req) {
         let page = await this.getPageData();
         page = page || {};
 
         if (Array.isArray(page.snippets) && page.snippets.length > 0) {
+            // The snippets Array is converted to an Object here.
             page.snippets = await this.getContentSnippets(page.snippets);
         } else {
             page.snippets = {};
         }
 
-        const data = await this.getDynamicData(params);
+        const data = await this.getDynamicData(req.pathnameParams);
 
-        return Object.assign(page, data);
+        const decorations = {
+            canonical_url: req.url.href,
+        };
+
+        return Object.assign(decorations, page, data);
     }
 
-    async generateHTML(params) {
+    /**
+     * @public
+     */
+    async generateHTML(req) {
         if (this.#cachedHTML) {
             return this.#cachedHTML;
         }
 
-        const page = await this.generateJSON(params);
+        const page = await this.generateJSON(req);
         const template = await this.getTemplate();
 
         const html = template(page);
@@ -102,6 +113,9 @@ export default class BasePage {
         return html;
     }
 
+    /**
+     * @private
+     */
     async rengerateCache() {
         const name = this.constructor.name;
         const pageId = this.#pageId;
@@ -123,6 +137,9 @@ export default class BasePage {
         }
     }
 
+    /**
+     * @private
+     */
     getPageData() {
         if (this.#cachedPageData) {
             return this.#cachedPageData;
@@ -139,6 +156,9 @@ export default class BasePage {
         return pageData;
     }
 
+    /**
+     * @private
+     */
     getContentSnippets(snippetIds) {
         if (this.#cachedContentSnippets) {
             return this.#cachedContentSnippets;
@@ -155,12 +175,19 @@ export default class BasePage {
         return snippets;
     }
 
-    getTemplate() {
+    /**
+     * @private
+     */
+    async getTemplate() {
         if (this.#cachedTemplate) {
             return this.#cachedTemplate;
         }
 
-        const template = this.#templateStore.fetch(this.#templateId);
+        const template = await this.#templateStore.fetch(this.#templateId);
+
+        if (!template) {
+            throw new NotFoundError(`Template "${ this.#templateId }" could not be found`);
+        }
 
         // We don't cache templates for static pages, since we cache the full HTML
         // content utf8 for static pages.
@@ -171,6 +198,10 @@ export default class BasePage {
         return template;
     }
 
+    /**
+     * Override getDynamicData() for dynamic pages.
+     * @private
+     */
     getDynamicData() {
         return null;
     }

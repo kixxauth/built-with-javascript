@@ -1,0 +1,9 @@
+page_type = "website"
+page_title = "Adirondack Community Avalanche Project"
+page_description = "A place for winter enthusiasts in the Adirondacks to submit and learn from snowpack and avalanche observations."
+
+[page_image]
+url = ""
+
+[hero_image]
+url = "https://kixx-stage.imgix.net/fa045b93-3ae8-4851-846f-9e1b083b0942.jpg"

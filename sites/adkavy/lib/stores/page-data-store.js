@@ -32,6 +32,8 @@ export default class PageDataStore {
         const filename = pageId.split('/').join('__');
         const filepath = path.join(this.#directory, `${ filename }.toml`);
 
+        this.#logger.debug('fetch page', { pageId, filepath });
+
         let utf8;
         try {
             utf8 = await fsp.readFile(filepath, { encoding: 'utf8' });

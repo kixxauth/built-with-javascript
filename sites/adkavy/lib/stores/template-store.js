@@ -33,7 +33,17 @@ export default class TemplateStore {
 
         const filename = templateId.split('/').join('__');
         const filepath = path.join(this.#directory, 'pages', filename);
-        const utf8 = await fsp.readFile(filepath, { encoding: 'utf8' });
+
+        let utf8;
+        try {
+            utf8 = await fsp.readFile(filepath, { encoding: 'utf8' });
+        } catch (cause) {
+            if (cause.code === 'ENOENT') {
+                this.#logger.error('template does not exist', { templateId, filepath });
+                return null;
+            }
+            throw new Error(`Unexpected error reading template file ${ filepath }`, { cause });
+        }
 
         this.#logger.debug('compiling template', { templateId, filename });
 
@@ -72,9 +82,11 @@ export default class TemplateStore {
     }
 
     async #registerPartial(handlebars, filepath) {
-        const parts = filepath.split('.');
+        const parts = path.basename(filepath).split('.');
         parts.pop(); // Pop off the file extension.
         const name = parts.join('.');
+
+        this.#logger.debug('register partial', { filepath, name });
 
         const html = await fsp.readFile(filepath, { encoding: 'utf8' });
 

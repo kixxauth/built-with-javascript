@@ -32,7 +32,10 @@ export default class Route {
     }
 
     handleRequest(request, response) {
-        const { method, options } = this.#methods[request.method];
+        // Map HEAD requests to GET.
+        const httpMethod = request.method === 'HEAD' ? 'GET' : request.method;
+
+        const { method, options } = this.#methods[httpMethod];
 
         const handler = this.#httpInterface[method].bind(this.#httpInterface);
 

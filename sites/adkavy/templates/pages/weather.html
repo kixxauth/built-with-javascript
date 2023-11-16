@@ -1,0 +1,103 @@
+{{> site_head }}
+{{> header }}
+<article id="page-weather" class="page-article">
+<section class="hero-section">
+	<img src="{{ hero_image.url }}?ar=2:1&fit=crop&w=600"
+		srcset="{{ hero_image.url }}?ar=2:1&fit=crop&w=600 600w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1000 1000w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1500 1500w, {{ hero_image.url }}?ar=2:1&fit=crop&w=3000 3000w" 
+		sizes="100vw"
+		alt="A skier carving turns through powder snow in back country mountains">
+	<div class="hero-section__scrim">
+		<div class="width-wrapper">
+			<div class="hero-section__content">
+				<h2>Adirondack Backcountry Weather</h2>
+				<p>Weather information for winter backcountry enthusiasts.</p>
+			</div>
+		</div>
+	</div>
+</section>
+<nav class="post-hero-navigation">
+	<div class="post-hero-navigation__links width-wrapper">
+		<a href="/observations" class="button button--secondary button--outlined button--icon-start">
+			<i class="button__icon material-symbols-outlined">dynamic_feed</i>
+			<span class="button__label">View Observations</span>
+		</a>
+		<a href="/create-observation" class="button button--secondary button--filled button--icon-start">
+			<i class="button__icon material-symbols-outlined">edit_square</i>
+			<span class="button__label">Post Observation</span>
+		</a>
+	</div>
+</nav>
+<div class="width-wrapper" id="page-weather__body">
+	<section class="external-resource-links">
+		<header>
+			<h2 class="heading2--light">National Weather Service</h2>
+		</header>
+		<div class="external-resource-links__item">
+			<a href="https://forecast.weather.gov/MapClick.php?lon=-73.9859488606453&lat=44.117788928658854#.Y9pKnRPMJ4B" target="_blank">
+				<h3>Point Forecast near Lake Colden</h3>
+				<p>The NWS point forecast for the Lake Colden area at about 3000ft elevation.</p>
+			</a>
+		</div>
+		<div class="external-resource-links__item">
+			<a href="https://www.weather.gov/btv/mountain_enhanced?loc=MOUNT%20MARCY" target="_blank">
+				<h3>Mount Marcy Point Forecast</h3>
+				<p>The enhanced mountain point forecast for the Mount Marcy.</p>
+			</a>
+		</div>
+		<div class="external-resource-links__item">
+			<a href="https://www.weather.gov/btv/AvalancheWeather" target="_blank">
+				<h3>Avalanche Weather Forecast</h3>
+				<p>Designed to provide snow safety officials with a weather forecast over specific areas of backcountry recreation interest.</p>
+			</a>
+		</div>
+	</section>
+	<section class="external-resource-links">
+		<header>
+			<h2 class="heading2--light">New York State DEC</h2>
+		</header>
+		<div class="external-resource-links__item">
+			<a href="https://www.dec.ny.gov/outdoor/9198.html" target="_blank">
+				<h3>Backcountry Information for the Adirondack Park</h3>
+				<p>Helpful trail and road condition and closure information from the DEC.</p>
+			</a>
+		</div>
+	</section>
+	<section class="external-resource-links">
+		<header>
+			<h2 class="heading2--light">SUNY Albany Mesonet &amp; ASRC</h2>
+		</header>
+		<div class="external-resource-links__item">
+			<a href="https://www2.nysmesonet.org/weather#network=nysm&stid=wfmb" target="_blank">
+				<h3>Whiteface - Weather Station</h3>
+				<p>Up to the minute weather station measurements at the base of Whiteface.</p>
+			</a>
+		</div>
+		<div class="external-resource-links__item">
+			<a href="https://www2.nysmesonet.org/networks/snow#stid=snow_wfmb" target="_blank">
+				<h3>Whiteface - Snowpack Monitoring Station</h3>
+				<p>Snow depth and snow water equivalent measurements at the base of Whiteface.</p>
+			</a>
+		</div>
+		<div class="external-resource-links__item">
+			<a href="https://whiteface.asrc.albany.edu/" target="_blank">
+				<h3>Whiteface Mountain Atmospheric Science Research Center</h3>
+				<p>A unique atmospheric science research and education facility managed and operated by ASRC since 1961</p>
+			</a>
+		</div>
+		<div class="external-resource-links__item">
+			<a href="https://www2.nysmesonet.org/weather#network=nysm&stid=newc" target="_blank">
+				<h3>Newcomb - Weather Station</h3>
+				<p>Up to the minute weather station measurements in the South Central ADK.</p>
+			</a>
+		</div>
+		<div class="external-resource-links__item">
+			<a href="https://www2.nysmesonet.org/networks/snow#stid=snow_newc" target="_blank">
+				<h3>Newcomb - Snowpack Monitoring Station</h3>
+				<p>Snow depth and snow water equivalent measurements in the South Central ADK.</p>
+			</a>
+		</div>
+	</section>
+</div>
+</article>
+{{> footer }}
+{{> site_foot }}

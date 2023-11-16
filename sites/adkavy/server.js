@@ -78,19 +78,19 @@ async function start() {
     const datastore = new DataStore();
 
     const pageDataStore = new PageDataStore({
-        directory: path.join('ROOT_DIR', 'pages'),
+        directory: path.join(ROOT_DIR, 'pages'),
         logger,
         eventBus,
     });
 
     const pageSnippetStore = new PageSnippetStore({
-        directory: path.join('ROOT_DIR', 'pages-snippets'),
+        directory: path.join(ROOT_DIR, 'pages-snippets'),
         logger,
         eventBus,
     });
 
     const templateStore = new TemplateStore({
-        directory: path.join('ROOT_DIR', 'templates'),
+        directory: path.join(ROOT_DIR, 'templates'),
         logger,
         eventBus,
     });
