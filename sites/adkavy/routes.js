@@ -64,17 +64,20 @@ export default [
                 method: 'viewObservation',
             },
             HEAD: {},
-            PUT: {
+            PATCH: {
                 method: 'updateObservation',
             },
         },
     },
     {
-        pattern: '/observations/:observationId/photos/',
+        pattern: '/observations/:observationId/media/:mediaId',
         HTTPInterface: 'Observations',
         methods: {
-            POST: {
-                method: 'addObservationPhoto',
+            PUT: {
+                method: 'addMedia',
+            },
+            PATCH: {
+                method: 'updateMedia',
             },
         },
     },
@@ -176,16 +179,6 @@ export default [
                 },
             },
             HEAD: {},
-        },
-    },
-    // Post images to the media server database.
-    {
-        pattern: '/media/',
-        HTTPInterface: 'Media',
-        methods: {
-            POST: {
-                method: 'processMedia',
-            },
         },
     },
     // Static root files. This should always go last in the lookup order.

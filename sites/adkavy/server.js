@@ -11,7 +11,6 @@ import HTMLPage from './lib/http-interfaces/html-page.js';
 import Observations from './lib/http-interfaces/observations.js';
 import Events from './lib/http-interfaces/events.js';
 import IncidentReports from './lib/http-interfaces/incident-reports.js';
-import Media from './lib/http-interfaces/media.js';
 import DataStore from './lib/stores/data-store.js';
 import PageDataStore from './lib/stores/page-data-store.js';
 import PageSnippetStore from './lib/stores/page-snippet-store.js';
@@ -125,10 +124,6 @@ async function start() {
     }));
 
     routingTable.registerHTTPInterface('IncidentReports', new IncidentReports({
-        logger,
-    }));
-
-    routingTable.registerHTTPInterface('Media', new Media({
         logger,
     }));
 

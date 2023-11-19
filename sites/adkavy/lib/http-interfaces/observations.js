@@ -1,6 +1,9 @@
 import { KixxAssert } from '../../dependencies.js';
-import { ValidationError } from '../errors.js';
+import Observation from '../models/observation.js';
+import { ValidationError, NotFoundError, ConflictError } from '../errors.js';
 import ViewObservationPage from '../pages/view-observation-page.js';
+import UploadMediaJob from '../jobs/upload-media-job.js';
+
 
 const { isPlainObject, isNonEmptyString, assert } = KixxAssert;
 
@@ -8,6 +11,8 @@ const { isPlainObject, isNonEmptyString, assert } = KixxAssert;
 export default class Observations {
 
     #logger = null;
+    #config = null;
+    #datastore = null;
     #viewObservationPage = null;
 
     constructor(spec) {
@@ -15,6 +20,7 @@ export default class Observations {
 
         const {
             logger,
+            config,
             eventBus,
             pageDataStore,
             pageSnippetStore,
@@ -23,6 +29,8 @@ export default class Observations {
         } = spec;
 
         this.#logger = logger.createChild({ name: 'Observations' });
+        this.#config = config;
+        this.#datastore = datastore;
 
         this.#viewObservationPage = new ViewObservationPage({
             logger,
@@ -66,6 +74,24 @@ export default class Observations {
                     });
                 }
                 break;
+            case NotFoundError.CODE:
+                status = 404;
+                jsonResponse.errors.push({
+                    status: 404,
+                    code: error.code || 'NOT_FOUND_ERROR',
+                    title: 'NotFoundError',
+                    detail: error.message,
+                });
+                break;
+            case ConflictError.CODE:
+                status = 409;
+                jsonResponse.errors.push({
+                    status: 409,
+                    code: error.code || 'CONFLICT_ERROR',
+                    title: 'ConflictError',
+                    detail: error.message,
+                });
+                break;
             default:
                 this.#logger.error('caught unexpected error', { error });
                 // Do not return the error.message for privacy and security reasons.
@@ -101,12 +127,91 @@ export default class Observations {
     listObservations() {
     }
 
-    createObservation() {
+    async createObservation(request, response) {
+        const data = await request.json();
+
+        const observation = new Observation(data).ensureId();
+
+        observation.validateBeforeSave();
+
+        await this.#datastore.save(observation);
+
+        return response.respondWithJSON(201, observation.toObject());
     }
 
-    updateObservation() {
+    async updateObservation(request, response) {
+        const { observationId } = request.pathnameParams;
+
+        assert(isNonEmptyString(observationId), 'observationId isNonEmptyString');
+
+        const patch = await request.json();
+        let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
+
+        if (!observation) {
+            throw new NotFoundError(`Observation ${ observationId } does not exist.`);
+        }
+
+        observation = observation.update(patch);
+        observation.validateBeforeSave();
+
+        await this.#datastore.save(observation);
+
+        return response.respondWithJSON(200, observation.toObject());
     }
 
-    addObservationPhoto() {
+    async addMedia(request, response) {
+        const { observationId, mediaId } = request.pathnameParams;
+
+        assert(isNonEmptyString(observationId), 'observationId isNonEmptyString');
+
+        let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
+
+        const job = new UploadMediaJob({
+            logger: this.#logger,
+            config: this.#config,
+        });
+
+        const result = await job.uploadObservationAttachment(request.getReadStream(), {
+            observationId,
+            // The index for a new observation is the latest index + 1, which is .length:
+            index: observation.attributes.media.length,
+            filename: mediaId,
+        });
+
+        console.log('==>> uploadObservationAttachment() result', result);
+
+        observation = observation.addMedia(result);
+        observation.validateBeforeSave();
+
+        console.log('==>> uploadObservationAttachment() observation', observation);
+
+        await this.#datastore.save(observation);
+
+        const allMedia = observation.toObject().media;
+
+        return response.respondWithJSON(201, allMedia[allMedia.length - 1]);
+    }
+
+    async updateMedia(request, response) {
+        const { observationId, mediaId } = request.pathnameParams;
+
+        assert(isNonEmptyString(observationId), 'observationId isNonEmptyString');
+        assert(isNonEmptyString(mediaId), 'observationId isNonEmptyString');
+
+        const patch = await request.json();
+        let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
+
+        observation = observation.updateMedia(mediaId, patch);
+        observation.validateBeforeSave();
+
+        await this.#datastore.save(observation);
+
+        const allMedia = observation.toObject().media;
+
+        const mediaItem = allMedia.find((item) => {
+            return item.id === mediaId;
+        });
+
+        return response.respondWithJSON(200, mediaItem);
     }
 }

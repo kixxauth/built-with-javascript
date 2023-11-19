@@ -71,3 +71,11 @@ export function fromFileUrl(url) {
         url.pathname.replace(/%(?![0-9A-Fa-f]{2})/g, '%25')
     );
 }
+
+export function createIncrementer(start = 0) {
+    return function getIncrement() {
+        const i = start;
+        start += 1;
+        return i;
+    };
+}
