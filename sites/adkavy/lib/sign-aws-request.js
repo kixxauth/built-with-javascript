@@ -34,6 +34,7 @@ export function signRequest(awsOptions, requestOptions, payload) {
         method,
         url,
         contentType,
+        awsHeaders,
     } = requestOptions;
 
     const { host, pathname, searchParams } = url;
@@ -48,6 +49,12 @@ export function signRequest(awsOptions, requestOptions, payload) {
     headers.set('host', host);
     headers.set('x-amz-content-sha256', payloadHash);
     headers.set('x-amz-date', dateTimeString);
+
+    if (awsHeaders) {
+        Object.keys(awsHeaders).forEach((headerName) => {
+            headers.set(headerName.toLowerCase(), awsHeaders[headerName]);
+        });
+    }
 
     if (contentType) {
         headers.set('content-type', contentType);

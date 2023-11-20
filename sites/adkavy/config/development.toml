@@ -13,17 +13,9 @@ port = 3033
 
 [dynamoDB]
 region = "us-east-2"
+# Endpoints: https://docs.aws.amazon.com/general/latest/gr/ddb.html
+endpoint = "https://dynamodb.us-east-2.amazonaws.com"
+accessKeyId = "AKIASKMAWDULYI4WIHPD"
+secretAccessKey = "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"
 applicationName = "adkavy"
 environment = "development"
-accessKeyId = ""
-secretAccessKey = ""
-
-[objectStore]
-region = "us-east-2"
-bucketName = ""
-environment = "development"
-accessKeyId = ""
-secretAccessKey = ""
-
-[localObjectStore]
-directory = ""

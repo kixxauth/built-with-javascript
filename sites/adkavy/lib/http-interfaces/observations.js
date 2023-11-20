@@ -128,15 +128,35 @@ export default class Observations {
     }
 
     async createObservation(request, response) {
-        const data = await request.json();
+        const body = await request.json();
 
-        const observation = new Observation(data).ensureId();
+        let observation = Observation.fromJsonAPI(body.data).ensureId();
 
         observation.validateBeforeSave();
 
-        await this.#datastore.save(observation);
+        observation = await this.#datastore.save(observation);
 
-        return response.respondWithJSON(201, observation.toObject());
+        const {
+            type,
+            id,
+            attributes,
+            relationships,
+            meta,
+            links,
+        } = observation.toJsonAPI();
+
+        const data = {
+            type,
+            id,
+            attributes,
+            relationships,
+        };
+
+        return response.respondWithJSON(201, {
+            data,
+            links,
+            meta,
+        });
     }
 
     async updateObservation(request, response) {

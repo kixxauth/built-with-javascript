@@ -14,7 +14,7 @@ export default [
         },
     },
     {
-        pattern: '/:index?',
+        pattern: '/',
         HTTPInterface: 'HTMLPage',
         methods: {
             GET: {

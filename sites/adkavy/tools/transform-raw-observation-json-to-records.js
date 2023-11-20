@@ -8,7 +8,7 @@ if (!process.argv[2]) {
 }
 
 // Should be something like:
-// tmp/observations.csv
+// tmp/observations.json
 const sourceFilepath = path.resolve(process.argv[2]);
 
 const stats = fs.statSync(sourceFilepath);

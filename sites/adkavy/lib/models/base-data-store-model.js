@@ -167,7 +167,7 @@ export default class BaseDataStoreModel {
     }
 
     static fromJsonAPI({ id, attributes, relationships }) {
-        const mappedRelationships = Object.keys(relationships).reduce((mapping, key) => {
+        const mappedRelationships = Object.keys(relationships || {}).reduce((mapping, key) => {
             const { data } = relationships[key] || {};
             mapping[key] = data || [];
             return mapping;

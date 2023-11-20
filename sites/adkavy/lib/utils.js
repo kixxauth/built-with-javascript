@@ -72,6 +72,12 @@ export function fromFileUrl(url) {
     );
 }
 
+export function compact(list) {
+    return list.filter((x) => {
+        return x;
+    });
+}
+
 export function createIncrementer(start = 0) {
     return function getIncrement() {
         const i = start;

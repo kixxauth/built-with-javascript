@@ -74,7 +74,10 @@ async function start() {
         }, 200);
     }
 
-    const datastore = new DataStore();
+    const datastore = new DataStore({
+        config,
+        logger,
+    });
 
     const pageDataStore = new PageDataStore({
         directory: path.join(ROOT_DIR, 'pages'),
