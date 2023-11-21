@@ -27,14 +27,19 @@ export default class DynamoDBClient {
         this.#entityTableName = `${ options.applicationName }_${ options.environment }_entities`;
     }
 
-    async getItem() {
+    async getItem({ type, id }) {
         const command = {
             TableName: this.#entityTableName,
+            Key: serializeObject({ type, id }),
         };
 
-        await this.#makeRequest('GetItem', command);
+        const result = await this.#makeRequest('GetItem', command);
 
-        return null;
+        if (!result.Item) {
+            return null;
+        }
+
+        return deserializeObject(result.Item);
     }
 
     async putItem(item) {

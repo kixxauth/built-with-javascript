@@ -1,5 +1,6 @@
-import DynamoDBClient from '../dynamodb/dynamodb-client.js';
 import { KixxAssert } from '../../dependencies.js';
+import DynamoDBClient from '../dynamodb/dynamodb-client.js';
+import Observation from '../models/observation.js';
 
 
 const { assert, assertIncludes, isNonEmptyString } = KixxAssert;
@@ -9,6 +10,10 @@ const ALLOWED_ENVIRONMENTS = [
     'development',
     'production',
 ];
+
+const MODELS_BY_TYPE = new Map([
+    [ 'observation', Observation ],
+]);
 
 
 export default class DataStore {
@@ -49,12 +54,16 @@ export default class DataStore {
     }
 
     async fetch({ type, id }) {
+        this.#logger.log('fetch record', { type, id });
 
-        const result = await this.#dynamoDBClient.getItem({ type, id });
+        const Model = MODELS_BY_TYPE.get(type);
+        const spec = await this.#dynamoDBClient.getItem({ type, id });
 
-        console.log('DynamoDB GetItemCommand result ==>>', result);
+        if (spec) {
+            return new Model(spec);
+        }
 
-        throw new Error('End fetch');
+        return null;
     }
 
     async save(obj) {

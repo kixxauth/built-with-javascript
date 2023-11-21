@@ -1,6 +1,11 @@
 import { KixxAssert } from '../../dependencies.js';
 import Observation from '../models/observation.js';
-import { ValidationError, NotFoundError, ConflictError } from '../errors.js';
+import {
+    ValidationError,
+    NotFoundError,
+    ConflictError,
+    BadRequestError
+} from '../errors.js';
 import ViewObservationPage from '../pages/view-observation-page.js';
 import UploadMediaJob from '../jobs/upload-media-job.js';
 
@@ -92,6 +97,15 @@ export default class Observations {
                     detail: error.message,
                 });
                 break;
+            case BadRequestError.CODE:
+                status = 400;
+                jsonResponse.errors.push({
+                    status: 400,
+                    code: error.code || 'BAD_REQUEST_ERROR',
+                    title: 'BadRequestError',
+                    detail: error.message,
+                });
+                break;
             default:
                 this.#logger.error('caught unexpected error', { error });
                 // Do not return the error.message for privacy and security reasons.
@@ -164,19 +178,44 @@ export default class Observations {
 
         assert(isNonEmptyString(observationId), 'observationId isNonEmptyString');
 
-        const patch = await request.json();
+        const body = await request.json();
+
+        if (!body || !body.data || !body.data.attributes) {
+            throw new BadRequestError('JSON body.data.attributes must be an object');
+        }
+
         let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
 
         if (!observation) {
             throw new NotFoundError(`Observation ${ observationId } does not exist.`);
         }
 
-        observation = observation.update(patch);
+        observation = observation.updateAttributes(body.data.attributes);
         observation.validateBeforeSave();
 
         await this.#datastore.save(observation);
 
-        return response.respondWithJSON(200, observation.toObject());
+        const {
+            type,
+            id,
+            attributes,
+            relationships,
+            meta,
+            links,
+        } = observation.toJsonAPI();
+
+        const data = {
+            type,
+            id,
+            attributes,
+            relationships,
+        };
+
+        return response.respondWithJSON(200, {
+            data,
+            links,
+            meta,
+        });
     }
 
     async addMedia(request, response) {

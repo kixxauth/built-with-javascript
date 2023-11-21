@@ -28,7 +28,7 @@ export default class BaseDataStoreModel {
             },
             attributes: {
                 enumerable: true,
-                value: Object.freeze(attributes || {}),
+                value: Object.freeze(this.mapAttributes(attributes)),
             },
             relationships: {
                 enumerable: true,
@@ -117,6 +117,9 @@ export default class BaseDataStoreModel {
         return new Model(Object.assign({}, this, { relationships }));
     }
 
+    /**
+     * @public
+     */
     updateMeta() {
         const now = new Date();
         const created = isNonEmptyString(this.meta.created) ? this.meta.created : now.toISOString();
@@ -153,6 +156,14 @@ export default class BaseDataStoreModel {
             attributes: this.attributes,
             relationships,
         };
+    }
+
+    /**
+     * @private
+     */
+    mapAttributes(attrs) {
+        // Override me.
+        return attrs || {};
     }
 
     /**

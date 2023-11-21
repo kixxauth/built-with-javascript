@@ -8,19 +8,19 @@ export default class Route {
     #httpInterface = null;
     #methods = null;
     #supportedHttpMethods = [];
-    #params = {};
+    #pathnameParams = {};
 
     constructor(matcher) {
         const {
             httpInterface,
             methods,
-            params,
+            pathnameParams,
         } = matcher;
 
         this.#httpInterface = httpInterface;
         this.#methods = methods;
         this.#supportedHttpMethods = Object.keys(methods);
-        this.#params = params;
+        this.#pathnameParams = pathnameParams;
     }
 
     getAllowedMethods() {
@@ -39,7 +39,7 @@ export default class Route {
 
         const handler = this.#httpInterface[method].bind(this.#httpInterface);
 
-        request.setPathnameParams(this.#params);
+        request.setPathnameParams(this.#pathnameParams);
 
         // May not always return a Promise!
         return handler(request, response, options);

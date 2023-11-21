@@ -33,6 +33,7 @@ if (!stats.isFile()) {
 async function main() {
     const records = await readJSONFile(sourceFilepath);
     await createObservation(records[1]);
+    await updateObservation(records[1]);
 }
 
 async function createObservation(record) {
@@ -42,6 +43,7 @@ async function createObservation(record) {
             id: record.id,
             attributes: {
                 csv: record.attributes.csv,
+                reportedDateTime: record.attributes.reportedDate,
                 observationDate: record.attributes.observationTimestamp.split('T')[0],
                 travelMode: record.attributes.travelMode,
                 triggeredAvalanche: record.attributes.triggeredAvalanche,
@@ -62,7 +64,51 @@ async function createObservation(record) {
 
     const result = await makeRequest(method, url, headers, body);
 
-    console.log('RESULT =>', result);
+    // eslint-disable-next-line no-console
+    console.log(result.data.id, 'created observation');
+}
+
+async function updateObservation(record) {
+    const timeMatch = /T([\d]{2}:[\d]{2}):/.exec(record.attributes.observationTimestamp);
+    const observationTime = timeMatch[1];
+
+    const body = JSON.stringify({
+        data: {
+            type: 'observation',
+            id: record.id,
+            attributes: {
+                name: record.attributes.name,
+                email: record.attributes.email,
+                title: record.attributes.title,
+                observationTime,
+                elevation: record.attributes.elevation,
+                aspect: record.attributes.aspect,
+                redFlags: record.attributes.redFlags,
+                details: record.attributes.details,
+                triggeredAvalancheType: record.attributes.triggeredAvalancheType,
+                triggeredAvalancheSize: record.attributes.triggeredAvalancheSize,
+                triggeredAvalancheComments: record.attributes.triggeredAvalancheComments,
+                observedAvalancheType: record.attributes.observedAvalancheType,
+                observedAvalancheSize: record.attributes.observedAvalancheSize,
+                observedAvalancheElevation: record.attributes.observedAvalancheElevation,
+                observedAvalancheAspect: record.attributes.observedAvalancheAspect,
+                observedAvalancheComments: record.attributes.observedAvalancheComments,
+            },
+        },
+    });
+
+    const method = 'PATCH';
+    const url = new URL(`/observations/${ record.id }`, endpoint);
+
+    const headers = {
+        'content-type': 'application/json',
+        'content-length': Buffer.byteLength(body),
+    };
+
+    const result = await makeRequest(method, url, headers, body);
+
+    // eslint-disable-next-line no-console
+    console.log(result.data.id, 'updated observation');
 }
 
 function makeRequest(method, url, headers, data) {
