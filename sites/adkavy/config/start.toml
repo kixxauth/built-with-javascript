@@ -19,3 +19,8 @@ accessKeyId = ""
 secretAccessKey = ""
 applicationName = ""
 environment = "development"
+
+[objectService]
+endpoint = ""
+scope = "adkavy-development"
+token = ""

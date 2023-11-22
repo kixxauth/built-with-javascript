@@ -10,7 +10,12 @@ import ViewObservationPage from '../pages/view-observation-page.js';
 import UploadMediaJob from '../jobs/upload-media-job.js';
 
 
-const { isPlainObject, isNonEmptyString, assert } = KixxAssert;
+const {
+    isPlainObject,
+    isNonEmptyString,
+    isNumberNotNaN,
+    assert,
+} = KixxAssert;
 
 
 export default class Observations {
@@ -219,9 +224,14 @@ export default class Observations {
     }
 
     async addMedia(request, response) {
-        const { observationId, mediaId } = request.pathnameParams;
+        const { observationId, filename } = request.pathnameParams;
+        const contentType = request.headers.get('content-type');
+        const contentLength = parseInt(request.headers.get('content-length'), 10);
 
         assert(isNonEmptyString(observationId), 'observationId isNonEmptyString');
+        assert(isNonEmptyString(filename), 'filename isNonEmptyString');
+        assert(isNonEmptyString(contentType), 'content-type isNonEmptyString');
+        assert(isNumberNotNaN(contentLength), 'content-length isNumberNotNaN');
 
         let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
 
@@ -230,25 +240,31 @@ export default class Observations {
             config: this.#config,
         });
 
+        const existingMediaItems = observation.relationships.media || [];
+
         const result = await job.uploadObservationAttachment(request.getReadStream(), {
             observationId,
             // The index for a new observation is the latest index + 1, which is .length:
-            index: observation.attributes.media.length,
-            filename: mediaId,
+            index: existingMediaItems.length,
+            filename,
+            contentType,
+            contentLength,
         });
 
-        console.log('==>> uploadObservationAttachment() result', result);
+        if (!result) {
+            // The object already exists and this was a no-op.
+            return response.respondWithJSON(200, {});
+        }
 
-        observation = observation.addMedia(result);
+        observation = observation.addMediaFromMediaUploadJob(result);
         observation.validateBeforeSave();
-
-        console.log('==>> uploadObservationAttachment() observation', observation);
 
         await this.#datastore.save(observation);
 
-        const allMedia = observation.toObject().media;
+        const allMedia = observation.relationships.media;
+        const data = allMedia[allMedia.length - 1];
 
-        return response.respondWithJSON(201, allMedia[allMedia.length - 1]);
+        return response.respondWithJSON(201, { data });
     }
 
     async updateMedia(request, response) {

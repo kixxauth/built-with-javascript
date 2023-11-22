@@ -114,6 +114,7 @@ async function start() {
     }));
 
     routingTable.registerHTTPInterface('Observations', new Observations({
+        config,
         logger,
         eventBus,
         pageDataStore,

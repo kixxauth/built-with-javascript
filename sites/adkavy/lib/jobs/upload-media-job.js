@@ -1,7 +1,7 @@
 import http from 'node:http';
 import https from 'node:https';
 import { KixxAssert } from '../../dependencies.js';
-import { JSONParsingError } from '../errors.js';
+import { OperationalError, JSONParsingError } from '../errors.js';
 
 
 const { assert, isNonEmptyString } = KixxAssert;
@@ -60,7 +60,34 @@ export default class UploadMediaJob {
             processingParams,
         });
 
-        const { links } = result.data;
+        const { statusCode, body } = result;
+
+        if (statusCode !== 201) {
+            // The only case we care about is a new object being uploaded and processed,
+            // which should always return a 201.
+            //
+            // If the object already exists, and the etag matches then the object management
+            // service will respond with a 200, indicating a no-op.
+            return null;
+        }
+
+        if (Array.isArray(body.errors)) {
+            for (const error of body.errors) {
+                this.#logger.error('object service response error', error);
+            }
+
+            throw new OperationalError('Unexpected object service response error');
+        }
+
+        let objectStorageRecord;
+        if (body.data) {
+            objectStorageRecord = body.data;
+        } else {
+            throw new OperationalError('Unexpected object service response shape');
+        }
+
+        const { links } = objectStorageRecord;
+
         let mediaURLs;
         let posterURLs;
 
@@ -86,11 +113,11 @@ export default class UploadMediaJob {
         }
 
         return {
-            id: result.data.id,
-            contentType: result.data.contentType,
-            contentLength: result.data.contentLength,
-            md5Hash: result.data.md5Hash,
-            version: result.data.version,
+            id: objectStorageRecord.id,
+            contentType: objectStorageRecord.contentType,
+            contentLength,
+            md5Hash: objectStorageRecord.md5Hash,
+            version: objectStorageRecord.version,
             mediaURLs,
             posterURLs,
         };
@@ -104,14 +131,13 @@ export default class UploadMediaJob {
             processingParams,
         } = options;
 
-        console.log('==>> Make object service request', options);
-
         return new Promise((resolve, reject) => {
             const url = new URL(`/objects/${ this.#objectServiceScope }/${ key }`, this.#objectServiceEndpoint);
             const { protocol } = url;
+            const method = 'PUT';
 
             const reqOptions = {
-                method: 'PUT',
+                method,
                 headers: {
                     authorization: `Bearer ${ this.#objectServiceToken }`,
                     'content-type': contentType,
@@ -125,7 +151,8 @@ export default class UploadMediaJob {
                 reqOptions.headers['x-kc-video-processing'] = buff.toString('base64');
             }
 
-            this.#logger.log('upload file', {
+            this.#logger.log('object service request', {
+                method,
                 url: url.href,
                 contentType,
                 contentLength,
@@ -159,13 +186,24 @@ export default class UploadMediaJob {
                         return;
                     }
 
-                    resolve(json);
+                    resolve({
+                        statusCode: res.statusCode,
+                        body: json,
+                    });
                 });
             });
 
             req.on('error', (error) => {
                 this.#logger.error('object service request error', { error });
-                reject(error);
+
+                if (error.code === 'ECONNREFUSED') {
+                    reject(new OperationalError(
+                        'Could not connect to the object service',
+                        { code: error.code, cause: error }
+                    ));
+                } else {
+                    reject(error);
+                }
             });
 
             sourceStream.pipe(req);

@@ -66,20 +66,23 @@ export default class BaseDataStoreModel {
     /**
      * @public
      */
-    addRelationship(key, type, id, attributes) {
-        let relationships;
+    addRelationship(key, { type, id, attributes }) {
+        let list;
 
         if (this.relationships[key]) {
-            relationships = this.relationships[key].slice();
+            list = this.relationships[key].slice();
         } else {
-            relationships = [];
+            list = [];
         }
 
-        relationships.push({
+        list.push({
             type,
             id,
             attributes,
         });
+
+        const relationships = Object.assign({}, this.relationships);
+        relationships[key] = list;
 
         const Model = this.constructor;
 

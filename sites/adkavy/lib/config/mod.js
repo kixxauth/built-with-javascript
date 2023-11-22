@@ -28,6 +28,10 @@ export default class Config {
                 enumerable: true,
                 value: new DynamoDBConfig(config.dynamoDB),
             },
+            objectService: {
+                enumerable: true,
+                value: new ObjectServiceConfig(config.objectService),
+            },
         });
     }
 
@@ -95,5 +99,25 @@ class DynamoDBConfig {
 
     getEnvironment() {
         return this.#config.environment;
+    }
+}
+
+class ObjectServiceConfig {
+    #config = null;
+
+    constructor(config) {
+        this.#config = config;
+    }
+
+    getEndpoint() {
+        return this.#config.endpoint;
+    }
+
+    getScope() {
+        return this.#config.scope;
+    }
+
+    getToken() {
+        return this.#config.token;
     }
 }

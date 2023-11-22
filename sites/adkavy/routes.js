@@ -70,7 +70,7 @@ export default [
         },
     },
     {
-        pattern: '/observations/:observationId/media/:mediaId',
+        pattern: '/observations/:observationId/media/:filename',
         HTTPInterface: 'Observations',
         methods: {
             PUT: {

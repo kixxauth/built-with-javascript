@@ -85,8 +85,8 @@ export default class Observation extends BaseDataStoreModel {
                 version: data.version || null,
                 title: data.title || '',
                 details: data.details || '',
-                mediaURLs: this.mapMediaURLs(data.mediaURLs),
-                posterURLs: this.mapMediaURLs(data.posterURLs),
+                mediaURLs: this.#mapMediaURLs(data.mediaURLs),
+                posterURLs: this.#mapMediaURLs(data.posterURLs),
             },
         });
     }

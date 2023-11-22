@@ -1,5 +1,7 @@
 // Use the HTTP interface of the adkavy site to seed the database.
 // Takes the output of transform-raw-observation-json-to-records.js as input.
+// Reads media files from tmp/observation-media/**
+
 import path from 'node:path';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
@@ -23,9 +25,7 @@ const sourceFilepath = path.resolve(process.argv[2]);
 // http://localhost:3033
 const endpoint = process.argv[3];
 
-const stats = fs.statSync(sourceFilepath);
-
-if (!stats.isFile()) {
+if (!fs.statSync(sourceFilepath).isFile()) {
     throw new Error(`The file ${ sourceFilepath } does not exist.`);
 }
 
@@ -34,6 +34,7 @@ async function main() {
     const records = await readJSONFile(sourceFilepath);
     await createObservation(records[1]);
     await updateObservation(records[1]);
+    await uploadAllMedia(records[1]);
 }
 
 async function createObservation(record) {
@@ -111,6 +112,44 @@ async function updateObservation(record) {
     console.log(result.data.id, 'updated observation');
 }
 
+async function uploadAllMedia(record) {
+    if (record.attributes.csv.hasPhotos) {
+        const { row } = record.attributes.csv;
+        const dir = path.join(path.dirname(sourceFilepath), 'observation-media', row.toString());
+
+        const entries = fs.readdirSync(dir);
+
+        for (const entry of entries) {
+            await attachMedia(record, path.join(dir, entry));
+            // TODO: Update media title and details.
+        }
+    }
+}
+
+async function attachMedia(record, filepath) {
+    const filename = slugify(path.basename(filepath));
+    const stats = fs.statSync(filepath);
+    const readStream = fs.createReadStream(filepath);
+
+    const method = 'PUT';
+    const url = new URL(`/observations/${ record.id }/media/${ filename }`, endpoint);
+
+    const headers = {
+        'content-type': contentTypeByFileExtension(filename),
+        'content-length': stats.size,
+    };
+
+    const { data } = await makeRequest(method, url, headers, readStream);
+
+    if (data) {
+        // eslint-disable-next-line no-console
+        console.log(record.id, 'updated observation media', data.id, data.attributes.contentType);
+    } else {
+        // eslint-disable-next-line no-console
+        console.log(record.id, 'observation media already exists', filepath);
+    }
+}
+
 function makeRequest(method, url, headers, data) {
     return new Promise((resolve, reject) => {
         const options = { method, headers };
@@ -153,6 +192,40 @@ function makeRequest(method, url, headers, data) {
             req.end();
         }
     });
+}
+
+function slugify(text) {
+    /* eslint-disable no-multi-spaces,no-useless-escape */
+    return text
+        .toString()                      // Cast to string (optional)
+        .normalize('NFKD')               // The normalize() using NFKD method returns the Unicode Normalization Form of a given string.
+        .replace(/[\u0300-\u036f]/g, '') // Deletes all the accents, which happen to be all in the \u03xx UNICODE block
+        .toLowerCase()                   // Convert the string to lowercase letters
+        .trim()                          // Remove whitespace from both sides of a string (optional)
+        .replace(/\s+/g, '-')            // Replace spaces with -
+        .replace(/[^\w\-\.]+/g, '')        // Remove all non-word chars
+        // .replace(/\_/g, '-')             // Replace _ with -
+        .replace(/\-\-+/g, '-')          // Replace multiple - with single -
+        .replace(/\-$/g, '');            // Remove trailing -
+    /* eslint-enable no-multi-spaces,no-useless-escape */
+}
+
+function contentTypeByFileExtension(filename) {
+    const extname = path.extname(filename);
+
+    switch (extname) {
+        case '.mov':
+            return 'video/quicktime';
+        case '.heif':
+            return 'image/heif';
+        case '.heic':
+            return 'image/heic';
+        case '.jpg':
+        case '.jpeg':
+            return 'image/jpeg';
+        default:
+            throw new Error(`No content type registered for file extension "${ extname }"`);
+    }
 }
 
 async function readJSONFile(filepath) {

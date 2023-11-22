@@ -117,6 +117,8 @@ export default class RoutingTable {
                     res = await this.#handleError(error, request, response);
                 }
             } else {
+                // TODO: We still want to give an opportunity for the route to handle the
+                //       error (above) but also kill the server for this unknown error.
                 throw error;
             }
         }
