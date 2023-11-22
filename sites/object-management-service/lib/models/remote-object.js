@@ -274,6 +274,7 @@ export default class RemoteObject {
             scopeId: this.scopeId,
             key: this.key || null,
             contentType: this.contentType || null,
+            contentLength: this.contentLength || null,
             storageClass: this.storageClass || null,
             md5Hash: this.md5Hash || null,
             version: this.version || null,

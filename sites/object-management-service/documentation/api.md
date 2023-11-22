@@ -111,7 +111,9 @@ POST /admin-rpc
 
 Returns JSON; `{ "result": {"scopeId": "SCOPE_ID","accessTokens": ["TOKEN_STRING"]}}`
 
-If the scope does not exist in the database, then create it. Then generate a UUID as a token and accociate it with the scope in the database.
+If the scope does not exist in the database, then create it. Then generate a UUID as a token and associate it with the scope in the database.
+
+Follows the [JSON RPC 2.0 Specification](https://www.jsonrpc.org/specification).
 
 #### Design Decisions for Scope.generateAuthenticationToken()
 ```js

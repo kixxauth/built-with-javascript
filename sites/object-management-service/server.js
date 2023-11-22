@@ -106,6 +106,7 @@ async function start() {
     }));
 
     routingTable.registerHTTPInterface('AdminRPCTarget', new AdminRPCTarget({
+        config,
         logger,
         dataStore,
     }));
