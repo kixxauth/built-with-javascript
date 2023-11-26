@@ -63,6 +63,7 @@ export default class LocalObjectStore {
                 resolve(new LocalObject(spec));
             };
 
+            // TODO: Is it necessary to listen to "finish"? (No, only the "close" event is fired)
             sourceStream.on('finish', onComplete);
             sourceStream.on('close', onComplete);
 

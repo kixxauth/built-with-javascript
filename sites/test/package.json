@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "name": "test-server",
+  "version": "0.0.1",
+  "description": "A test application server for the Edge Proxy Server",
+  "type": "module",
+  "engines": {
+    "node": ">=16.13.2"
+  },
+  "scripts": {
+    "test": "eslint ./"
+  },
+  "devDependencies": {
+    "eslint": "~8.48.0"
+  },
+  "author": "Kris Walker (www.kriswalker.me)",
+  "license": "CC-BY-SA-4.0"
+}

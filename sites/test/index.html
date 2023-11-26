@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <title>Test Application</title>
+    <meta name="description" content="Test application for Edge Server.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style type="text/css">
+        /* A box sizing reset: https://css-tricks.com/box-sizing/ */
+        html {
+            box-sizing: border-box;
+            font-size: 16px;
+            --theme-text-color: #eee;
+            --theme-background-color: #111;
+            --theme-primary-hue: 214;
+            --theme-primary-saturation: 81%;
+            --theme-primary-lightness: 49%;
+            --theme-primary: hsl(var(--theme-primary-hue), var(--theme-primary-saturation), var(--theme-primary-lightness));
+            --theme-on-primary: #fff;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            line-height: 1.4;
+            color: var(--theme-text-color);
+            background-color: var(--theme-background-color);
+        }
+        a, a:visited {
+            color: var(--theme-primary);
+        }
+        #page-wrapper {
+            max-width: 720px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        @media screen and (max-width: 740px) {
+            #page-wrapper {
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+        }
+
+        ul#actions-list {
+            list-style: none;
+            padding: 0;
+        }
+        ul#actions-list > li {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="page-wrapper">
+        <h1>Edge Server Test Application</h1>
+        <ul id="actions-list">
+            <li>
+                <h2>Request Not Found</h2>
+                <p>Hit an endpoint which does not exist on the server.</p>
+                <p><a href="/does-not-exist">This link is broken</a></p>
+            </li>
+            <li>
+                <h2>Trigger Server Error</h2>
+                <p>Hit an endpoint on the server which should trigger an error. Check the server logs after making the request.</p>
+                <p><a href="/trigger-error">Trigger Error</a></p>
+            </li>
+            <li>
+                <h2>Upload File</h2>
+                <p>Upload a file through the proxy server and write it to a temporary location on disk. Observe the request in the browser console network tab.</p>
+                <form id="fileUploadForm">
+                    <h2>Upload Media Files</h2>
+                    <p>
+                        <label>Choose media file</label>
+                        <input id="fileInput" type="file" name="media_file">
+                    </p>
+                    <p>
+                        <button>Upload</button>
+                    </p>
+                </form>
+                <p id="notification"></p>
+            </li>
+        </ul>
+    </div>
+
+    <script type="text/javascript">
+    (function () {
+        const form = document.getElementById('fileUploadForm');
+        const input = document.getElementById('fileInput');
+        const notification = document.getElementById('notification');
+
+        async function uploadFile(file) {
+            const res = await fetch(`./file`, {
+                method: 'PUT',
+                headers: {
+                    'content-type': file.type,
+                    'content-length': file.size,
+                },
+                body: file,
+            });
+
+            if (!res.ok) {
+                throw new Error(`Unexpected status code from server: ${ res.status }`);
+            }
+
+            return true;
+        }
+
+        function printNotification(msg) {
+            notification.innerText = msg;
+        }
+
+        form.addEventListener('submit', (ev) => {
+            ev.stopPropagation();
+            ev.preventDefault();
+
+            const file = input.files[0];
+
+            if (file) {
+                uploadFile(file).then(() => {
+                    printNotification(`File ${ file.name } uploaded - mimetype: ${ file.type }`);
+                }, (error) => {
+                    console.error('Error uploading file:');
+                    console.error(error);
+                });
+            }
+        });
+    }());
+    </script>
+</body>
