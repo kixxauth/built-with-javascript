@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 
 
-const PORT = 3001;
+const PORT = 8001;
 const FILEPATH = fromFileUrl(new URL(import.meta.url));
 const ROOTDIR = path.dirname(FILEPATH);
 
