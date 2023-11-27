@@ -5,7 +5,7 @@ import tls from 'node:tls';
 import childProcesses from 'node:child_process';
 import Logger from './lib/logger.js';
 import { createHttpRequestHandler } from './lib/http-request-handler.js';
-import { isNonEmptyString, readBufferFile, readJsonFile, createCounter } from './lib/utils.js';
+import { isNonEmptyString, readBufferFile, readJsonFile } from './lib/utils.js';
 
 if (!isNonEmptyString(process.argv[2])) {
     throw new Error('Expected a config file path as commmand line argument');
@@ -30,34 +30,25 @@ const servers = [];
 const subProcesses = [];
 const openSockets = new Set();
 
-const getSocketId = createCounter(1);
-
 let destroyed = false;
 
 
 async function main() {
     const config = await loadConfig(CONFIG_FILEPATH);
 
-    VHOSTS_BY_HOSTNAME.forEach(({ command }) => {
+    config.virtualHosts.forEach(({ command }) => {
         subProcesses.push(startSubProcess(command));
     });
 
     servers.push(startEncryptedServer(config));
-    servers.push(startUencryptedServer(config));
+    servers.push(startUnencryptedServer(config));
 
     // Track open socket connections so we can close the server when needed.
     servers.forEach((server) => {
-        const { port } = server.address();
-
         server.on('connection', (socket) => {
             openSockets.add(socket);
 
-            const id = getSocketId();
-
-            logger.log('new connection', { port, id, connections: openSockets.size });
-
             socket.on('close', () => {
-                logger.log('closed connection', { port, id, connections: openSockets.size });
                 openSockets.delete(socket);
             });
         });
@@ -236,12 +227,12 @@ function startEncryptedServer(config) {
         }
     }
 
-    server.on('error', (error) => {
+    server.once('error', (error) => {
         logger.error('encrypted server error event', { error });
         closeServersAndExit();
     });
 
-    server.on('listening', () => {
+    server.once('listening', () => {
         const { port } = server.address();
         logger.log('encrypted server listening', { port });
     });
@@ -253,7 +244,7 @@ function startEncryptedServer(config) {
     return server;
 }
 
-function startUencryptedServer(config) {
+function startUnencryptedServer(config) {
     const server = http.createServer();
 
     const handleRequest = createHttpRequestHandler({
@@ -261,12 +252,12 @@ function startUencryptedServer(config) {
         vhostsByHostname: VHOSTS_BY_HOSTNAME,
     });
 
-    server.on('error', (error) => {
+    server.once('error', (error) => {
         logger.error('unencrypted server error event', { error });
         closeServersAndExit();
     });
 
-    server.on('listening', () => {
+    server.once('listening', () => {
         const { port } = server.address();
         logger.log('unencrypted server listening', { port });
     });

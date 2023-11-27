@@ -42,6 +42,9 @@ tmp/
 # Protect secrets from getting into source control
 .secrets
 
+# Edge Server
+edge-server/config/
+
 # Object Management Service
 sites/object-management-service/config/**
 !sites/object-management-service/config/start.toml
