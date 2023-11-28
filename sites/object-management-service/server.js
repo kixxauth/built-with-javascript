@@ -16,6 +16,8 @@ import AdminRPCTarget from './lib/http-interfaces/admin-rpc-target.js';
 
 const ROOT_DIR_FILE_URL = new URL('./', import.meta.url);
 
+const NAME = 'ObjectService';
+
 const ALLOWED_ENVIRONMENTS = [
     'development',
     'production',
@@ -47,7 +49,7 @@ async function start() {
     await config.load(environment);
 
     const logger = createLogger({
-        name: 'server',
+        name: NAME,
         level: config.logger.getLevel(),
         makePretty: config.logger.getMakePretty(),
     });
