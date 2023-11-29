@@ -103,7 +103,7 @@ export default class ObjectStore {
             StorageClass: storageClass,
         });
 
-        this.#logger.log('put object; uploaded', { bucket, key, id });
+        this.#logger.debug('put object; uploaded', { bucket, key, id });
 
         return obj.updateFromS3(result);
     }
@@ -125,7 +125,7 @@ export default class ObjectStore {
             });
         } catch (error) {
             if (error.name === '403' || error.name === 'AccessDenied') {
-                this.#logger.log('fetch object head; not found', { bucket, key });
+                this.#logger.debug('fetch object head; not found', { bucket, key });
                 return null;
             }
             throw error;

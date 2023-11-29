@@ -131,6 +131,7 @@ export function createHttpRequestHandler(deps) {
         const host = req.headers.host;
         const href = `${ protocol }://${ host }${ req.url }`;
 
+        // TODO: Do not log out a URL until we have checked to ensure that it is safe.
         logger.log('request', { method, href });
 
         if (!isNonEmptyString(host)) {
@@ -143,6 +144,7 @@ export function createHttpRequestHandler(deps) {
         try {
             url = createFullUrl(protocol, host, req.url);
         } catch (error) {
+            // TODO: Do not log out a URL until we have checked to ensure that it is safe.
             logger.debug('invalid request url', { url: req.url, error });
             sendInvalidUrlResponse(req, res);
             return;

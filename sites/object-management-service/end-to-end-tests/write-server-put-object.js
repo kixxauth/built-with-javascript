@@ -19,8 +19,8 @@ const {
 
 
 // Choose an endpoint.
-const ENDPOINT = 'https://media.kixx.name';
-// const ENDPOINT = 'http://localhost:3003';
+// const ENDPOINT = 'https://media.kixx.name';
+const ENDPOINT = 'http://localhost:3003';
 
 // The default auth token should match the admin token in
 // seeds/main_document.json for development. Or pass in a different
@@ -28,8 +28,9 @@ const ENDPOINT = 'https://media.kixx.name';
 const AUTH_TOKEN = process.argv[2] || '37e70d72-39c9-4db4-a61e-c4af20d093cb';
 
 // Choose a scopeId.
-const SCOPE_ID = 'adkavy';
-// const SCOPE_ID = 'testing-123';
+// const SCOPE_ID = 'adkavy';
+const SCOPE_ID = 'testing-123';
+
 
 function main() {
     let id;

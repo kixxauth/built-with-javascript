@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import https from 'node:https';
 import { KixxAssert } from '../dependencies.js';
 
 const {
@@ -17,8 +18,19 @@ const {
 } = KixxAssert;
 
 
+// Choose an endpoint.
+// const ENDPOINT = 'https://media.kixx.name';
+const ENDPOINT = 'http://localhost:3003';
+
+// The default auth token should match the admin token in
+// seeds/main_document.json for development. Or pass in a different
+// token as a command line argument.
+const AUTH_TOKEN = process.argv[2] || '37e70d72-39c9-4db4-a61e-c4af20d093cb';
+
+// Choose a scopeId.
+// const SCOPE_ID = 'adkavy';
 const SCOPE_ID = 'testing-123';
-const AUTH_TOKEN = '37e70d72-39c9-4db4-a61e-c4af20d093cb';
+
 
 function main() {
     let id;
@@ -47,12 +59,12 @@ function main() {
 
         assertEmpty(json.data.filepath);
 
-        assertEqual('http://localhost:3003/origin/testing-123/latest/video.mov', json.data.links.object.origin);
-        assertEqual('https://kixx-stage.imgix.net/testing-123/latest/video.mov', json.data.links.object.cdns[0]);
-        assertEqual(`http://localhost:3003/origin/testing-123/${ id }/latest/video.mp4`, json.data.links.mediaResource.origin);
-        assertEqual(`https://kixx-stage.imgix.net/testing-123/${ id }/latest/video.mp4`, json.data.links.mediaResource.cdns[0]);
-        assertEqual(`http://localhost:3003/origin/testing-123/${ id }/latest/video.0000000.jpg`, json.data.links.mediaPoster.origin);
-        assertEqual(`https://kixx-stage.imgix.net/testing-123/${ id }/latest/video.0000000.jpg`, json.data.links.mediaPoster.cdns[0]);
+        assertEqual(`${ ENDPOINT }/origin/${ SCOPE_ID }/latest/video.mov`, json.data.links.object.origin);
+        assertEqual(`https://kixx.imgix.net/${ SCOPE_ID }/latest/video.mov`, json.data.links.object.cdns[0]);
+        assertEqual(`${ ENDPOINT }/origin/${ SCOPE_ID }/${ id }/latest/video.mp4`, json.data.links.mediaResource.origin);
+        assertEqual(`https://kixx.imgix.net/${ SCOPE_ID }/${ id }/latest/video.mp4`, json.data.links.mediaResource.cdns[0]);
+        assertEqual(`${ ENDPOINT }/origin/${ SCOPE_ID }/${ id }/latest/video.0000000.jpg`, json.data.links.mediaPoster.origin);
+        assertEqual(`https://kixx.imgix.net/${ SCOPE_ID }/${ id }/latest/video.0000000.jpg`, json.data.links.mediaPoster.cdns[0]);
 
         /* eslint-disable no-console */
         console.log('Upload complete');
@@ -67,7 +79,7 @@ function uploadObject(callback) {
     const stats = fs.statSync(filepath);
     const sourceStream = fs.createReadStream(filepath);
 
-    const url = new URL(`/objects/${ SCOPE_ID }/video.mov`, 'http://localhost:3003');
+    const url = new URL(`/objects/${ SCOPE_ID }/video.mov`, ENDPOINT);
     const videoProcessingParams = JSON.stringify({
         type: 'MP4_H264_AAC',
         video: {
@@ -87,9 +99,13 @@ function uploadObject(callback) {
             'x-kc-video-processing': Buffer.from(videoProcessingParams, 'utf8').toString('base64'),
             'x-kc-storage-class': 'STANDARD',
         },
+        // Required to get around the certificate authority for the *.kixx.name SSL cert.
+        rejectUnauthorized: false,
     };
 
-    const req = http.request(url, reqOptions, (res) => {
+    const proto = url.protocol === 'https:' ? https : http;
+
+    const req = proto.request(url, reqOptions, (res) => {
         const chunks = [];
 
         res.on('error', (error) => {

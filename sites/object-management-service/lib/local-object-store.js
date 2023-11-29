@@ -58,7 +58,7 @@ export default class LocalObjectStore {
                     md5Hash,
                 });
 
-                this.#logger.log('object saved', { scopeId, id, md5Hash });
+                this.#logger.debug('object saved', { scopeId, id, md5Hash });
 
                 resolve(new LocalObject(spec));
             };
