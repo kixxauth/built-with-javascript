@@ -154,7 +154,7 @@ export default class ObjectStore {
             result = await this.awsGetObjectCommand(options);
         } catch (error) {
             if (error.name === '403' || error.name === 'AccessDenied') {
-                this.#logger.log('fetch object; not found', { bucket, key });
+                this.#logger.debug('fetch object; not found', { bucket, key });
                 return null;
             }
             throw error;

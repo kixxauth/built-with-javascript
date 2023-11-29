@@ -21,6 +21,8 @@ import { fromFileUrl } from './lib/utils.js';
 
 const ROOT_DIR = fromFileUrl(new URL('./', import.meta.url));
 
+const NAME = 'adkavy';
+
 const ALLOWED_ENVIRONMENTS = [
     'development',
     'production',
@@ -52,7 +54,7 @@ async function start() {
     await config.load(environment);
 
     const logger = createLogger({
-        name: 'server',
+        name: NAME,
         level: config.logger.getLevel(),
         makePretty: config.logger.getMakePretty(),
     });

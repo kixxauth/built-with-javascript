@@ -1,4 +1,5 @@
 import http from 'node:http';
+import https from 'node:https';
 import { randomUUID } from 'node:crypto';
 import { KixxAssert } from '../dependencies.js';
 
@@ -11,6 +12,17 @@ const {
 } = KixxAssert;
 
 
+// Choose an endpoint.
+// const ENDPOINT = 'https://media.kixx.name';
+const ENDPOINT = 'http://localhost:3003';
+
+// The default auth token should match the admin token in
+// seeds/main_document.json for development. Or pass in a different
+// token as a command line argument.
+const AUTH_TOKEN = process.argv[2] || '57e897f8-3b81-4cde-92c0-66d619b44663';
+
+// Choose a scopeId.
+// const scopeId = 'adkavy';
 const scopeId = '92a27706-77ce-4127-8aee-d8f4e4f330cb';
 
 function main() {
@@ -23,18 +35,22 @@ function main() {
         params: { scopeId },
     });
 
-    const url = new URL('/admin-rpc', 'http://localhost:3003');
+    const url = new URL('/admin-rpc', ENDPOINT);
 
     const reqOptions = {
         method: 'POST',
         headers: {
-            authorization: 'Bearer 57e897f8-3b81-4cde-92c0-66d619b44663',
+            authorization: `Bearer ${ AUTH_TOKEN }`,
             'content-type': 'application/json',
             'content-length': Buffer.byteLength(data),
         },
+        // Required to get around the certificate authority for the *.kixx.name SSL cert.
+        rejectUnauthorized: false,
     };
 
-    const req = http.request(url, reqOptions, (res) => {
+    const proto = url.protocol === 'https:' ? https : http;
+
+    const req = proto.request(url, reqOptions, (res) => {
         const chunks = [];
 
         res.on('error', (error) => {

@@ -128,7 +128,7 @@ export default class WriteServer {
         const env = this.#config.application.getEnvironment();
 
         // Redirect http: to https: (NOT in the development environment)
-        if (protocol !== 'https:' && env !== 'development') {
+        if (protocol === 'http:' && env !== 'development') {
             const newLocation = href.replace(/^http:/, 'https:');
             return response.respondWithRedirect(301, newLocation);
         }

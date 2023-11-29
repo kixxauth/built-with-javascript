@@ -66,7 +66,7 @@ export default class DataStore {
         const itemKey = this.#createItemKey(type, id);
         const doc = await this.#fetchDocument();
 
-        if (doc[itemKey]) {
+        if (doc && doc[itemKey]) {
             const Model = this.#getModel(type);
             return new Model(doc[itemKey]);
         }
@@ -115,6 +115,9 @@ export default class DataStore {
 
             response = await this.#s3Client.send(command);
         } catch (cause) {
+            if (cause.name === '403' || cause.name === 'AccessDenied') {
+                return null;
+            }
             throw new OperationalError(
                 `Error fetching document object from S3 storage: ${ cause.message }`,
                 { code: 'AWS_S3_ERR_GETOBJECT', cause, fatal: true }
