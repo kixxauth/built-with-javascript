@@ -5,8 +5,17 @@ export function isNonEmptyString(x) {
     return x && typeof x === 'string';
 }
 
-export function readBufferFile(filepath) {
-    return fsp.readFile(filepath, { encoding: null });
+export async function readBufferFile(filepath) {
+    let result;
+    try {
+        result = await fsp.readFile(filepath, { encoding: null });
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            return null;
+        }
+        throw err;
+    }
+    return result;
 }
 
 export async function readJsonFile(filepath) {

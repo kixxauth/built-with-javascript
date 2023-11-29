@@ -9,9 +9,10 @@ export function createHttpRequestHandler(deps) {
     const {
         logger,
         vhostsByHostname,
+        protocol,
     } = deps;
 
-    function createFullUrl(protocol, host, pathname) {
+    function createFullUrl(proto, host, pathname) {
         decodeURIComponent(pathname);
 
         if (DISALLOWED_URL_CHARACTERS.test(pathname)) {
@@ -19,7 +20,7 @@ export function createHttpRequestHandler(deps) {
         }
 
         // Parse the URL.
-        return new URL(pathname, `${ protocol }://${ host }`);
+        return new URL(pathname, `${ proto }://${ host }`);
     }
 
     function sendInvalidHostResponse(req, res) {
@@ -65,7 +66,7 @@ export function createHttpRequestHandler(deps) {
     function proxyRequest(req, res, url, port) {
         const { method } = req;
         const { href } = url;
-        const protocol = url.protocol.replace(/:$/, '');
+        const proto = url.protocol.replace(/:$/, '');
         const headers = Object.assign({}, req.headers);
 
         // Use the finish event to log out the response.
@@ -80,7 +81,7 @@ export function createHttpRequestHandler(deps) {
         });
 
         headers['x-forwarded-host'] = headers.host;
-        headers['x-forwarded-proto'] = protocol;
+        headers['x-forwarded-proto'] = proto;
 
         const options = {
             method,
@@ -128,7 +129,7 @@ export function createHttpRequestHandler(deps) {
     return function httpRequestHandler(req, res) {
         const { method } = req;
         const host = req.headers.host;
-        const href = `https://${ host }${ req.url }`;
+        const href = `${ protocol }://${ host }${ req.url }`;
 
         logger.log('request', { method, href });
 
@@ -140,7 +141,7 @@ export function createHttpRequestHandler(deps) {
 
         let url;
         try {
-            url = createFullUrl('https', host, req.url);
+            url = createFullUrl(protocol, host, req.url);
         } catch (error) {
             logger.debug('invalid request url', { url: req.url, error });
             sendInvalidUrlResponse(req, res);

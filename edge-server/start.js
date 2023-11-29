@@ -20,6 +20,7 @@ const SUBPROCESS_MATURITY_MS = 15 * 1000;
 
 const VHOSTS_BY_HOSTNAME = new Map();
 const CERTNAME_BY_SERVERNAME = new Map();
+const SSL_CA_CACHE = new Map();
 const SSL_CERT_CACHE = new Map();
 const SSL_KEY_CACHE = new Map();
 
@@ -87,6 +88,16 @@ function getSslCertForServername(servername) {
     return buff;
 }
 
+function getSslCaForServername(servername) {
+    const certname = CERTNAME_BY_SERVERNAME.get(servername);
+
+    if (!certname) {
+        throw new Error(`SNI servername "${ servername }" is unknown`);
+    }
+
+    return SSL_CA_CACHE.get(certname);
+}
+
 async function loadConfig(filepath) {
     const config = await readJsonFile(filepath);
 
@@ -118,12 +129,23 @@ async function loadConfig(filepath) {
             if (isNonEmptyString(hostname.certname)) {
                 CERTNAME_BY_SERVERNAME.set(hostname.hostname, hostname.certname);
 
+                const caFilepath = path.join(config.certDirectory, `${ hostname.certname }.ca`);
                 const certFilepath = path.join(config.certDirectory, `${ hostname.certname }.cert`);
                 const keyFilepath = path.join(config.certDirectory, `${ hostname.certname }.key`);
 
+                const ca = await readBufferFile(caFilepath);
                 const cert = await readBufferFile(certFilepath);
                 const key = await readBufferFile(keyFilepath);
 
+                logger.log('loaded ssl certificate', {
+                    hostname: hostname.hostname,
+                    certname: hostname.certname,
+                    ca: Boolean(ca),
+                    cert: Boolean(cert),
+                    key: Boolean(key),
+                });
+
+                SSL_CA_CACHE.set(hostname.certname, ca);
                 SSL_CERT_CACHE.set(hostname.certname, cert);
                 SSL_KEY_CACHE.set(hostname.certname, key);
             }
@@ -197,6 +219,7 @@ function startEncryptedServer(config) {
 
     const handleRequest = createHttpRequestHandler({
         logger,
+        protocol: 'https',
         vhostsByHostname: VHOSTS_BY_HOSTNAME,
     });
 
@@ -214,9 +237,15 @@ function startEncryptedServer(config) {
 
         let context;
         try {
+            const ca = getSslCaForServername(servername);
             const cert = getSslCertForServername(servername);
             const key = getSslKeyForServername(servername);
-            context = tls.createSecureContext({ cert, key });
+
+            if (ca) {
+                context = tls.createSecureContext({ ca, cert, key });
+            } else {
+                context = tls.createSecureContext({ cert, key });
+            }
         } catch (error) {
             logger.error('error in SNI callback', { error });
             callback(error);
@@ -249,6 +278,7 @@ function startUnencryptedServer(config) {
 
     const handleRequest = createHttpRequestHandler({
         logger,
+        protocol: 'http',
         vhostsByHostname: VHOSTS_BY_HOSTNAME,
     });
 
