@@ -24,6 +24,10 @@ const SSL_CA_CACHE = new Map();
 const SSL_CERT_CACHE = new Map();
 const SSL_KEY_CACHE = new Map();
 
+// The "^" symbol within "[^]" means one NOT of the following set of characters.
+// eslint-disable-next-line no-useless-escape
+const DISALLOWED_HOST_CHARACTERS = /[^a-z0-9_\.\:\-]/i;
+
 
 const logger = new Logger({ name: 'EdgeServer' });
 
@@ -56,45 +60,27 @@ async function main() {
     });
 }
 
-function getSslKeyForServername(servername) {
-    const certname = CERTNAME_BY_SERVERNAME.get(servername);
-
-    if (!certname) {
-        throw new Error(`SNI servername "${ servername }" is unknown`);
-    }
-
+function getSslKeyForServername(certname) {
     const buff = SSL_KEY_CACHE.get(certname);
 
     if (!buff) {
-        throw new Error(`Missing key for SNI servername "${ servername }" certname "${ certname }"`);
+        throw new Error(`Missing key for SNI certname "${ certname }"`);
     }
 
     return buff;
 }
 
-function getSslCertForServername(servername) {
-    const certname = CERTNAME_BY_SERVERNAME.get(servername);
-
-    if (!certname) {
-        throw new Error(`SNI servername "${ servername }" is unknown`);
-    }
-
+function getSslCertForServername(certname) {
     const buff = SSL_CERT_CACHE.get(certname);
 
     if (!buff) {
-        throw new Error(`Missing cert for SNI servername "${ servername }" certname "${ certname }"`);
+        throw new Error(`Missing cert for SNI certname "${ certname }"`);
     }
 
     return buff;
 }
 
-function getSslCaForServername(servername) {
-    const certname = CERTNAME_BY_SERVERNAME.get(servername);
-
-    if (!certname) {
-        throw new Error(`SNI servername "${ servername }" is unknown`);
-    }
-
+function getSslCaForServername(certname) {
     return SSL_CA_CACHE.get(certname);
 }
 
@@ -225,21 +211,32 @@ function startEncryptedServer(config) {
 
     // In a Server Name Indication scheme (SNI) the servername is the hostname on the request.
     function sniCallback(servername, callback) {
-        logger.log('server name indication callback', { servername });
-
-        // Uncomment for testing.
-        // An Error here, without using the provided callback, will crash the server.
-        // throw new Error('Test SNI Error');
-
-        // Uncomment for testing.
-        // It is possible to exit the process from here. The following call will succeed:
-        // closeServersAndExit();
-
         let context;
         try {
-            const ca = getSslCaForServername(servername);
-            const cert = getSslCertForServername(servername);
-            const key = getSslKeyForServername(servername);
+            // Attempt to stop SNI cracks before they become a problem.
+            if (DISALLOWED_HOST_CHARACTERS.test(servername)) {
+                throw new TypeError('Disallowed characters in SNI servername');
+            }
+
+            logger.log('server name indication callback', { servername });
+
+            // Uncomment for testing.
+            // An Error here, without using the provided callback, will crash the server.
+            // throw new Error('Test SNI Error');
+
+            // Uncomment for testing.
+            // It is possible to exit the process from here. The following call will succeed:
+            // closeServersAndExit();
+
+            const certname = CERTNAME_BY_SERVERNAME.get(servername);
+
+            if (!certname) {
+                throw new Error(`SNI servername "${ servername }" is unknown`);
+            }
+
+            const ca = getSslCaForServername(certname);
+            const cert = getSslCertForServername(certname);
+            const key = getSslKeyForServername(certname);
 
             if (ca) {
                 context = tls.createSecureContext({ ca, cert, key });

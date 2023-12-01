@@ -4,6 +4,8 @@ import { isNonEmptyString } from './utils.js';
 // The "^" symbol within "[^]" means one NOT of the following set of characters.
 // eslint-disable-next-line no-useless-escape
 const DISALLOWED_URL_CHARACTERS = /[^a-z0-9_\.\:\-\/\&\?\=%]/i;
+// eslint-disable-next-line no-useless-escape
+const DISALLOWED_HOST_CHARACTERS = /[^a-z0-9_\.\:\-]/i;
 
 export function createHttpRequestHandler(deps) {
     const {
@@ -13,8 +15,12 @@ export function createHttpRequestHandler(deps) {
     } = deps;
 
     function createFullUrl(proto, host, pathname) {
+        decodeURIComponent(host);
         decodeURIComponent(pathname);
 
+        if (DISALLOWED_HOST_CHARACTERS.test(host)) {
+            throw new TypeError('Disallowed characters in hostname');
+        }
         if (DISALLOWED_URL_CHARACTERS.test(pathname)) {
             throw new TypeError('Disallowed characters in request URL');
         }
@@ -131,11 +137,8 @@ export function createHttpRequestHandler(deps) {
         const host = req.headers.host;
         const href = `${ protocol }://${ host }${ req.url }`;
 
-        // TODO: Do not log out a URL until we have checked to ensure that it is safe.
-        logger.log('request', { method, href });
-
         if (!isNonEmptyString(host)) {
-            logger.log('invalid request host', { host });
+            logger.debug('invalid or missing request host header');
             sendInvalidHostResponse(req, res);
             return;
         }
@@ -144,8 +147,7 @@ export function createHttpRequestHandler(deps) {
         try {
             url = createFullUrl(protocol, host, req.url);
         } catch (error) {
-            // TODO: Do not log out a URL until we have checked to ensure that it is safe.
-            logger.debug('invalid request url', { url: req.url, error });
+            logger.debug('invalid request url', { error });
             sendInvalidUrlResponse(req, res);
             return;
         }
@@ -153,10 +155,12 @@ export function createHttpRequestHandler(deps) {
         const vhost = vhostsByHostname.get(url.hostname);
 
         if (!vhost) {
-            logger.log('host not available', { hostname: url.hostname });
+            logger.debug('host does not exist', { hostname: url.hostname });
             sendNotFoundHostResponse(req, res);
             return;
         }
+
+        logger.log('request', { method, href });
 
         proxyRequest(req, res, url, vhost.port);
     };
