@@ -20,7 +20,12 @@ TestServer running at http://localhost:8001
 {"time":"2023-11-29T14:47:09.870Z","name":"EdgeServer","level":"INFO ","msg":"response finish","method":"POST","href":"https://media.kixx.name/admin-rpc","statusCode":200,"contentType":"application/json","contentLength":147}
 {"name":"ObjectService:HTTPRequestTarget","hostname":"wall-e-2","pid":98701,"time":"2023-11-29T14:47:09.867Z","level":30,"msg":"http response","requestId":2,"status":200,"method":"POST","url":"/admin-rpc","contentLength":147}
 {"time":"2023-11-29T14:47:53.487Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://68.183.50.204/"}
+
+
+// TODO: This should be a DEBUG log level
 {"time":"2023-11-29T14:47:53.488Z","name":"EdgeServer","level":"INFO ","msg":"host not available","hostname":"68.183.50.204"}
+
+
 {"time":"2023-11-29T14:58:05.139Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://138.197.53.160/"}
 request GET /
 {"time":"2023-11-29T14:58:05.165Z","name":"EdgeServer","level":"INFO ","msg":"response finish","method":"GET","href":"http://138.197.53.160/","statusCode":200,"contentType":"text/html","contentLength":4338}
@@ -29,8 +34,14 @@ request GET /
 {"time":"2023-11-29T15:18:24.422Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://138.197.53.160/"}
 {"time":"2023-11-29T15:18:24.433Z","name":"EdgeServer","level":"INFO ","msg":"response finish","method":"GET","href":"http://138.197.53.160/","statusCode":200,"contentType":"text/html","contentLength":4338}
 request GET /
+
+
+// TODO: Do not log out the request if the host name is not available.
 {"time":"2023-11-29T15:21:02.977Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://68.183.50.204/"}
 {"time":"2023-11-29T15:21:02.977Z","name":"EdgeServer","level":"INFO ","msg":"host not available","hostname":"68.183.50.204"}
+
+
+
 {"time":"2023-11-29T15:25:47.160Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://68.183.50.204/"}
 {"time":"2023-11-29T15:25:47.161Z","name":"EdgeServer","level":"INFO ","msg":"host not available","hostname":"68.183.50.204"}
 {"time":"2023-11-29T15:25:54.534Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://68.183.50.204/favicon.ico"}
@@ -58,8 +69,15 @@ send not found response
 {"time":"2023-11-29T15:30:48.506Z","name":"EdgeServer","level":"INFO ","msg":"host not available","hostname":"68.183.50.204"}
 {"time":"2023-11-29T15:34:05.974Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://68.183.50.204:80/"}
 {"time":"2023-11-29T15:34:05.975Z","name":"EdgeServer","level":"INFO ","msg":"host not available","hostname":"68.183.50.204"}
+
+
+
+// TODO: Do not log out the SNI servername until it has been tested for invalid characters
 {"time":"2023-11-29T15:35:28.098Z","name":"EdgeServer","level":"INFO ","msg":"server name indication callback","servername":"68.183.50.204"}
 {"time":"2023-11-29T15:35:28.099Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"68.183.50.204\" is unknown","stack":["Error: SNI servername \"68.183.50.204\" is unknown","    at getSslCaForServername (file:///home/kris/webserver/edge-server/start.js:95:15)","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:240:24)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
+
+
+
 {"time":"2023-11-29T15:35:28.271Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://68.183.50.204/.env"}
 {"time":"2023-11-29T15:35:28.272Z","name":"EdgeServer","level":"INFO ","msg":"host not available","hostname":"68.183.50.204"}
 {"time":"2023-11-29T15:36:47.502Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://138.197.53.160:80/"}
@@ -356,10 +374,17 @@ request GET /
 {"time":"2023-11-29T15:51:28.520Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"138.197.53.160\" is unknown","stack":["Error: SNI servername \"138.197.53.160\" is unknown","    at getSslCaForServername (file:///home/kris/webserver/edge-server/start.js:95:15)","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:240:24)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
 {"time":"2023-11-29T15:51:28.606Z","name":"EdgeServer","level":"INFO ","msg":"server name indication callback","servername":"138.197.53.160"}
 {"time":"2023-11-29T15:51:28.606Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"138.197.53.160\" is unknown","stack":["Error: SNI servername \"138.197.53.160\" is unknown","    at getSslCaForServername (file:///home/kris/webserver/edge-server/start.js:95:15)","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:240:24)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
+
+
+
+// TODO: Remove the IP address "138.197.53.160" as a valid hostname
 {"time":"2023-11-29T15:51:40.466Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"POST","href":"http://138.197.53.160:80/Autodiscover/Autodiscover.xml"}
 {"time":"2023-11-29T15:51:40.472Z","name":"EdgeServer","level":"INFO ","msg":"response finish","method":"POST","href":"http://138.197.53.160/Autodiscover/Autodiscover.xml","statusCode":404,"contentType":"text/plain","contentLength":53}
 request POST /Autodiscover/Autodiscover.xml
 send not found response
+
+
+
 {"time":"2023-11-29T15:52:31.529Z","name":"EdgeServer","level":"INFO ","msg":"server name indication callback","servername":"138.197.53.160"}
 {"time":"2023-11-29T15:52:31.530Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"138.197.53.160\" is unknown","stack":["Error: SNI servername \"138.197.53.160\" is unknown","    at getSslCaForServername (file:///home/kris/webserver/edge-server/start.js:95:15)","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:240:24)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
 {"time":"2023-11-29T15:52:31.616Z","name":"EdgeServer","level":"INFO ","msg":"server name indication callback","servername":"138.197.53.160"}
@@ -488,6 +513,10 @@ send not found response
 {"time":"2023-11-29T15:55:47.177Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"138.197.53.160\" is unknown","stack":["Error: SNI servername \"138.197.53.160\" is unknown","    at getSslCaForServername (file:///home/kris/webserver/edge-server/start.js:95:15)","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:240:24)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
 {"time":"2023-11-29T15:55:47.264Z","name":"EdgeServer","level":"INFO ","msg":"server name indication callback","servername":"138.197.53.160"}
 {"time":"2023-11-29T15:55:47.265Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"138.197.53.160\" is unknown","stack":["Error: SNI servername \"138.197.53.160\" is unknown","    at getSslCaForServername (file:///home/kris/webserver/edge-server/start.js:95:15)","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:240:24)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
+
+
+
+// Example of unsecure PHP
 {"time":"2023-11-29T15:58:38.270Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"POST","href":"http://138.197.53.160:80/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php"}
 {"time":"2023-11-29T15:58:38.274Z","name":"EdgeServer","level":"INFO ","msg":"response finish","method":"POST","href":"http://138.197.53.160/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php","statusCode":404,"contentType":"text/plain","contentLength":74}
 request POST /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
@@ -498,10 +527,17 @@ send not found response
 {"time":"2023-11-29T16:02:04.538Z","name":"EdgeServer","level":"INFO ","msg":"response finish","method":"GET","href":"http://138.197.53.160/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php","statusCode":404,"contentType":"text/plain","contentLength":74}
 request GET /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
 send not found response
+
+
+
+// Example of unsecure static server
 {"time":"2023-11-29T16:04:52.766Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://138.197.53.160/.env"}
 {"time":"2023-11-29T16:04:52.770Z","name":"EdgeServer","level":"INFO ","msg":"response finish","method":"GET","href":"http://138.197.53.160/.env","statusCode":404,"contentType":"text/plain","contentLength":28}
 request GET /.env
 send not found response
+
+
+
 {"time":"2023-11-29T16:04:53.765Z","name":"EdgeServer","level":"INFO ","msg":"request","method":"GET","href":"http://138.197.53.160/conf/.env"}
 request GET /conf/.env
 send not found response

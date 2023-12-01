@@ -244,7 +244,7 @@ function startEncryptedServer(config) {
                 context = tls.createSecureContext({ cert, key });
             }
         } catch (error) {
-            logger.error('error in SNI callback', { error });
+            logger.error('error in SNI callback', { errorMessage: error.message });
             callback(error);
         }
 

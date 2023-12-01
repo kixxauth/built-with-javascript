@@ -18,12 +18,28 @@ TestServer running at http://localhost:8001
 {"time":"2023-11-30T23:24:54.745Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"138.197.53.160"}
 {"time":"2023-11-30T23:24:59.059Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"138.197.53.160"}
 {"time":"2023-11-30T23:27:51.138Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"138.197.53.160"}
+
+// TODO: No need to log out the full stack trace
+// TODO: Log out the IP address of requests so we can track attackers
 {"time":"2023-11-30T23:54:47.777Z","name":"EdgeServer","level":"DEBUG","msg":"invalid request url","error":{"name":"TypeError","code":"NO_CODE","message":"Disallowed characters in request URL","stack":["TypeError: Disallowed characters in request URL","    at createFullUrl (file:///home/kris/webserver/edge-server/lib/http-request-handler.js:25:19)","    at Server.httpRequestHandler (file:///home/kris/webserver/edge-server/lib/http-request-handler.js:148:19)","    at Server.emit (node:events:514:28)","    at parserOnIncoming (node:_http_server:1143:12)","    at HTTPParser.parserOnHeadersComplete (node:_http_common:119:17)"]}}
+
+
+
 {"time":"2023-11-30T23:59:21.997Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"68.183.50.204"}
 {"time":"2023-11-30T23:59:22.184Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"68.183.50.204"}
 {"time":"2023-11-30T23:59:36.824Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"68.183.50.204"}
+
+
+
+// TODO: Do not log out the SNI servername until it has been checked for security
 {"time":"2023-12-01T00:05:45.065Z","name":"EdgeServer","level":"INFO ","msg":"server name indication callback","servername":"68.183.50.204"}
+
+
+// TODO: Do not log out the full stack trace
 {"time":"2023-12-01T00:05:45.066Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"68.183.50.204\" is unknown","stack":["Error: SNI servername \"68.183.50.204\" is unknown","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:234:23)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
+
+
+
 {"time":"2023-12-01T00:05:45.205Z","name":"EdgeServer","level":"INFO ","msg":"server name indication callback","servername":"68.183.50.204"}
 {"time":"2023-12-01T00:05:45.205Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"68.183.50.204\" is unknown","stack":["Error: SNI servername \"68.183.50.204\" is unknown","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:234:23)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
 {"time":"2023-12-01T00:05:45.344Z","name":"EdgeServer","level":"INFO ","msg":"server name indication callback","servername":"68.183.50.204"}
@@ -50,6 +66,8 @@ TestServer running at http://localhost:8001
 {"time":"2023-12-01T00:09:13.415Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"138.197.53.160\" is unknown","stack":["Error: SNI servername \"138.197.53.160\" is unknown","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:234:23)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
 {"time":"2023-12-01T00:09:13.553Z","name":"EdgeServer","level":"INFO ","msg":"server name indication callback","servername":"138.197.53.160"}
 {"time":"2023-12-01T00:09:13.554Z","name":"EdgeServer","level":"ERROR","msg":"error in SNI callback","error":{"name":"Error","code":"NO_CODE","message":"SNI servername \"138.197.53.160\" is unknown","stack":["Error: SNI servername \"138.197.53.160\" is unknown","    at TLSSocket.sniCallback [as _SNICallback] (file:///home/kris/webserver/edge-server/start.js:234:23)","    at TLSWrap.loadSNI [as oncertcb] (node:_tls_wrap:220:9)"]}}
+
+// TODO: Log out the IP address of the sender for security logging.
 {"time":"2023-12-01T00:18:54.299Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"68.183.50.204"}
 {"time":"2023-12-01T00:18:54.474Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"68.183.50.204"}
 {"time":"2023-12-01T00:19:06.463Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"138.197.53.160"}
@@ -76,6 +94,9 @@ TestServer running at http://localhost:8001
 {"time":"2023-12-01T03:14:03.124Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"68.183.50.204"}
 {"time":"2023-12-01T03:20:40.533Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"138.197.53.160"}
 {"time":"2023-12-01T03:20:40.718Z","name":"EdgeServer","level":"DEBUG","msg":"host does not exist","hostname":"138.197.53.160"}
+
+
+// TODO: How is this request getting through to the test application server without being logged?
 request GET /
 request GET /favicon.ico
 send not found response

@@ -19,7 +19,8 @@ function printErrorAndExit(message, error) {
 }
 
 const server = http.createServer((req, res) => {
-    console.log('request', req.method, req.url);
+    const ip = req.socket.remoteAddress;
+    console.log('TestServer request', ip, req.method, req.url);
 
     req.on('error', (error) => {
         printErrorAndExit('request error event', error);
@@ -78,7 +79,7 @@ function handleFileUpload(req, res) {
         // });
 
         req.on('close', () => {
-            console.log('file saved');
+            console.log('TestServer file saved');
             res.writeHead(201, 'Created');
             res.end();
         });
@@ -89,7 +90,7 @@ function handleFileUpload(req, res) {
 
 function handleTriggerError() {
     setTimeout(() => {
-        console.log('throw error');
+        console.log('TestServer throw error');
         throw new Error('Async fatal test error');
     }, 500);
 }
@@ -97,7 +98,7 @@ function handleTriggerError() {
 function sendNotFound(req, res) {
     const body = `No resource found at ${ req.url }.\n`;
 
-    console.log('send not found response');
+    console.log('TestServer send not found response');
 
     res.writeHead(404, 'Not Found', {
         'content-type': 'text/plain',

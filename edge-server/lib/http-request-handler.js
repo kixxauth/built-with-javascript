@@ -133,12 +133,13 @@ export function createHttpRequestHandler(deps) {
     }
 
     return function httpRequestHandler(req, res) {
-        const { method } = req;
+        const { method, socket } = req;
+        const ip = socket.remoteAddress;
         const host = req.headers.host;
         const href = `${ protocol }://${ host }${ req.url }`;
 
         if (!isNonEmptyString(host)) {
-            logger.debug('invalid or missing request host header');
+            logger.debug('invalid or missing request host header', { ip });
             sendInvalidHostResponse(req, res);
             return;
         }
@@ -147,7 +148,7 @@ export function createHttpRequestHandler(deps) {
         try {
             url = createFullUrl(protocol, host, req.url);
         } catch (error) {
-            logger.debug('invalid request url', { error });
+            logger.debug('invalid request url', { ip, errorMessage: error.message });
             sendInvalidUrlResponse(req, res);
             return;
         }
@@ -155,12 +156,12 @@ export function createHttpRequestHandler(deps) {
         const vhost = vhostsByHostname.get(url.hostname);
 
         if (!vhost) {
-            logger.debug('host does not exist', { hostname: url.hostname });
+            logger.debug('host does not exist', { ip, hostname: url.hostname });
             sendNotFoundHostResponse(req, res);
             return;
         }
 
-        logger.log('request', { method, href });
+        logger.log('request', { ip, method, href });
 
         proxyRequest(req, res, url, vhost.port);
     };
