@@ -77,6 +77,7 @@ export default class AdminRPCTarget {
         const env = this.#config.application.getEnvironment();
 
         // Redirect http: to https: (NOT in the development environment)
+        // TODO: Set a seperate config for this like "redirectToHTTPS"
         if (protocol === 'http:' && env !== 'development') {
             const newLocation = href.replace(/^http:/, 'https:');
             return response.respondWithRedirect(301, newLocation);
