@@ -13,17 +13,14 @@ if (!process.argv[2]) {
     throw new Error('A source file is required');
 }
 
-if (!process.argv[3]) {
-    throw new Error('An endpoint is required');
-}
-
 // Should be something like:
 // tmp/observations_records.json
 const sourceFilepath = path.resolve(process.argv[2]);
 
 // Something like:
 // http://localhost:3033
-const endpoint = process.argv[3];
+const endpoint = process.argv[3] || 'http://localhost:3033';
+
 
 if (!fs.statSync(sourceFilepath).isFile()) {
     throw new Error(`The file ${ sourceFilepath } does not exist.`);
@@ -32,6 +29,7 @@ if (!fs.statSync(sourceFilepath).isFile()) {
 
 async function main() {
     const records = await readJSONFile(sourceFilepath);
+
     await createObservation(records[1]);
     await updateObservation(records[1]);
     await uploadAllMedia(records[1]);
@@ -67,6 +65,8 @@ async function createObservation(record) {
 
     // eslint-disable-next-line no-console
     console.log(result.data.id, 'created observation');
+
+    return result.data;
 }
 
 async function updateObservation(record) {
@@ -110,6 +110,8 @@ async function updateObservation(record) {
 
     // eslint-disable-next-line no-console
     console.log(result.data.id, 'updated observation');
+
+    return result.data;
 }
 
 async function uploadAllMedia(record) {
@@ -120,8 +122,8 @@ async function uploadAllMedia(record) {
         const entries = fs.readdirSync(dir);
 
         for (const entry of entries) {
-            await attachMedia(record, path.join(dir, entry));
-            // TODO: Update media title and details.
+            const filename = await attachMedia(record, path.join(dir, entry));
+            await updateMediaMetadata(record, filename);
         }
     }
 }
@@ -139,15 +141,56 @@ async function attachMedia(record, filepath) {
         'content-length': stats.size,
     };
 
-    const { data } = await makeRequest(method, url, headers, readStream);
+    const { errors, data } = await makeRequest(method, url, headers, readStream);
 
+    if (errors) {
+        const msg = errors[0]?.detail || 'No server error message';
+        // eslint-disable-next-line no-console
+        console.log(record.id, 'error attaching observation media', errors);
+        throw new Error(msg);
+    }
     if (data) {
         // eslint-disable-next-line no-console
-        console.log(record.id, 'updated observation media', data.id, data.attributes.contentType);
+        console.log(record.id, 'attached observation media', data.id, data.attributes.contentType);
     } else {
         // eslint-disable-next-line no-console
         console.log(record.id, 'observation media already exists', filepath);
     }
+
+    return filename;
+}
+
+async function updateMediaMetadata(record, filename) {
+    const { title } = record.attributes;
+
+    const method = 'PATCH';
+    const url = new URL(`/observations/${ record.id }/media/${ filename }`, endpoint);
+
+    const body = JSON.stringify({
+        data: {
+            type: 'media',
+            attributes: { title },
+        },
+    });
+
+    const headers = {
+        'content-type': 'application/json',
+        'content-length': Buffer.byteLength(body),
+    };
+
+    const { errors, data } = await makeRequest(method, url, headers, body);
+
+    if (errors) {
+        const msg = errors[0]?.detail || 'No server error message';
+        // eslint-disable-next-line no-console
+        console.log(record.id, 'error attaching observation media', errors);
+        throw new Error(msg);
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(record.id, 'updated observation media', data.id);
+
+    return data;
 }
 
 function makeRequest(method, url, headers, data) {

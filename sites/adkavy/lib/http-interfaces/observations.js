@@ -8,6 +8,7 @@ import {
 } from '../errors.js';
 import ViewObservationPage from '../pages/view-observation-page.js';
 import UploadMediaJob from '../jobs/upload-media-job.js';
+import { slugifyFilename } from '../utils.js';
 
 
 const {
@@ -116,6 +117,8 @@ export default class Observations {
                 // Do not return the error.message for privacy and security reasons.
                 jsonResponse.errors.push({
                     status: 500,
+                    // TODO: Not sure it is a great idea to include error codes here?
+                    //       For example: "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
                     code: error.code || 'INTERNAL_SERVER_ERROR',
                     title: error.name || 'InternalServerError',
                     detail: 'Unexpected internal server error.',
@@ -224,7 +227,8 @@ export default class Observations {
     }
 
     async addMedia(request, response) {
-        const { observationId, filename } = request.pathnameParams;
+        const { observationId } = request.pathnameParams;
+        let { filename } = request.pathnameParams;
         const contentType = request.headers.get('content-type');
         const contentLength = parseInt(request.headers.get('content-length'), 10);
 
@@ -233,7 +237,13 @@ export default class Observations {
         assert(isNonEmptyString(contentType), 'content-type isNonEmptyString');
         assert(isNumberNotNaN(contentLength), 'content-length isNumberNotNaN');
 
+        filename = slugifyFilename(filename);
+
         let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
+
+        if (!observation) {
+            throw new NotFoundError(`Observation ${ observationId } does not exist.`);
+        }
 
         const job = new UploadMediaJob({
             logger: this.#logger,
@@ -268,25 +278,35 @@ export default class Observations {
     }
 
     async updateMedia(request, response) {
-        const { observationId, mediaId } = request.pathnameParams;
+        const { observationId, filename } = request.pathnameParams;
 
         assert(isNonEmptyString(observationId), 'observationId isNonEmptyString');
-        assert(isNonEmptyString(mediaId), 'observationId isNonEmptyString');
+        assert(isNonEmptyString(filename), 'filename isNonEmptyString');
 
-        const patch = await request.json();
+        const body = await request.json();
+
+        if (!body || !body.data || !body.data.attributes) {
+            throw new BadRequestError('JSON body.data.attributes must be an object');
+        }
+
         let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
 
-        observation = observation.updateMedia(mediaId, patch);
+        if (!observation) {
+            throw new NotFoundError(`Observation ${ observationId } does not exist.`);
+        }
+
+        observation = observation.updateMedia(filename, body.data.attributes);
+
+        if (!observation) {
+            throw new NotFoundError(`Observation media file ${ filename } does not exist.`);
+        }
+
         observation.validateBeforeSave();
 
         await this.#datastore.save(observation);
 
-        const allMedia = observation.toObject().media;
+        const data = observation.getMediaItemByFilename(filename);
 
-        const mediaItem = allMedia.find((item) => {
-            return item.id === mediaId;
-        });
-
-        return response.respondWithJSON(200, mediaItem);
+        return response.respondWithJSON(201, { data });
     }
 }

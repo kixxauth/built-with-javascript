@@ -114,6 +114,7 @@ export default class UploadMediaJob {
 
         return {
             id: objectStorageRecord.id,
+            filename,
             contentType: objectStorageRecord.contentType,
             contentLength,
             md5Hash: objectStorageRecord.md5Hash,
@@ -144,6 +145,8 @@ export default class UploadMediaJob {
                     'content-length': contentLength,
                     'x-kc-storage-class': 'STANDARD',
                 },
+                // Required to get around the certificate authority for the *.kixx.name SSL cert.
+                rejectUnauthorized: false,
             };
 
             if (processingParams) {
@@ -196,14 +199,22 @@ export default class UploadMediaJob {
             req.on('error', (error) => {
                 this.#logger.error('object service request error', { error });
 
-                if (error.code === 'ECONNREFUSED') {
-                    reject(new OperationalError(
-                        'Could not connect to the object service',
-                        { code: error.code, cause: error }
-                    ));
-                } else {
-                    reject(error);
-                }
+                reject(new OperationalError(
+                    'Could not connect to the object service',
+                    { code: error.code, cause: error }
+                ));
+
+                // This code used to treat all request errors as fatal, except for connection errors.
+                // However, we only need to treat errors which could leave the system in a bad state
+                // as fatal. Not sure this is a good candidate. TBD?
+                // if (error.code === 'ECONNREFUSED') {
+                //     reject(new OperationalError(
+                //         'Could not connect to the object service',
+                //         { code: error.code, cause: error }
+                //     ));
+                // } else {
+                //     reject(error);
+                // }
             });
 
             sourceStream.pipe(req);

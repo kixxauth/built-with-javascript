@@ -51,6 +51,17 @@ export default class Observation extends BaseDataStoreModel {
     /**
      * @public
      */
+    getMediaItemByFilename(filename) {
+        const item = this.relationships.media.find(({ attributes }) => {
+            return attributes.filename === filename;
+        });
+
+        return item || null;
+    }
+
+    /**
+     * @public
+     */
     addMediaFromMediaUploadJob(data) {
         return this.addRelationship('media', this.#mapMediaFromMediaUploadJob(data));
     }
@@ -58,8 +69,14 @@ export default class Observation extends BaseDataStoreModel {
     /**
      * @public
      */
-    updateMedia(mediaId, attributes) {
-        return this.updateRelationship('media', mediaId, attributes);
+    updateMedia(filename, attributes) {
+        const item = this.getMediaItemByFilename(filename);
+
+        if (item) {
+            return this.updateRelationship('media', item.id, attributes);
+        }
+
+        return null;
     }
 
     /**
@@ -79,6 +96,7 @@ export default class Observation extends BaseDataStoreModel {
             id: data.id,
             type: 'media',
             attributes: {
+                filename: data.filename,
                 contentType: data.contentType || null,
                 contentLength: data.contentLength || null,
                 md5Hash: data.md5Hash || null,
