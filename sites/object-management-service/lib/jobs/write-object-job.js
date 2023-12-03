@@ -1,5 +1,5 @@
 import { KixxAssert } from '../../dependencies.js';
-import { ValidationError, UnprocessableError } from '../errors.js';
+import { OperationalError, ValidationError, UnprocessableError } from '../errors.js';
 import LocalObject from '../models/local-object.js';
 import RemoteObject from '../models/remote-object.js';
 
@@ -66,7 +66,9 @@ export default class WriteObjectJob {
             this.#localObjectStore.write(localObject, readStream),
         ]);
 
-        if (nextRemoteObject && nextRemoteObject.getEtag() === nextLocalObject.getEtag()) {
+        const etag = nextLocalObject.getEtag();
+
+        if (nextRemoteObject && nextRemoteObject.getEtag() === etag) {
             this.#logger.log('etag match; skip upload', { requestId });
 
             this.#localObjectStore.removeStoredObject(nextLocalObject).catch((error) => {
@@ -110,7 +112,7 @@ export default class WriteObjectJob {
             requestId,
             scopeId: remoteObject.scopeId,
             id: remoteObject.id,
-            etag: remoteObject.getEtag(),
+            etag,
             key: remoteObject.key,
             storageClass: remoteObject.storageClass,
         });
@@ -127,6 +129,11 @@ export default class WriteObjectJob {
 
         // Remove the locally stored object after it has been uploaded.
         await this.#localObjectStore.removeStoredObject(nextLocalObject);
+
+        if (remoteObject.getEtag() !== etag) {
+            this.#logger.error('local md5 hash does not match s3', { etag, s3Etag: remoteObject.getEtag() });
+            throw new OperationalError('Local MD5 hash does not match S3');
+        }
 
         if (processVideo) {
             this.#logger.log('process object as video', {

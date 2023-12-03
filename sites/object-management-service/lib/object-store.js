@@ -1,3 +1,4 @@
+import fsp from 'node:fs/promises';
 import {
     S3Client,
     GetObjectCommand,
@@ -94,10 +95,16 @@ export default class ObjectStore {
             'RemoteObject.storageClass must map to S3 storage class'
         );
 
+        // TODO: Buffering the file fixes the corrupted AWS upload, but
+        //       is probably not a good solution.
+        const buff = await fsp.readFile(obj.filepath);
+
+        console.log('==>> BUFFER size', buff.length);
+
         const result = await this.awsPutObjectCommand({
             Bucket: bucket,
             Key: key,
-            Body: obj.createReadStream(),
+            Body: buff,
             ContentType: contentType,
             Metadata: { id },
             StorageClass: storageClass,

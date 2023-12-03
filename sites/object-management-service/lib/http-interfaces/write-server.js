@@ -111,6 +111,7 @@ export default class WriteServer {
                 // Do not return the error.message for privacy and security reasons.
                 jsonResponse.errors.push({
                     status: 500,
+                    // TODO: May not want to return the error.code for security reasons?
                     code: error.code || 'INTERNAL_SERVER_ERROR',
                     title: error.name || 'InternalServerError',
                     detail: 'Unexpected internal server error.',
