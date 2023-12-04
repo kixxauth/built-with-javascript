@@ -96,16 +96,14 @@ export default class BaseDataStoreModel {
         // We want to know if we found the relationship by id.
         let foundTarget = false;
 
-        let relationships = this.relationships[key];
-
-        if (!Array.isArray(relationships)) {
+        if (!Array.isArray(this.relationships[key])) {
             throw new ConflictError(`Unable to update relationship; No relationships for key ${ key }`);
         }
 
-        relationships = relationships.map((item) => {
+        const items = this.relationships[key].map((item) => {
             if (item.id === id) {
                 foundTarget = true;
-                return item.updateAttributes(attributes);
+                Object.assign(item.attributes, attributes);
             }
 
             return item;
@@ -116,6 +114,9 @@ export default class BaseDataStoreModel {
         }
 
         const Model = this.constructor;
+        const relationships = Object.assign({}, this.relationships);
+
+        relationships[key] = items;
 
         return new Model(Object.assign({}, this, { relationships }));
     }
