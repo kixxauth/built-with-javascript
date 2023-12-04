@@ -173,6 +173,12 @@ function hashSHA256(data) {
     return hash.digest();
 }
 
+export function hashSHA256HexDigest(data) {
+    const hash = crypto.createHash('sha256');
+    hash.update(data);
+    return hash.digest('hex');
+}
+
 function signSHA256(key, data) {
     const hmac = crypto.createHmac('sha256', key);
     hmac.update(data);

@@ -31,6 +31,7 @@ export default class MediaConvert {
         this.#logger = logger.createChild({ name: 'MediaConvert' });
 
         this.#mediaConvertClient = new MediaConvertClient({
+            logger: this.#logger,
             awsRegion: config.objectStore.getRegion(),
             awsAccessKeyId,
             awsSecretKey,

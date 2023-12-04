@@ -1,11 +1,13 @@
 import https from 'node:https';
+import { OperationalError } from '../errors.js';
 import { SignAWSRequest } from '../../dependencies.js';
 
-const { signRequest, headersToPlainObject } = SignAWSRequest;
+const { signRequest, hashSHA256HexDigest, headersToPlainObject } = SignAWSRequest;
 
 
 export default class MediaConvertClient {
 
+    #logger = null;
     #awsAccessKeyId = null;
     #awsSecretKey = null;
     #awsRegion = null;
@@ -14,6 +16,7 @@ export default class MediaConvertClient {
     #serviceVersion = '2017-08-29';
 
     constructor(options) {
+        this.#logger = options.logger;
         this.#awsAccessKeyId = options.awsAccessKeyId;
         this.#awsSecretKey = options.awsSecretKey;
         this.#awsRegion = options.awsRegion;
@@ -35,13 +38,21 @@ export default class MediaConvertClient {
     async createJob(spec) {
         const pathname = `/${ this.#serviceVersion }/jobs`;
         const result = await this.#makeRequest('POST', pathname, JSON.stringify(spec));
+
+        const { statusCode } = result;
+
+        if (statusCode !== 201) {
+            this.#logger.error('unable to create mediaconvert job', { statusCode, utf8: result.utf8 });
+            throw new OperationalError('Unable to create MediaConvert job');
+        }
+
         return result.json;
     }
 
     /**
      * @private
      */
-    async #makeRequest(method, pathname, body) {
+    #makeRequest(method, pathname, body) {
         const url = new URL(pathname, this.#awsMediaConvertEndpoint);
 
         const awsOptions = {
@@ -53,16 +64,15 @@ export default class MediaConvertClient {
 
         const requestOptions = { method, url };
 
-        const headers = signRequest(awsOptions, requestOptions, body);
+        const hash = hashSHA256HexDigest(body);
+        const headers = signRequest(awsOptions, requestOptions, hash);
 
         const options = {
             method,
             headers: headersToPlainObject(headers),
         };
 
-        const result = await this.#makeHttpsRequest(url, options, body);
-
-        return result;
+        return this.#makeHttpsRequest(url, options, body);
     }
 
     /**
@@ -90,8 +100,9 @@ export default class MediaConvertClient {
                         json = JSON.parse(utf8);
                     } catch (e) {
                         resolve({
-                            stausCode: res.statusCode,
+                            statusCode: res.statusCode,
                             headers: res.headers,
+                            json: null,
                             utf8,
                         });
 
@@ -102,6 +113,7 @@ export default class MediaConvertClient {
                         statusCode: res.statusCode,
                         headers: res.headers,
                         json,
+                        utf8,
                     });
                 });
             });
