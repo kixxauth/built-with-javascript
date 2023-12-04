@@ -21,8 +21,8 @@ export function headersToPlainObject(headers) {
 //
 // - awsOptions - Object
 // - requestOptions - Object
-// - paylaod - Buffer
-export function signRequest(awsOptions, requestOptions, payload) {
+// - payloadHash - SHA256 hash as a hex string
+export function signRequest(awsOptions, requestOptions, payloadHash) {
     const {
         accessKey,
         secretKey,
@@ -34,20 +34,25 @@ export function signRequest(awsOptions, requestOptions, payload) {
         method,
         url,
         contentType,
+        awsHeaders,
     } = requestOptions;
 
     const { host, pathname, searchParams } = url;
-    payload = payload || '';
 
     const headers = new Headers();
     const date = new Date();
     const dateString = getDateString(date);
     const dateTimeString = getDateTimeString(date);
-    const payloadHash = hashSHA256(payload).toString('hex');
 
     headers.set('host', host);
     headers.set('x-amz-content-sha256', payloadHash);
     headers.set('x-amz-date', dateTimeString);
+
+    if (awsHeaders) {
+        Object.keys(awsHeaders).forEach((headerName) => {
+            headers.set(headerName.toLowerCase(), awsHeaders[headerName]);
+        });
+    }
 
     if (contentType) {
         headers.set('content-type', contentType);

@@ -20,9 +20,17 @@ export default class LocalObject {
                 enumerable: true,
                 value: spec.filepath,
             },
+            contentLength: {
+                enumerable: true,
+                value: spec.contentLength,
+            },
             md5Hash: {
                 enumerable: true,
                 value: spec.md5Hash,
+            },
+            sha256Hash: {
+                enumerable: true,
+                value: spec.sha256Hash,
             },
         });
     }

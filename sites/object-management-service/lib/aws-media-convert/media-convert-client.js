@@ -1,5 +1,7 @@
 import https from 'node:https';
-import { signRequest, headersToPlainObject } from '../sign-aws-request.js';
+import { SignAWSRequest } from '../../dependencies.js';
+
+const { signRequest, headersToPlainObject } = SignAWSRequest;
 
 
 export default class MediaConvertClient {

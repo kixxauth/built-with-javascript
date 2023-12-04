@@ -53,6 +53,10 @@ export default class RemoteObject {
                 enumerable: true,
                 value: spec.md5Hash,
             },
+            sha256Hash: {
+                enumerable: true,
+                value: spec.sha256Hash,
+            },
             version: {
                 enumerable: true,
                 value: spec.version,
@@ -115,16 +119,15 @@ export default class RemoteObject {
      * @public
      */
     updateFromS3(result) {
-        const id = (result.Metadata || {}).id || this.id;
-        const version = result.VersionId || this.version;
+        const id = result.id || this.id;
+        const version = result.version || this.version;
 
-        // Remove the double quotes if they exist.
-        const md5Hash = (result.ETag || '').replace(/^"|"$/g, '') || this.md5Hash;
+        const md5Hash = (result.etag || '').replace(/^"|"$/g, '') || this.md5Hash;
 
-        const contentType = result.ContentType || this.contentType;
-        const contentLength = parseInt(result.ContentLength || this.contentLength, 10) || null;
+        const contentType = result.contentType || this.contentType;
+        const contentLength = parseInt(result.contentLength || this.contentLength, 10) || null;
 
-        const date = result.LastModified || new Date();
+        const date = result.lastModifiedDate || new Date();
         const lastModifiedDate = date.toISOString();
 
         const spec = Object.assign({}, this, {
@@ -154,7 +157,9 @@ export default class RemoteObject {
 
         spec.id = spec.id || localObject.id;
         spec.md5Hash = localObject.md5Hash;
+        spec.sha256Hash = localObject.sha256Hash;
         spec.filepath = localObject.filepath;
+        spec.contentLength = localObject.contentLength;
 
         return new RemoteObject(spec);
     }
@@ -277,6 +282,7 @@ export default class RemoteObject {
             contentLength: this.contentLength || null,
             storageClass: this.storageClass || null,
             md5Hash: this.md5Hash || null,
+            sha256Hash: this.sha256Hash || null,
             version: this.version || null,
             lastModifiedDate: this.lastModifiedDate || null,
             mediaOutput: this.mediaOutput || null,

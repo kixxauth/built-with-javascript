@@ -30,8 +30,13 @@ export default class LocalObjectStore {
             this.#ensureDirectoryFor(filepath);
 
             const destStream = this.createFileWriteStream(filepath);
-            const hasher = crypto.createHash('md5');
+
+            const md5Hasher = crypto.createHash('md5');
+            const sha256Hasher = crypto.createHash('sha256');
+
             let md5Hash;
+            let sha256Hash;
+            let contentLength = 0;
 
             this.#logger.log('saving object', { scopeId, id });
 
@@ -39,32 +44,42 @@ export default class LocalObjectStore {
             destStream.on('error', reject);
 
             sourceStream.on('data', (chunk) => {
-                hasher.update(chunk);
+                contentLength += chunk.length;
+                md5Hasher.update(chunk);
+                sha256Hasher.update(chunk);
             });
 
-            sourceStream.on('end', () => {
-                md5Hash = hasher.digest('hex');
+            sourceStream.on('end', (chunk) => {
+                if (chunk) {
+                    contentLength += chunk.length;
+                    md5Hasher.update(chunk);
+                    sha256Hasher.update(chunk);
+                }
+
+                md5Hash = md5Hasher.digest('hex');
+                sha256Hash = sha256Hasher.digest('hex');
             });
 
             const onComplete = () => {
                 sourceStream.off('error', reject);
                 destStream.off('error', reject);
-                destStream.off('finish', onComplete);
                 destStream.off('close', onComplete);
 
                 const spec = Object.assign({}, obj, {
                     id,
                     filepath,
+                    contentLength,
                     md5Hash,
+                    sha256Hash,
                 });
 
-                this.#logger.debug('object saved', { scopeId, id, md5Hash });
+                this.#logger.debug('object saved', { scopeId, id, md5Hash, contentLength });
 
                 resolve(new LocalObject(spec));
             };
 
-            // TODO: Is it necessary to listen to "finish"? (No, only the "close" event is fired)
-            sourceStream.on('finish', onComplete);
+            // Is it necessary to listen to "finish"? (No, only the "close" event is fired)
+            // sourceStream.on('finish', onComplete);
             sourceStream.on('close', onComplete);
 
             sourceStream.pipe(destStream);

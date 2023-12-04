@@ -1,5 +1,5 @@
 import { KixxAssert } from '../../dependencies.js';
-import { OperationalError, ValidationError, UnprocessableError } from '../errors.js';
+import { ValidationError, UnprocessableError } from '../errors.js';
 import LocalObject from '../models/local-object.js';
 import RemoteObject from '../models/remote-object.js';
 
@@ -68,6 +68,8 @@ export default class WriteObjectJob {
 
         const etag = nextLocalObject.getEtag();
 
+        // TODO: Validate the content length matches the Content-Length request header.
+
         if (nextRemoteObject && nextRemoteObject.getEtag() === etag) {
             this.#logger.log('etag match; skip upload', { requestId });
 
@@ -129,11 +131,6 @@ export default class WriteObjectJob {
 
         // Remove the locally stored object after it has been uploaded.
         await this.#localObjectStore.removeStoredObject(nextLocalObject);
-
-        if (remoteObject.getEtag() !== etag) {
-            this.#logger.error('local md5 hash does not match s3', { etag, s3Etag: remoteObject.getEtag() });
-            throw new OperationalError('Local MD5 hash does not match S3');
-        }
 
         if (processVideo) {
             this.#logger.log('process object as video', {

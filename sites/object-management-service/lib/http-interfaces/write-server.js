@@ -139,6 +139,7 @@ export default class WriteServer {
         const { requestId } = request;
         const { scope } = user;
         const contentType = request.headers.get('content-type');
+        const contentLength = parseInt(request.headers.get('content-length'), 10);
         const storageClass = request.headers.get('x-kc-storage-class');
 
         assert(Array.isArray(request.params.key), 'Request.params.key expected to be an Array');
@@ -159,6 +160,7 @@ export default class WriteServer {
         const [ status, remoteObject ] = await writeObjectJob.putObject({
             key,
             contentType,
+            contentLength,
             storageClass,
             videoProcessingParams: this.#getVideoProcessingParams(request),
             readStream: request.getReadStream(),
