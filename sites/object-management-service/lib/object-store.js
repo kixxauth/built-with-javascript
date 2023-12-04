@@ -1,5 +1,4 @@
 import https from 'node:https';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { OperationalError } from './errors.js';
 import { KixxAssert, SignAWSRequest } from '../dependencies.js';
 
@@ -30,8 +29,6 @@ const ALLOWED_KEY_PATH_RX = /^[\w\-\.]+$/;
 export default class ObjectStore {
 
     #logger = null;
-    #s3Client = null;
-    #s3BucketName = null;
     #s3Endpoint = null;
     #s3Options = null;
     #environment = null;
@@ -58,18 +55,7 @@ export default class ObjectStore {
         assert(isNonEmptyString(secretAccessKey), 'AWS secretAccessKey must be a non empty String');
 
         this.#logger = logger.createChild({ name: 'ObjectStore' });
-
-        this.#s3Client = new S3Client({
-            region,
-            credentials: {
-                accessKeyId,
-                secretAccessKey,
-            },
-        });
-
         this.#environment = environment;
-        this.#s3BucketName = bucketName;
-
         this.#s3Endpoint = `https://${ bucketName }.s3.${ region }.amazonaws.com`;
 
         this.#s3Options = {
@@ -140,17 +126,15 @@ export default class ObjectStore {
      * @public
      */
     async fetchHead(obj) {
-        const bucket = this.#s3BucketName;
         const key = this.#generateRemoteObjectKey(obj);
-
-        this.#logger.log('fetch object head', { bucket, key });
+        this.#logger.log('fetch object head', { key });
 
         let result;
         try {
             result = await this.awsHeadObjectCommand(key);
         } catch (error) {
             if (error.code === 403) {
-                this.#logger.debug('fetch object head; not found', { bucket, key });
+                this.#logger.debug('fetch object head; not found', { key });
                 return null;
             }
             throw error;
@@ -160,42 +144,107 @@ export default class ObjectStore {
     }
 
     async fetchObject(obj) {
-        const bucket = this.#s3BucketName;
         const key = this.#generateRemoteObjectKey(obj);
-
-        this.#logger.log('fetch object', { bucket, key });
-
-        const options = {
-            Bucket: bucket,
-            Key: key,
-        };
-
-        if (obj.version) {
-            options.VersionId = obj.version;
-        }
+        this.#logger.log('fetch object', { key });
 
         let result;
         try {
-            result = await this.awsGetObjectCommand(options);
+            result = await this.awsGetObjectCommand(key, obj.version);
         } catch (error) {
-            if (error.name === '403' || error.name === 'AccessDenied') {
-                this.#logger.debug('fetch object; not found', { bucket, key });
+            if (error.code === 403) {
+                this.#logger.debug('fetch object; not found', { key });
                 return null;
             }
             throw error;
         }
 
-        const newObject = obj.updateFromS3(result);
+        const [ metadata, sourceStream ] = result;
 
-        return [ newObject, result.Body ];
+        const newObject = obj.updateFromS3(metadata);
+
+        return [ newObject, sourceStream ];
     }
 
     /**
      * @private
      */
-    awsGetObjectCommand(options) {
-        const command = new GetObjectCommand(options);
-        return this.#s3Client.send(command);
+    awsGetObjectCommand(key, version) {
+
+        return new Promise((resolve, reject) => {
+            const method = 'GET';
+
+            let urlPath = key;
+            if (version) {
+                urlPath += `?versionId=${ encodeURIComponent(version) }`;
+            }
+
+            const url = new URL(urlPath, this.#s3Endpoint);
+
+            const requestSignatureOptions = {
+                method,
+                url,
+            };
+
+            const headers = SignAWSRequest.signRequest(
+                this.#s3Options,
+                requestSignatureOptions,
+                // SHA256 hash of an empty buffer
+                'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+            );
+
+            const requestOptions = {
+                method,
+                headers: SignAWSRequest.headersToPlainObject(headers),
+            };
+
+            const req = https.request(url, requestOptions, (res) => {
+
+                const { statusCode } = res;
+
+                if (statusCode !== 200) {
+                    const chunks = [];
+
+                    res.on('error', reject);
+
+                    res.on('data', (chunk) => {
+                        chunks.push(chunk);
+                    });
+
+                    res.on('end', (chunk) => {
+                        if (chunk) {
+                            chunks.push(chunk);
+                        }
+
+                        // TODO: Interpret AWS S3 response with XML parser.
+                        const utf8 = Buffer.concat(chunks).toString('utf8');
+                        this.#logger.warn('unexpected s3 response', { statusCode, utf8 });
+                        const error = new Error('unexpected s3 response');
+                        error.code = statusCode;
+                        reject(error);
+                    });
+                } else {
+                    const lastModifiedDate = res.headers['last-modified']
+                        ? new Date(res.headers['last-modified'])
+                        : null;
+
+                    const metadata = {
+                        version: res.headers['x-amz-version-id'],
+                        // Remove the double quotes if they exist.
+                        etag: (res.headers.etag || '').replace(/^"|"$/g, ''),
+                        storageClass: res.headers['x-amz-storage-class'],
+                        id: res.headers['x-amz-meta-id'],
+                        contentType: res.headers['content-type'],
+                        contentLength: parseInt(res.headers['content-length'], 10),
+                        lastModifiedDate,
+                    };
+
+                    resolve([ metadata, res ]);
+                }
+            });
+
+            req.on('error', reject);
+            req.end();
+        });
     }
 
     /**
