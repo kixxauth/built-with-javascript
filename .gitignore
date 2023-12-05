@@ -55,4 +55,5 @@ sites/object-management-service/config/**
 # ADK Avy
 sites/adkavy/config/**
 !sites/adkavy/config/start.toml
+sites/adkavy/end-to-end-tests/aws-s3-client/config/**
 
