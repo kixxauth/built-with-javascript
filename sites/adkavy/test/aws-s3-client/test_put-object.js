@@ -11,17 +11,15 @@ export default async function test_getObject() {
     const s3Region = 'wakanda-2';
     const s3AccessKey = 'the-key-to-life';
     const s3SecretKey = 'stay-on-the-bus';
-    // Not used:
-    // const s3StorageClass = 'NON-STANDARD';
+    const s3StorageClass = 'NON-STANDARD';
     const s3Bucket = 'helsinki';
     const key = '/bus/route.json';
     const contentType = 'application/json';
     const expectedURL = new URL(`https://helsinki.s3.wakanda-2.amazonaws.com${ key }`);
-    const expectedEtag = 'blahblahblah';
-    const emptyDataHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    const expectedEtag = '035b92f46843244cb12c7a793ff90806';
 
 
-    async function getObject() {
+    async function putObject() {
         // Create a Sinon sandbox for stubs isolated to this test.
         const sandbox = sinon.createSandbox();
 
@@ -39,14 +37,11 @@ export default async function test_getObject() {
         const { logger } = fakeLoggerWrapper;
         sandbox.stub(logger, 'info');
 
-        const now = new Date();
-
         const serverResponse = {
             statusCode: 200,
             headers: {
-                'last-modified': now.toUTCString(),
-                'content-type': contentType,
                 etag: `"${ expectedEtag }"`,
+                'x-amz-storage-class': s3StorageClass,
             },
         };
 
@@ -55,27 +50,44 @@ export default async function test_getObject() {
         sandbox.stub(client, 'makeHttpRequest').returns(Promise.resolve(serverResponse));
         sandbox.stub(client, 'bufferResponseData').returns(Promise.resolve(serverResponseBuffer));
 
-        const [ metadata, buff ] = await client.getObject({ s3Bucket }, key);
+        const putOptions = {
+            s3Bucket,
+            s3StorageClass,
+            contentType,
+        };
 
-        assertEqual(expectedEtag, metadata.etag);
-        assertEqual(contentType, metadata.contentType);
-        assertEqual(serverResponseBuffer, buff);
+        const jsonString = JSON.stringify({
+            foo: 'bar',
+            bar: 'baz',
+            baz: [ 'foo', 'bar' ],
+        });
+
+        const objectBuff = Buffer.from(jsonString);
+
+        const metadata = await client.putObject(putOptions, key, objectBuff);
 
         assertEqual(1, client.makeHttpRequest.callCount);
-        assertEqual(1, client.bufferResponseData.callCount);
+        assertEqual(0, client.bufferResponseData.callCount);
 
         const [ url, data, options ] = client.makeHttpRequest.firstCall.args;
 
         assertEqual(expectedURL.href, url.href);
-        assertEqual(null, data);
-        assertEqual('GET', options.method);
+        assertEqual(objectBuff, data);
+        assertEqual('PUT', options.method);
         assertEqual(expectedURL.host, options.headers.host);
-        assertEqual(emptyDataHash, options.headers['x-amz-content-sha256']);
+
+        assertEqual(
+            'fb7123568c7a2dea33f6977f88346a38984e000fb8f1cc7795944f0d1d4e0bd0',
+            options.headers['x-amz-content-sha256']
+        );
+
         assert(isNonEmptyString(options.headers['x-amz-date']));
         assert(isNonEmptyString(options.headers.authorization));
+
+        assertEqual(expectedEtag, metadata.etag);
 
         sandbox.restore();
     }
 
-    await getObject();
+    await putObject();
 }

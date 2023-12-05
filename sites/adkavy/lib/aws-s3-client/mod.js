@@ -18,8 +18,6 @@ export default class AwsS3Client {
     #s3Region = null;
     #s3AccessKey = null;
     #s3SecretKey = null;
-    #s3StorageClass = null;
-    #s3Endpoint = null;
 
     constructor(options) {
         const {
@@ -27,12 +25,9 @@ export default class AwsS3Client {
             s3Region,
             s3AccessKey,
             s3SecretKey,
-            s3StorageClass,
-            s3Bucket,
         } = options;
 
         assert(isNonEmptyString(s3Region), 'S3 region must be a non empty String');
-        assert(isNonEmptyString(s3Bucket), 'S3 bucket must be a non empty String');
         assert(isNonEmptyString(s3AccessKey), 'AWS accessKey must be a non empty String');
         assert(isNonEmptyString(s3SecretKey), 'AWS secretKey must be a non empty String');
 
@@ -40,13 +35,17 @@ export default class AwsS3Client {
         this.#s3Region = s3Region;
         this.#s3AccessKey = s3AccessKey;
         this.#s3SecretKey = s3SecretKey;
-        this.#s3StorageClass = s3StorageClass || 'STANDARD';
-        this.#s3Endpoint = `https://${ s3Bucket }.s3.${ s3Region }.amazonaws.com`;
     }
 
-    async getObject(key) {
+    async getObject(options, key) {
+        assert(options, '; getObject() options must be provided');
+        const { s3Bucket } = options;
+        assert(isNonEmptyString(s3Bucket), '; options.s3Bucket must be a non empty String');
+
+        const s3Endpoint = `https://${ s3Bucket }.s3.${ this.#s3Region }.amazonaws.com`;
+
         const method = 'GET';
-        const url = new URL(key, this.#s3Endpoint);
+        const url = new URL(key, s3Endpoint);
 
         this.#logger.info('get object', { url: url.href });
 
@@ -112,12 +111,21 @@ export default class AwsS3Client {
         return [ metdata, buff ];
     }
 
+    // - options      - { s3Bucket, s3StorageClass, contentType }
     // - key          - String
     // - contentType  - Mime String
     // - data         - Buffer
-    async putObject(key, contentType, data) {
+    async putObject(options, key, data) {
+        assert(options, '; getObject() options must be provided');
+        const { s3Bucket, contentType } = options;
+        const s3StorageClass = options.s3StorageClass || 'STANDARD';
+        assert(isNonEmptyString(s3Bucket), '; options.s3Bucket must be a non empty String');
+        assert(isNonEmptyString(contentType), '; options.contentType must be a non empty String');
+
+        const s3Endpoint = `https://${ s3Bucket }.s3.${ this.#s3Region }.amazonaws.com`;
+
         const method = 'PUT';
-        const url = new URL(key, this.#s3Endpoint);
+        const url = new URL(key, s3Endpoint);
         const contentLength = data.length;
         const md5Hash = md5HexDigest(data);
 
@@ -132,7 +140,7 @@ export default class AwsS3Client {
             headers: {
                 'content-type': contentType,
                 'content-length': contentLength.toString(),
-                'x-amz-storage-class': this.#s3StorageClass,
+                'x-amz-storage-class': s3StorageClass,
             },
         });
 

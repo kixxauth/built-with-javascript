@@ -38,13 +38,15 @@ async function main() {
         s3Region: config.s3Region,
         s3AccessKey: config.s3AccessKey,
         s3SecretKey: config.s3SecretKey,
-        s3Bucket: config.s3Bucket,
     });
 
-    const [ metatdata, buff ] = await client.getObject('/development/foo/bar');
+    const [ metadata, buff ] = await client.getObject(
+        { s3Bucket: config.s3Bucket },
+        '/development/foo/bar'
+    );
 
     try {
-        assertEqual(null, metatdata);
+        assertEqual(null, metadata);
         assertEqual(null, buff);
     } catch (err) {
         printError('Test error:', err);

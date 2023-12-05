@@ -39,13 +39,12 @@ async function main() {
         // For alternate testing:
         // s3AccessKey: config.s3AccessKey,
         // s3SecretKey: config.s3SecretKey,
-        s3Bucket: config.s3Bucket,
     });
 
     let error;
 
     try {
-        await client.getObject('/foo/bar');
+        await client.getObject({ s3Bucket: config.s3Bucket }, '/foo/bar');
     } catch (err) {
         error = err;
     }

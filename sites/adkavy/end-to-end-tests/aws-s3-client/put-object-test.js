@@ -38,7 +38,6 @@ async function main() {
         s3Region: config.s3Region,
         s3AccessKey: config.s3AccessKey,
         s3SecretKey: config.s3SecretKey,
-        s3Bucket: config.s3Bucket,
     });
 
     const data = {
@@ -47,9 +46,15 @@ async function main() {
         baz: [ 'foo', 'bar' ],
     };
 
+    const options = {
+        s3Bucket: config.s3Bucket,
+        s3StorageClass: 'STANDARD_IA',
+        contentType: 'application/json',
+    };
+
     const res = await client.putObject(
+        options,
         `/development/test/${ Date.now() }.json`,
-        'application/json',
         Buffer.from(JSON.stringify(data, null, 4))
     );
 
