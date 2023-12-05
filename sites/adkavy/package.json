@@ -8,7 +8,9 @@
     "node": ">=16.13.2"
   },
   "scripts": {
-    "test": "eslint ./"
+    "lint": "eslint ./",
+    "unit-tests": "node ./test/run-tests.js",
+    "test": "npm run lint && npm run unit-tests"
   },
   "dependencies": {
     "@iarna/toml": "~2.2.5",
@@ -18,7 +20,8 @@
   },
   "devDependencies": {
     "csv-parse": "~5.5.2",
-    "eslint": "~8.48.0"
+    "eslint": "~8.48.0",
+    "sinon": "~16.0.0"
   },
   "author": "Kris Walker (www.kriswalker.me)",
   "license": "CC-BY-SA-4.0"
