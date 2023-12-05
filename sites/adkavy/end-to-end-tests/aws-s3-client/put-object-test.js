@@ -13,7 +13,7 @@ import { KixxAssert } from '../../dependencies.js';
 import { createLogger } from '../../lib/logger.js';
 import AwsS3Client from '../../lib/aws-s3-client/mod.js';
 
-const { assertEqual } = KixxAssert;
+const { assert, assertEqual } = KixxAssert;
 
 
 // Should be something like './end-to-end-tests/aws-client/config.json'.
@@ -54,7 +54,8 @@ async function main() {
     );
 
     try {
-        assertEqual('60955694d380deba88329f1d7ea4a495', res);
+        assert(res);
+        assertEqual('60955694d380deba88329f1d7ea4a495', res.etag);
     } catch (err) {
         printError('Test error:', err);
     }

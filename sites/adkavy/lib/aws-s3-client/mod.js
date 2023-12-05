@@ -145,11 +145,25 @@ export default class AwsS3Client {
 
         if (statusCode !== 200) {
             const buff = await this.bufferResponseData(res);
+
             // TODO: Interpret AWS S3 response with XML parser.
             const utf8 = buff.toString('utf8');
 
-            this.#logger.error('put object; unexpected s3 status code', { statusCode, utf8 });
+            if (utf8.includes('InvalidAccessKeyId')) {
+                throw new OperationalError(
+                    `PUT object; unexpected S3 status code ${ statusCode }; InvalidAccessKeyId`,
+                    { code: 'InvalidAccessKeyId' }
+                );
+            }
 
+            if (utf8.includes('SignatureDoesNotMatch')) {
+                throw new OperationalError(
+                    `PUT object; unexpected S3 status code ${ statusCode }; SignatureDoesNotMatch`,
+                    { code: 'SignatureDoesNotMatch' }
+                );
+            }
+
+            this.#logger.warn('put object; unexpected s3 status code', { statusCode, utf8 });
             throw new OperationalError(
                 `PUT object; unexpected S3 status code ${ statusCode }`,
                 { code: statusCode }
@@ -164,7 +178,7 @@ export default class AwsS3Client {
             throw new OperationalError('PUT object; validation check failed');
         }
 
-        return etag;
+        return { etag };
     }
 
     /**

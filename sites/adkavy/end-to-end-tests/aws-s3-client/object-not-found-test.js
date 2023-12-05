@@ -41,10 +41,11 @@ async function main() {
         s3Bucket: config.s3Bucket,
     });
 
-    const res = await client.getObject('/development/foo/bar');
+    const [ metatdata, buff ] = await client.getObject('/development/foo/bar');
 
     try {
-        assertEqual(null, res);
+        assertEqual(null, metatdata);
+        assertEqual(null, buff);
     } catch (err) {
         printError('Test error:', err);
     }

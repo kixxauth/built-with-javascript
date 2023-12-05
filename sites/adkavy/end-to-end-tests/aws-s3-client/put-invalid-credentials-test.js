@@ -42,10 +42,20 @@ async function main() {
         s3Bucket: config.s3Bucket,
     });
 
+    const data = {
+        foo: 'bar',
+        bar: 'baz',
+        baz: [ 'foo', 'bar' ],
+    };
+
     let error;
 
     try {
-        await client.getObject('/foo/bar');
+        await client.putObject(
+            `/development/test/${ Date.now() }.json`,
+            'application/json',
+            Buffer.from(JSON.stringify(data, null, 4))
+        );
     } catch (err) {
         error = err;
     }
