@@ -77,5 +77,176 @@ export default async function test_getObject() {
         sandbox.restore();
     }
 
+    async function getObject_withInvalidAccessKey() {
+        // Create a Sinon sandbox for stubs isolated to this test.
+        const sandbox = sinon.createSandbox();
+
+        const fakeLoggerWrapper = new FakeLoggerWrapper();
+
+        const client = new AwsS3Client({
+            logger: fakeLoggerWrapper,
+            s3Region,
+            s3AccessKey,
+            s3SecretKey,
+        });
+
+        // Get a handle on the logger after it has been
+        // created by the subject module above.
+        const { logger } = fakeLoggerWrapper;
+        sandbox.stub(logger, 'info');
+        sandbox.stub(logger, 'warn');
+
+        const serverResponse = {
+            statusCode: 403,
+        };
+
+        const serverResponseBuffer = '<xml>InvalidAccessKeyId</xml>';
+
+        sandbox.stub(client, 'makeHttpRequest').returns(Promise.resolve(serverResponse));
+        sandbox.stub(client, 'bufferResponseData').returns(Promise.resolve(serverResponseBuffer));
+
+        let error;
+        try {
+            await client.getObject({ s3Bucket }, key);
+        } catch (err) {
+            error = err;
+        }
+
+        assert(error);
+        assertEqual('InvalidAccessKeyId', error.code);
+
+        assertEqual(1, client.bufferResponseData.callCount);
+
+        sandbox.restore();
+    }
+
+    async function getObject_withInvalidSecretKey() {
+        // Create a Sinon sandbox for stubs isolated to this test.
+        const sandbox = sinon.createSandbox();
+
+        const fakeLoggerWrapper = new FakeLoggerWrapper();
+
+        const client = new AwsS3Client({
+            logger: fakeLoggerWrapper,
+            s3Region,
+            s3AccessKey,
+            s3SecretKey,
+        });
+
+        // Get a handle on the logger after it has been
+        // created by the subject module above.
+        const { logger } = fakeLoggerWrapper;
+        sandbox.stub(logger, 'info');
+        sandbox.stub(logger, 'warn');
+
+        const serverResponse = {
+            statusCode: 403,
+        };
+
+        const serverResponseBuffer = '<xml>SignatureDoesNotMatch</xml>';
+
+        sandbox.stub(client, 'makeHttpRequest').returns(Promise.resolve(serverResponse));
+        sandbox.stub(client, 'bufferResponseData').returns(Promise.resolve(serverResponseBuffer));
+
+        let error;
+        try {
+            await client.getObject({ s3Bucket }, key);
+        } catch (err) {
+            error = err;
+        }
+
+        assert(error);
+        assertEqual('SignatureDoesNotMatch', error.code);
+
+        assertEqual(1, client.bufferResponseData.callCount);
+
+        sandbox.restore();
+    }
+
+    async function getObject_withNotFound403() {
+        // Create a Sinon sandbox for stubs isolated to this test.
+        const sandbox = sinon.createSandbox();
+
+        const fakeLoggerWrapper = new FakeLoggerWrapper();
+
+        const client = new AwsS3Client({
+            logger: fakeLoggerWrapper,
+            s3Region,
+            s3AccessKey,
+            s3SecretKey,
+        });
+
+        // Get a handle on the logger after it has been
+        // created by the subject module above.
+        const { logger } = fakeLoggerWrapper;
+        sandbox.stub(logger, 'info');
+        sandbox.stub(logger, 'warn');
+
+        const serverResponse = {
+            statusCode: 403,
+        };
+
+        const serverResponseBuffer = '<xml>Access Denied</xml>';
+
+        sandbox.stub(client, 'makeHttpRequest').returns(Promise.resolve(serverResponse));
+        sandbox.stub(client, 'bufferResponseData').returns(Promise.resolve(serverResponseBuffer));
+
+        const [ metadata, buff ] = await client.getObject({ s3Bucket }, key);
+
+        assertEqual(null, metadata);
+        assertEqual(null, buff);
+
+        assertEqual(1, client.bufferResponseData.callCount);
+
+        sandbox.restore();
+    }
+
+    async function getObject_withOtherStatusCode() {
+        // Create a Sinon sandbox for stubs isolated to this test.
+        const sandbox = sinon.createSandbox();
+
+        const fakeLoggerWrapper = new FakeLoggerWrapper();
+
+        const client = new AwsS3Client({
+            logger: fakeLoggerWrapper,
+            s3Region,
+            s3AccessKey,
+            s3SecretKey,
+        });
+
+        // Get a handle on the logger after it has been
+        // created by the subject module above.
+        const { logger } = fakeLoggerWrapper;
+        sandbox.stub(logger, 'info');
+        sandbox.stub(logger, 'warn');
+
+        const serverResponse = {
+            statusCode: 509,
+        };
+
+        const serverResponseBuffer = '<xml>Someting Else</xml>';
+
+        sandbox.stub(client, 'makeHttpRequest').returns(Promise.resolve(serverResponse));
+        sandbox.stub(client, 'bufferResponseData').returns(Promise.resolve(serverResponseBuffer));
+
+        let error;
+        try {
+            await client.getObject({ s3Bucket }, key);
+        } catch (err) {
+            error = err;
+        }
+
+        assert(error);
+        assertEqual(509, error.code);
+
+        assertEqual(1, client.bufferResponseData.callCount);
+
+        sandbox.restore();
+    }
+
     await getObject();
+    await getObject_withInvalidAccessKey();
+    await getObject_withInvalidSecretKey();
+    await getObject_withNotFound403();
+    await getObject_withOtherStatusCode();
 }

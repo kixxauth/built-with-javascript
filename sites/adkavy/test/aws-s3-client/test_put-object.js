@@ -89,5 +89,176 @@ export default async function test_getObject() {
         sandbox.restore();
     }
 
+    async function putObject_withInvalidAccessKey() {
+        // Create a Sinon sandbox for stubs isolated to this test.
+        const sandbox = sinon.createSandbox();
+
+        const fakeLoggerWrapper = new FakeLoggerWrapper();
+
+        const client = new AwsS3Client({
+            logger: fakeLoggerWrapper,
+            s3Region,
+            s3AccessKey,
+            s3SecretKey,
+        });
+
+        // Get a handle on the logger after it has been
+        // created by the subject module above.
+        const { logger } = fakeLoggerWrapper;
+        sandbox.stub(logger, 'info');
+
+        const serverResponse = {
+            statusCode: 403,
+        };
+
+        const serverResponseBuffer = '<xml>InvalidAccessKeyId</xml>';
+
+        sandbox.stub(client, 'makeHttpRequest').returns(Promise.resolve(serverResponse));
+        sandbox.stub(client, 'bufferResponseData').returns(Promise.resolve(serverResponseBuffer));
+
+        const putOptions = {
+            s3Bucket,
+            s3StorageClass,
+            contentType,
+        };
+
+        const jsonString = JSON.stringify({
+            foo: 'bar',
+            bar: 'baz',
+            baz: [ 'foo', 'bar' ],
+        });
+
+        const objectBuff = Buffer.from(jsonString);
+
+        let error;
+        try {
+            await client.putObject(putOptions, key, objectBuff);
+        } catch (err) {
+            error = err;
+        }
+
+        assert(error);
+        assertEqual('InvalidAccessKeyId', error.code);
+
+        assertEqual(1, client.bufferResponseData.callCount);
+
+        sandbox.restore();
+    }
+
+    async function putObject_withInvalidSecretKey() {
+        // Create a Sinon sandbox for stubs isolated to this test.
+        const sandbox = sinon.createSandbox();
+
+        const fakeLoggerWrapper = new FakeLoggerWrapper();
+
+        const client = new AwsS3Client({
+            logger: fakeLoggerWrapper,
+            s3Region,
+            s3AccessKey,
+            s3SecretKey,
+        });
+
+        // Get a handle on the logger after it has been
+        // created by the subject module above.
+        const { logger } = fakeLoggerWrapper;
+        sandbox.stub(logger, 'info');
+
+        const serverResponse = {
+            statusCode: 403,
+        };
+
+        const serverResponseBuffer = '<xml>SignatureDoesNotMatch</xml>';
+
+        sandbox.stub(client, 'makeHttpRequest').returns(Promise.resolve(serverResponse));
+        sandbox.stub(client, 'bufferResponseData').returns(Promise.resolve(serverResponseBuffer));
+
+        const putOptions = {
+            s3Bucket,
+            s3StorageClass,
+            contentType,
+        };
+
+        const jsonString = JSON.stringify({
+            foo: 'bar',
+            bar: 'baz',
+            baz: [ 'foo', 'bar' ],
+        });
+
+        const objectBuff = Buffer.from(jsonString);
+
+        let error;
+        try {
+            await client.putObject(putOptions, key, objectBuff);
+        } catch (err) {
+            error = err;
+        }
+
+        assert(error);
+        assertEqual('SignatureDoesNotMatch', error.code);
+
+        assertEqual(1, client.bufferResponseData.callCount);
+
+        sandbox.restore();
+    }
+
+    async function putObject_withUnexpectedStatus() {
+        // Create a Sinon sandbox for stubs isolated to this test.
+        const sandbox = sinon.createSandbox();
+
+        const fakeLoggerWrapper = new FakeLoggerWrapper();
+
+        const client = new AwsS3Client({
+            logger: fakeLoggerWrapper,
+            s3Region,
+            s3AccessKey,
+            s3SecretKey,
+        });
+
+        // Get a handle on the logger after it has been
+        // created by the subject module above.
+        const { logger } = fakeLoggerWrapper;
+        sandbox.stub(logger, 'info');
+
+        const serverResponse = {
+            statusCode: 403,
+        };
+
+        const serverResponseBuffer = '<xml>Some Other Problem</xml>';
+
+        sandbox.stub(client, 'makeHttpRequest').returns(Promise.resolve(serverResponse));
+        sandbox.stub(client, 'bufferResponseData').returns(Promise.resolve(serverResponseBuffer));
+
+        const putOptions = {
+            s3Bucket,
+            s3StorageClass,
+            contentType,
+        };
+
+        const jsonString = JSON.stringify({
+            foo: 'bar',
+            bar: 'baz',
+            baz: [ 'foo', 'bar' ],
+        });
+
+        const objectBuff = Buffer.from(jsonString);
+
+        let error;
+        try {
+            await client.putObject(putOptions, key, objectBuff);
+        } catch (err) {
+            error = err;
+        }
+
+        assert(error);
+        assertEqual(403, error.code);
+
+        assertEqual(1, client.bufferResponseData.callCount);
+
+        sandbox.restore();
+    }
+
     await putObject();
+    await putObject_withInvalidAccessKey();
+    await putObject_withInvalidSecretKey();
+    await putObject_withUnexpectedStatus();
 }

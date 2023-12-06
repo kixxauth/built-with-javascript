@@ -16,7 +16,7 @@ import AwsS3Client from '../../lib/aws-s3-client/mod.js';
 const { assertEqual } = KixxAssert;
 
 
-// Should be something like './end-to-end-tests/aws-client/config.json'.
+// Should be something like './end-to-end-tests/aws-client/config/good.json'.
 if (!process.argv[2]) {
     throw new Error('Config filepath is required argument');
 }
