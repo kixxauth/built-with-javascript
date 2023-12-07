@@ -36,6 +36,8 @@ export default async function test_getObject() {
         // created by the subject module above.
         const { logger } = fakeLoggerWrapper;
         sandbox.stub(logger, 'info');
+        sandbox.stub(logger, 'warn');
+        sandbox.stub(logger, 'error');
 
         const serverResponse = {
             statusCode: 200,
@@ -106,6 +108,8 @@ export default async function test_getObject() {
         // created by the subject module above.
         const { logger } = fakeLoggerWrapper;
         sandbox.stub(logger, 'info');
+        sandbox.stub(logger, 'warn');
+        sandbox.stub(logger, 'error');
 
         const serverResponse = {
             statusCode: 403,
@@ -162,6 +166,8 @@ export default async function test_getObject() {
         // created by the subject module above.
         const { logger } = fakeLoggerWrapper;
         sandbox.stub(logger, 'info');
+        sandbox.stub(logger, 'warn');
+        sandbox.stub(logger, 'error');
 
         const serverResponse = {
             statusCode: 403,
@@ -218,6 +224,8 @@ export default async function test_getObject() {
         // created by the subject module above.
         const { logger } = fakeLoggerWrapper;
         sandbox.stub(logger, 'info');
+        sandbox.stub(logger, 'warn');
+        sandbox.stub(logger, 'error');
 
         const serverResponse = {
             statusCode: 403,
