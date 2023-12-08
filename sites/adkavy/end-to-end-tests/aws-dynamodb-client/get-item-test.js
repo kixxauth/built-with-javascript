@@ -35,18 +35,21 @@ async function main() {
 
     const client = new AwsDynamoDbClient({
         logger,
-        environment: ENVIRONMENT,
         awsRegion: config.awsRegion,
         awsDynamoDbEndpoint: config.dynamodbEndpoint,
         awsAccessKey: config.awsAccessKey,
         awsSecretKey: config.awsSecretKey,
     });
 
-    const item = await client.getItem({ id: 'foo-bar-baz', type: 'Foo' });
+    const table = `adkavy_${ ENVIRONMENT }_entities`;
+    const item = await client.getItem(table, { id: 'foo-bar-baz', type: 'Foo' });
 
     assert(item);
     assertEqual('foo-bar-baz', item.id);
     assertEqual('Foo', item.type);
+
+    // eslint-disable-next-line no-console
+    console.log('Test Done');
 }
 
 async function loadConfig() {

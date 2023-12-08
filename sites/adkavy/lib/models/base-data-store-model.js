@@ -146,6 +146,13 @@ export default class BaseDataStoreModel {
     /**
      * @public
      */
+    assignDerivedDatastoreProperties() {
+        // Override me.
+    }
+
+    /**
+     * @public
+     */
     toJsonAPI() {
         const relationships = Object.keys(this.relationships).reduce((mapping, key) => {
             const data = this.relationships[key];

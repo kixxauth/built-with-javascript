@@ -27,6 +27,8 @@ export default class Observation extends BaseDataStoreModel {
             observationDate: attrs.observationDate || null,
             // The time of the observation in the field.
             observationTime: attrs.observationTime || null,
+            // The datetime string of the observation in the field.
+            observationDateTime: attrs.observationDateTime || null,
             // The date time string represented when this record was initially created.
             reportedDateTime: attrs.reportedDateTime || null,
             travelMode: attrs.travelMode || null,
@@ -84,6 +86,13 @@ export default class Observation extends BaseDataStoreModel {
      */
     validateBeforeSave() {
         // TODO: Validate Observation.
+    }
+
+    /**
+     * @public
+     */
+    assignDerivedDatastoreProperties(item) {
+        item.key_observationDateTime = this.attributes.observationDateTime;
     }
 
     /**

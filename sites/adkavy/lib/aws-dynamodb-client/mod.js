@@ -11,19 +11,30 @@ const DYNAMODB_API_VERSION = 'DynamoDB_20120810';
 
 export default class AwsDynamoDbClient {
 
-    #logger = null;
+    static fromConfig(logger, config) {
+        const awsRegion = config.dynamoDB.getRegion();
+        const awsAccessKey = config.dynamoDB.getAccessKeyId();
+        const awsSecretKey = config.dynamoDB.getSecretAccessKey();
+        const awsDynamoDbEndpoint = config.dynamoDB.getEndpoint();
 
-    #environment = null;
+        return new AwsDynamoDbClient({
+            logger,
+            awsRegion,
+            awsDynamoDbEndpoint,
+            awsAccessKey,
+            awsSecretKey,
+        });
+    }
+
+    #logger = null;
     #awsAccessKey = null;
     #awsSecretKey = null;
     #awsRegion = null;
     #awsDynamoDbEndpoint = null;
-    #entityTableName = null;
 
     constructor(options) {
         const {
             logger,
-            environment,
             awsRegion,
             awsDynamoDbEndpoint,
             awsAccessKey,
@@ -34,22 +45,18 @@ export default class AwsDynamoDbClient {
         assert(isNonEmptyString(awsAccessKey), 'AWS accessKey must be a non empty String');
         assert(isNonEmptyString(awsSecretKey), 'AWS secretKey must be a non empty String');
         assert(isNonEmptyString(awsDynamoDbEndpoint), 'AWS DynamoDBEndpoint must be a non empty String');
-        assert(isNonEmptyString(environment), 'environment must be a non empty String');
 
         this.#logger = logger.createChild({ name: 'DynamoDBClient' });
-
-        this.#environment = environment;
 
         this.#awsAccessKey = awsAccessKey;
         this.#awsSecretKey = awsSecretKey;
         this.#awsRegion = awsRegion;
         this.#awsDynamoDbEndpoint = awsDynamoDbEndpoint;
-        this.#entityTableName = `adkavy_${ environment }_entities`;
     }
 
-    async getItem({ type, id }) {
+    async getItem(table, { type, id }) {
         const command = {
-            TableName: this.#entityTableName,
+            TableName: table,
             Key: serializeObject({ type, id }),
         };
 
@@ -63,9 +70,9 @@ export default class AwsDynamoDbClient {
         return null;
     }
 
-    async putItem(item) {
+    async putItem(table, item) {
         const command = {
-            TableName: this.#entityTableName,
+            TableName: table,
             Item: serializeObject(item),
         };
 
@@ -75,28 +82,29 @@ export default class AwsDynamoDbClient {
         return true;
     }
 
-    async query(options) {
-        const {
-            type,
-            queryName,
-            limit,
-            exclusiveStartKey,
-        } = options;
+    async query() {
+        // TODO: DynamoDB Query
+        // const {
+        //     type,
+        //     queryName,
+        //     limit,
+        //     exclusiveStartKey,
+        // } = options;
 
-        const command = {
-            TableName: this.#entityTableName,
-            IndexName: `adkavy_${ this.#environment }_${ queryName }`,
-            KeyConditionExpression: '#type_key = :type_value',
-            ExpressionAttributeNames: { '#type_key': 'type' },
-            ExpressionAttributeValues: { ':type_value': { S: type } },
-            Limit: limit,
-        };
+        // const command = {
+        //     TableName: this.#entityTableName,
+        //     IndexName: `adkavy_${ this.#environment }_${ queryName }`,
+        //     KeyConditionExpression: '#type_key = :type_value',
+        //     ExpressionAttributeNames: { '#type_key': 'type' },
+        //     ExpressionAttributeValues: { ':type_value': { S: type } },
+        //     Limit: limit,
+        // };
 
-        if (exclusiveStartKey) {
-            command.ExclusiveStartKey = serializeObject(exclusiveStartKey);
-        }
+        // if (exclusiveStartKey) {
+        //     command.ExclusiveStartKey = serializeObject(exclusiveStartKey);
+        // }
 
-        await this.#makeDynamoDbRequest('Query', command);
+        // await this.#makeDynamoDbRequest('Query', command);
     }
 
     /**

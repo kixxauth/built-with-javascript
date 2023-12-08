@@ -35,7 +35,6 @@ async function main() {
 
     const client = new AwsDynamoDbClient({
         logger,
-        environment: ENVIRONMENT,
         awsRegion: config.awsRegion,
         awsDynamoDbEndpoint: config.dynamodbEndpoint,
         awsAccessKey: config.awsAccessKey,
@@ -51,9 +50,13 @@ async function main() {
         key_observationDateTime: new Date().toISOString(),
     };
 
-    const res = await client.putItem(item);
+    const table = `adkavy_${ ENVIRONMENT }_entities`;
+    const res = await client.putItem(table, item);
 
     assertEqual(true, res);
+
+    // eslint-disable-next-line no-console
+    console.log('Test Done');
 }
 
 async function loadConfig() {

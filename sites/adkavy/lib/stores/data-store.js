@@ -1,9 +1,8 @@
 import { KixxAssert } from '../../dependencies.js';
-import DynamoDBClient from '../dynamodb/dynamodb-client.js';
 import Observation from '../models/observation.js';
 
 
-const { assert, assertIncludes, isNonEmptyString } = KixxAssert;
+const { assertIncludes } = KixxAssert;
 
 
 const ALLOWED_ENVIRONMENTS = [
@@ -19,45 +18,26 @@ const MODELS_BY_TYPE = new Map([
 export default class DataStore {
 
     #logger = null;
-    #dynamoDBClient = null;
+    #dynamoDbClient = null;
 
-    constructor({ config, logger }) {
-        const awsRegion = config.dynamoDB.getRegion();
-        const awsAccessKeyId = config.dynamoDB.getAccessKeyId();
-        const awsSecretKey = config.dynamoDB.getSecretAccessKey();
-        const awsDynamoDbEndpoint = config.dynamoDB.getEndpoint();
-        const applicationName = config.dynamoDB.getApplicationName();
-        const environment = config.dynamoDB.getEnvironment();
-
-        assert(isNonEmptyString(awsRegion), 'DynamoDB region must be a non empty String');
-        assert(isNonEmptyString(awsAccessKeyId), 'DynamoDB accessKeyId must be a non empty String');
-        assert(isNonEmptyString(awsSecretKey), 'DynamoDB secretAccessKey must be a non empty String');
-        assert(isNonEmptyString(applicationName), 'DynamoDB applicationName must be a non empty String');
+    constructor({ config, logger, dynamoDbClient }) {
+        const environment = config.dataStore.getEnvironment();
 
         assertIncludes(
             environment,
             ALLOWED_ENVIRONMENTS,
-            `DynamoDB environment must be one of "${ ALLOWED_ENVIRONMENTS.join('","') }"`
+            `DataStore environment must be one of "${ ALLOWED_ENVIRONMENTS.join('","') }"`
         );
 
         this.#logger = logger.createChild({ name: 'DataStore' });
-
-        this.#dynamoDBClient = new DynamoDBClient({
-            logger,
-            awsRegion,
-            awsAccessKeyId,
-            awsSecretKey,
-            awsDynamoDbEndpoint,
-            applicationName,
-            environment,
-        });
+        this.#dynamoDbClient = dynamoDbClient;
     }
 
     async fetch({ type, id }) {
         this.#logger.log('fetch record', { type, id });
 
         const Model = MODELS_BY_TYPE.get(type);
-        const spec = await this.#dynamoDBClient.getItem({ type, id });
+        const spec = await this.#dynamoDbClient.getItem({ type, id });
 
         if (spec) {
             return new Model(spec);
@@ -68,15 +48,20 @@ export default class DataStore {
 
     async save(obj) {
         this.#logger.log('save record', { type: obj.type, id: obj.id });
+
         obj = obj.updateMeta();
 
-        await this.#dynamoDBClient.putItem({
+        const item = {
             type: obj.type,
             id: obj.id,
             meta: obj.meta,
             attributes: obj.attributes,
             relationships: obj.relationships,
-        });
+        };
+
+        obj.assignDerivedDatastoreProperties(item);
+
+        await this.#dynamoDbClient.putItem(item);
 
         return obj;
     }

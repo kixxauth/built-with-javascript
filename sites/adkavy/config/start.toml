@@ -11,14 +11,15 @@ makePretty = true
 [server]
 port = 3033
 
+[dataStore]
+environment = ""
+
 [dynamoDB]
 region = ""
 # Endpoints: https://docs.aws.amazon.com/general/latest/gr/ddb.html
 endpoint = ""
 accessKeyId = ""
 secretAccessKey = ""
-applicationName = ""
-environment = "development"
 
 [objectService]
 endpoint = ""

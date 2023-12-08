@@ -24,6 +24,10 @@ export default class Config {
                 enumerable: true,
                 value: new ServerConfig(config.server),
             },
+            dataStore: {
+                enumerable: true,
+                value: new DataStoreConfig(config.dataStore),
+            },
             dynamoDB: {
                 enumerable: true,
                 value: new DynamoDBConfig(config.dynamoDB),
@@ -70,6 +74,18 @@ class ServerConfig {
     }
 }
 
+class DataStoreConfig {
+    #config = null;
+
+    constructor(config) {
+        this.#config = config;
+    }
+
+    getEnvironment() {
+        return this.#config.environment || 'development';
+    }
+}
+
 class DynamoDBConfig {
     #config = null;
 
@@ -91,14 +107,6 @@ class DynamoDBConfig {
 
     getSecretAccessKey() {
         return this.#config.secretAccessKey;
-    }
-
-    getApplicationName() {
-        return this.#config.applicationName;
-    }
-
-    getEnvironment() {
-        return this.#config.environment;
     }
 }
 
