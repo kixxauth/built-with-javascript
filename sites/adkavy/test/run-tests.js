@@ -1,10 +1,13 @@
 import test_AwsS3Client from './aws-s3-client/tests.js';
+import test_Observations_HTTPInterface from './http-interfaces/observations/tests.js';
 
 
 async function runTests() {
     /* eslint-disable no-console */
     console.log('Running test_AwsS3Client');
     await test_AwsS3Client();
+    console.log('Running test_Observations_HTTPInterface');
+    await test_Observations_HTTPInterface();
     /* eslint-enable no-console */
 }
 

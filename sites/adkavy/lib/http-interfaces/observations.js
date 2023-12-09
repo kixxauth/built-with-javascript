@@ -6,7 +6,8 @@ import {
     ConflictError,
     BadRequestError
 } from '../errors.js';
-import ViewObservationPage from '../pages/view-observation-page.js';
+// Bring this in when we're ready
+// import ViewObservationPage from '../pages/view-observation-page.js';
 import UploadMediaJob from '../jobs/upload-media-job.js';
 import { slugifyFilename } from '../utils.js';
 
@@ -22,7 +23,6 @@ const {
 export default class Observations {
 
     #logger = null;
-    #config = null;
     #datastore = null;
     #viewObservationPage = null;
 
@@ -31,26 +31,26 @@ export default class Observations {
 
         const {
             logger,
-            config,
-            eventBus,
-            pageDataStore,
-            pageSnippetStore,
-            templateStore,
+            // Put these back when we actually need them.
+            // eventBus,
+            // pageDataStore,
+            // pageSnippetStore,
+            // templateStore,
             datastore,
         } = spec;
 
         this.#logger = logger.createChild({ name: 'Observations' });
-        this.#config = config;
         this.#datastore = datastore;
 
-        this.#viewObservationPage = new ViewObservationPage({
-            logger,
-            eventBus,
-            pageDataStore,
-            pageSnippetStore,
-            templateStore,
-            datastore,
-        });
+        // Put this back when we actually start using it.
+        // this.#viewObservationPage = new ViewObservationPage({
+        //     logger,
+        //     eventBus,
+        //     pageDataStore,
+        //     pageSnippetStore,
+        //     templateStore,
+        //     datastore,
+        // });
     }
 
     handleError(error, req, res) {
@@ -89,7 +89,7 @@ export default class Observations {
                 status = 404;
                 jsonResponse.errors.push({
                     status: 404,
-                    code: error.code || 'NOT_FOUND_ERROR',
+                    code: NotFoundError.CODE,
                     title: 'NotFoundError',
                     detail: error.message,
                 });
@@ -98,7 +98,7 @@ export default class Observations {
                 status = 409;
                 jsonResponse.errors.push({
                     status: 409,
-                    code: error.code || 'CONFLICT_ERROR',
+                    code: ConflictError.CODE,
                     title: 'ConflictError',
                     detail: error.message,
                 });
@@ -107,7 +107,7 @@ export default class Observations {
                 status = 400;
                 jsonResponse.errors.push({
                     status: 400,
-                    code: error.code || 'BAD_REQUEST_ERROR',
+                    code: BadRequestError.CODE,
                     title: 'BadRequestError',
                     detail: error.message,
                 });
@@ -117,10 +117,8 @@ export default class Observations {
                 // Do not return the error.message for privacy and security reasons.
                 jsonResponse.errors.push({
                     status: 500,
-                    // TODO: Not sure it is a great idea to include error codes here?
-                    //       For example: "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
-                    code: error.code || 'INTERNAL_SERVER_ERROR',
-                    title: error.name || 'InternalServerError',
+                    code: 'INTERNAL_SERVER_ERROR',
+                    title: 'InternalServerError',
                     detail: 'Unexpected internal server error.',
                 });
         }
@@ -247,7 +245,9 @@ export default class Observations {
 
         const job = new UploadMediaJob({
             logger: this.#logger,
-            config: this.#config,
+            // TODO: We need some sort of client which is already configured.
+            //       Then we use that client to create jobs.
+            // config: this.#config,
         });
 
         const existingMediaItems = observation.relationships.media || [];
