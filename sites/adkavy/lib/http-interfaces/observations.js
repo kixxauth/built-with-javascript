@@ -23,7 +23,7 @@ const {
 export default class Observations {
 
     #logger = null;
-    #datastore = null;
+    #dataStore = null;
     #viewObservationPage = null;
 
     constructor(spec) {
@@ -36,11 +36,11 @@ export default class Observations {
             // pageDataStore,
             // pageSnippetStore,
             // templateStore,
-            datastore,
+            dataStore,
         } = spec;
 
         this.#logger = logger.createChild({ name: 'Observations' });
-        this.#datastore = datastore;
+        this.#dataStore = dataStore;
 
         // Put this back when we actually start using it.
         // this.#viewObservationPage = new ViewObservationPage({
@@ -49,7 +49,7 @@ export default class Observations {
         //     pageDataStore,
         //     pageSnippetStore,
         //     templateStore,
-        //     datastore,
+        //     dataStore,
         // });
     }
 
@@ -150,11 +150,12 @@ export default class Observations {
     async createObservation(request, response) {
         const body = await request.json();
 
+        // TODO: Validate JSON API input.
         let observation = Observation.fromJsonAPI(body.data).ensureId();
 
         observation.validateBeforeSave();
 
-        observation = await this.#datastore.save(observation);
+        observation = await this.#dataStore.save(observation);
 
         const {
             type,
@@ -190,7 +191,7 @@ export default class Observations {
             throw new BadRequestError('JSON body.data.attributes must be an object');
         }
 
-        let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
+        let observation = await this.#dataStore.fetch(new Observation({ id: observationId }));
 
         if (!observation) {
             throw new NotFoundError(`Observation ${ observationId } does not exist.`);
@@ -199,7 +200,7 @@ export default class Observations {
         observation = observation.updateAttributes(body.data.attributes);
         observation.validateBeforeSave();
 
-        await this.#datastore.save(observation);
+        observation = await this.#dataStore.save(observation);
 
         const {
             type,
@@ -237,7 +238,7 @@ export default class Observations {
 
         filename = slugifyFilename(filename);
 
-        let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
+        let observation = await this.#dataStore.fetch(new Observation({ id: observationId }));
 
         if (!observation) {
             throw new NotFoundError(`Observation ${ observationId } does not exist.`);
@@ -269,7 +270,7 @@ export default class Observations {
         observation = observation.addMediaFromMediaUploadJob(result);
         observation.validateBeforeSave();
 
-        await this.#datastore.save(observation);
+        await this.#dataStore.save(observation);
 
         const allMedia = observation.relationships.media;
         const data = allMedia[allMedia.length - 1];
@@ -289,7 +290,7 @@ export default class Observations {
             throw new BadRequestError('JSON body.data.attributes must be an object');
         }
 
-        let observation = await this.#datastore.fetch(new Observation({ id: observationId }));
+        let observation = await this.#dataStore.fetch(new Observation({ id: observationId }));
 
         if (!observation) {
             throw new NotFoundError(`Observation ${ observationId } does not exist.`);
@@ -303,7 +304,7 @@ export default class Observations {
 
         observation.validateBeforeSave();
 
-        await this.#datastore.save(observation);
+        await this.#dataStore.save(observation);
 
         const data = observation.getMediaItemByFilename(filename);
 

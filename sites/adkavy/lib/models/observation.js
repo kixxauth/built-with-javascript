@@ -23,11 +23,6 @@ export default class Observation extends BaseDataStoreModel {
             // A person email.
             email: attrs.email || null,
             title: attrs.title || null,
-            // The date of the observation in the field.
-            observationDate: attrs.observationDate || null,
-            // The time of the observation in the field.
-            observationTime: attrs.observationTime || null,
-            // The datetime string of the observation in the field.
             observationDateTime: attrs.observationDateTime || null,
             // The date time string represented when this record was initially created.
             reportedDateTime: attrs.reportedDateTime || null,

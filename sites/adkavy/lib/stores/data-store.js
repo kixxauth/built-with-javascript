@@ -19,6 +19,7 @@ export default class DataStore {
 
     #logger = null;
     #dynamoDbClient = null;
+    #entityTable = null;
 
     constructor({ config, logger, dynamoDbClient }) {
         const environment = config.dataStore.getEnvironment();
@@ -31,13 +32,14 @@ export default class DataStore {
 
         this.#logger = logger.createChild({ name: 'DataStore' });
         this.#dynamoDbClient = dynamoDbClient;
+        this.#entityTable = `adkavy_${ environment }_entities`;
     }
 
     async fetch({ type, id }) {
         this.#logger.log('fetch record', { type, id });
 
         const Model = MODELS_BY_TYPE.get(type);
-        const spec = await this.#dynamoDbClient.getItem({ type, id });
+        const spec = await this.#dynamoDbClient.getItem(this.#entityTable, { type, id });
 
         if (spec) {
             return new Model(spec);
@@ -61,7 +63,7 @@ export default class DataStore {
 
         obj.assignDerivedDatastoreProperties(item);
 
-        await this.#dynamoDbClient.putItem(item);
+        await this.#dynamoDbClient.putItem(this.#entityTable, item);
 
         return obj;
     }
