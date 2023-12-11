@@ -57,4 +57,5 @@ sites/adkavy/config/**
 !sites/adkavy/config/start.toml
 sites/adkavy/end-to-end-tests/aws-s3-client/config/**
 sites/adkavy/end-to-end-tests/aws-dynamodb-client/config/**
+sites/adkavy/end-to-end-tests/object-management-client/config/**
 
