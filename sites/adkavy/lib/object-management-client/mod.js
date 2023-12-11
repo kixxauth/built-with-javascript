@@ -85,6 +85,48 @@ export default class ObjectManagementClient {
         }
 
         throw new OperationalError('Unexpected object service response shape');
+
+        /* body.data =>
+        {
+            "type": "remote-object",
+            "id": "56cadbd0-166a-4b52-a12e-7ada1583b672",
+            "scopeId": "adkavy",
+            "key": "testing/a-video.mov",
+            "contentType": "video/quicktime",
+            "contentLength": 6699955,
+            "storageClass": "STANDARD",
+            "md5Hash": "0aea39424f4afbe7eea3c8867115ba7e",
+            "sha256Hash": "b316e1d54542ed0db632204660b7aabee914e0032af8de1fa8cb9a58ce52eb18",
+            "version": "sqiMsP3QzFUbCz6Vk_FeSfbpYFur.zGm",
+            "lastModifiedDate": "2023-12-11T11:23:36.909Z",
+            "mediaOutput": {
+                "format": "MP4_H264_AAC",
+                "pathname": "56cadbd0-166a-4b52-a12e-7ada1583b672",
+                "videoFilename": "video.mp4",
+                "posterFilename": "video.0000000.jpg"
+            },
+            "links": {
+                "object": {
+                    "origin": "https://media.kixx.name/origin/adkavy/testing/latest/a-video.mov",
+                    "cdns": [
+                        "https://kixx.imgix.net/adkavy/testing/latest/a-video.mov"
+                    ]
+                },
+                "mediaResource": {
+                    "origin": "https://media.kixx.name/origin/adkavy/56cadbd0-166a-4b52-a12e-7ada1583b672/latest/video.mp4",
+                    "cdns": [
+                        "https://kixx.imgix.net/adkavy/56cadbd0-166a-4b52-a12e-7ada1583b672/latest/video.mp4"
+                    ]
+                },
+                "mediaPoster": {
+                    "origin": "https://media.kixx.name/origin/adkavy/56cadbd0-166a-4b52-a12e-7ada1583b672/latest/video.0000000.jpg",
+                    "cdns": [
+                        "https://kixx.imgix.net/adkavy/56cadbd0-166a-4b52-a12e-7ada1583b672/latest/video.0000000.jpg"
+                    ]
+                }
+            }
+        }
+         */
     }
 
     #makeRequest(sourceStream, options) {

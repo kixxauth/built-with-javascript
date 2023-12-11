@@ -12,6 +12,7 @@ import Observations from './lib/http-interfaces/observations.js';
 import Events from './lib/http-interfaces/events.js';
 import IncidentReports from './lib/http-interfaces/incident-reports.js';
 import AwsDynamoDbClient from './lib/aws-dynamodb-client/mod.js';
+import ObjectManagementClient from './lib/object-management-client/mod.js';
 import DataStore from './lib/stores/data-store.js';
 import PageDataStore from './lib/stores/page-data-store.js';
 import PageSnippetStore from './lib/stores/page-snippet-store.js';
@@ -78,6 +79,7 @@ async function start() {
     }
 
     const dynamoDbClient = AwsDynamoDbClient.fromConfig(logger, config);
+    const objectManagementClient = ObjectManagementClient.fromConfig(logger, config);
 
     const datastore = new DataStore({
         config,
@@ -123,10 +125,11 @@ async function start() {
         config,
         logger,
         eventBus,
+        datastore,
+        objectManagementClient,
         pageDataStore,
         pageSnippetStore,
         templateStore,
-        datastore,
     }));
 
     routingTable.registerHTTPInterface('Events', new Events({

@@ -43,6 +43,10 @@ export default class UploadMediaJob {
             processingParams,
         });
 
+        if (!res) {
+            return null;
+        }
+
         const { links } = res;
 
         let mediaURLs;
@@ -71,11 +75,11 @@ export default class UploadMediaJob {
 
         return {
             id: res.id,
-            filename,
             contentType: res.contentType,
             contentLength,
             md5Hash: res.md5Hash,
             version: res.version,
+            mediaOutput: res.mediaOutput,
             mediaURLs,
             posterURLs,
         };

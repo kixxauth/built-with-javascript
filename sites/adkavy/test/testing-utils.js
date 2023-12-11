@@ -18,4 +18,7 @@ class FakeLogger {
     warn() {}
     error() {}
     dispose() {}
+    createChild() {
+        return new FakeLogger();
+    }
 }

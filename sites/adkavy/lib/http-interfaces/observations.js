@@ -24,6 +24,7 @@ export default class Observations {
 
     #logger = null;
     #dataStore = null;
+    #objectManagementClient = null;
     #viewObservationPage = null;
 
     constructor(spec) {
@@ -37,10 +38,12 @@ export default class Observations {
             // pageSnippetStore,
             // templateStore,
             dataStore,
+            objectManagementClient,
         } = spec;
 
         this.#logger = logger.createChild({ name: 'Observations' });
         this.#dataStore = dataStore;
+        this.#objectManagementClient = objectManagementClient;
 
         // Put this back when we actually start using it.
         // this.#viewObservationPage = new ViewObservationPage({
@@ -246,9 +249,7 @@ export default class Observations {
 
         const job = new UploadMediaJob({
             logger: this.#logger,
-            // TODO: We need some sort of client which is already configured.
-            //       Then we use that client to create jobs.
-            // config: this.#config,
+            objectManagementClient: this.#objectManagementClient,
         });
 
         const existingMediaItems = observation.relationships.media || [];
