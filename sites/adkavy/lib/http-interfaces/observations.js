@@ -280,10 +280,12 @@ export default class Observations {
     }
 
     async updateMedia(request, response) {
-        const { observationId, filename } = request.pathnameParams;
+        const { observationId } = request.pathnameParams;
+        // Cast the filename to the media id.
+        const mediaId = request.pathnameParams.filename;
 
         assert(isNonEmptyString(observationId), 'observationId isNonEmptyString');
-        assert(isNonEmptyString(filename), 'filename isNonEmptyString');
+        assert(isNonEmptyString(mediaId), 'mediaId isNonEmptyString');
 
         const body = await request.json();
 
@@ -297,18 +299,18 @@ export default class Observations {
             throw new NotFoundError(`Observation ${ observationId } does not exist.`);
         }
 
-        observation = observation.updateMedia(filename, body.data.attributes);
+        observation = observation.updateMedia(mediaId, body.data.attributes);
 
         if (!observation) {
-            throw new NotFoundError(`Observation media file ${ filename } does not exist.`);
+            throw new NotFoundError(`Observation media ${ mediaId } does not exist.`);
         }
 
         observation.validateBeforeSave();
 
-        await this.#dataStore.save(observation);
+        observation = await this.#dataStore.save(observation);
 
-        const data = observation.getMediaItemByFilename(filename);
+        const data = observation.getMediaItemById(mediaId);
 
-        return response.respondWithJSON(201, { data });
+        return response.respondWithJSON(200, { data });
     }
 }

@@ -33,6 +33,9 @@ export default async function test_addMedia() {
             type: 'observation',
             attributes: {
             },
+            relationships: {
+                media: [{}],
+            },
             meta: {
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
@@ -150,7 +153,7 @@ export default async function test_addMedia() {
         assertEqual(readStream, fileSourceStream);
         assertEqual(contentType, mediaOptions.contentType);
         assertEqual(contentLength, mediaOptions.contentLength);
-        assertEqual('observations/foo-bar-baz/000.mov', mediaOptions.key);
+        assertEqual('observations/foo-bar-baz/001.mov', mediaOptions.key);
         assert(mediaOptions.processingParams);
 
         assertEqual(1, dynamoDbClient.getItem.callCount);
@@ -167,7 +170,7 @@ export default async function test_addMedia() {
         assertEqual('observation', obj.type);
         assertEqual('foo-bar-baz', obj.id);
 
-        const item = obj.relationships.media[0];
+        const item = obj.relationships.media[1];
 
         assertEqual('media', item.type);
         assertEqual('media-object-id', item.id);

@@ -86,7 +86,7 @@ export default class ObjectManagementClient {
 
         throw new OperationalError('Unexpected object service response shape');
 
-        /* body.data =>
+        /* Dump of body.data =>
         {
             "type": "remote-object",
             "id": "56cadbd0-166a-4b52-a12e-7ada1583b672",
