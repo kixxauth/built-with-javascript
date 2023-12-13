@@ -8,6 +8,9 @@ import fsp from 'node:fs/promises';
 import http from 'node:http';
 import https from 'node:https';
 
+// !!IMPORTANT
+// TODO: Copy over existing observation IDs from current site
+
 
 if (!process.argv[2]) {
     throw new Error('A source file is required');
@@ -26,8 +29,6 @@ if (!fs.statSync(sourceFilepath).isFile()) {
     throw new Error(`The file ${ sourceFilepath } does not exist.`);
 }
 
-// TODO: Need to process the observationDateTime as a single value
-
 async function main() {
     const records = await readJSONFile(sourceFilepath);
 
@@ -40,11 +41,12 @@ async function createObservation(record) {
     const body = JSON.stringify({
         data: {
             type: 'observation',
+            // TODO: Copy over existing ID from current site
             id: record.id,
             attributes: {
                 csv: record.attributes.csv,
                 reportedDateTime: record.attributes.reportedDate,
-                observationDate: record.attributes.observationTimestamp.split('T')[0],
+                observationDateTime: record.attributes.observationTimestamp,
                 travelMode: record.attributes.travelMode,
                 triggeredAvalanche: record.attributes.triggeredAvalanche,
                 observedAvalanche: record.attributes.observedAvalanche,
@@ -71,9 +73,6 @@ async function createObservation(record) {
 }
 
 async function updateObservation(record) {
-    const timeMatch = /T([\d]{2}:[\d]{2}):/.exec(record.attributes.observationTimestamp);
-    const observationTime = timeMatch[1];
-
     const body = JSON.stringify({
         data: {
             type: 'observation',
@@ -82,7 +81,6 @@ async function updateObservation(record) {
                 name: record.attributes.name,
                 email: record.attributes.email,
                 title: record.attributes.title,
-                observationTime,
                 elevation: record.attributes.elevation,
                 aspect: record.attributes.aspect,
                 redFlags: record.attributes.redFlags,
