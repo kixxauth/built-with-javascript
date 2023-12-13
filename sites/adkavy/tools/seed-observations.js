@@ -26,6 +26,7 @@ if (!fs.statSync(sourceFilepath).isFile()) {
     throw new Error(`The file ${ sourceFilepath } does not exist.`);
 }
 
+// TODO: Need to process the observationDateTime as a single value
 
 async function main() {
     const records = await readJSONFile(sourceFilepath);

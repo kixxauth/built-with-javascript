@@ -21,7 +21,7 @@ export default class UploadMediaJob {
         let key = `observations/${ observationId }/${ ('000' + index).slice(-3) }`;
 
         if (ext) {
-            key = `${ key }.${ ext }`;
+            key = `${ key }.${ ext.toLowerCase() }`;
         }
 
         // Always include processing params. These values will only be used if the

@@ -9,7 +9,6 @@ import {
 // Bring this in when we're ready
 // import ViewObservationPage from '../pages/view-observation-page.js';
 import UploadMediaJob from '../jobs/upload-media-job.js';
-import { slugifyFilename } from '../utils.js';
 
 
 const {
@@ -229,8 +228,8 @@ export default class Observations {
     }
 
     async addMedia(request, response) {
-        const { observationId } = request.pathnameParams;
-        let { filename } = request.pathnameParams;
+        // The filename is only used to get the file extension.
+        const { observationId, filename } = request.pathnameParams;
         const contentType = request.headers.get('content-type');
         const contentLength = parseInt(request.headers.get('content-length'), 10);
 
@@ -238,8 +237,6 @@ export default class Observations {
         assert(isNonEmptyString(filename), 'filename isNonEmptyString');
         assert(isNonEmptyString(contentType), 'content-type isNonEmptyString');
         assert(isNumberNotNaN(contentLength), 'content-length isNumberNotNaN');
-
-        filename = slugifyFilename(filename);
 
         let observation = await this.#dataStore.fetch(new Observation({ id: observationId }));
 
