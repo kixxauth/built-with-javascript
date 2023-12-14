@@ -1,8 +1,23 @@
+/*
+Implements a page caching strategy:
+
+- _Static Pages_ - Cache the HTML output by URL, but do not cache
+                   underlying data or templates.
+- _List Pages_ - (ie the observations/ page) Cache HTML output by URL, but do not cache
+                 underlying data or templates.
+- _Item Pages_ - (ie observation detail page) Do NOT cache HTML output or underlying data, but
+                 DO cache the page data and template.
+
+Short Summary:
+
+- If a page IS marked cacheable, then cache the HTML output by URL, but cache nothing else.
+- If a page is NOT marked cacheable, then cache the page data and template, but nothing else.
+ */
+
 import { KixxAssert } from '../../dependencies.js';
-import { OperationalError, NotFoundError } from '../errors.js';
+import { NotFoundError } from '../errors.js';
 
 const {
-    isPlainObject,
     isNonEmptyString,
     assert,
 } = KixxAssert;
@@ -10,25 +25,25 @@ const {
 
 export default class BasePage {
 
-    #pageId = null;
+    pageId = null;
     #templateId = null;
 
-    #logger = null;
-    #eventBus = null;
+    logger = null;
+    eventBus = null;
+
     #pageDataStore = null;
     #pageSnippetStore = null;
     #templateStore = null;
 
-    #isDynamic = false;
-    #caching = false;
+    #cacheable = false;
+    #cache = true;
 
     #cachedPageData = null;
     #cachedContentSnippets = null;
     #cachedTemplate = null;
-    #cachedHTML = null;
+    #cachedHTML = new Map();
 
     constructor(spec) {
-        assert(isPlainObject(spec), 'isPlainObject');
         assert(isNonEmptyString(spec.pageId), 'spec.pageId isNonEmptyString');
         assert(isNonEmptyString(spec.templateId), 'spec.templateId isNonEmptyString');
         assert(spec.logger);
@@ -40,8 +55,10 @@ export default class BasePage {
         const {
             pageId,
             templateId,
-            isDynamic,
-            caching,
+            // Is the page HTML cacheable?
+            cacheable,
+            // Set to true to turn off caching.
+            noCache,
             logger,
             eventBus,
             pageDataStore,
@@ -49,31 +66,45 @@ export default class BasePage {
             templateStore,
         } = spec;
 
-        this.#pageId = pageId;
+        const name = this.constructor.name;
+
+        Object.defineProperties(this, {
+            pageId: {
+                enumerable: true,
+                value: pageId,
+            },
+            logger: {
+                value: logger.createChild({ name }),
+            },
+            eventBus: {
+                value: eventBus,
+            },
+        });
+
         this.#templateId = templateId;
-        this.#isDynamic = Boolean(isDynamic);
-        this.#caching = Boolean(caching);
-        this.#logger = logger.createChild({ name: 'BasePage' });
+
+        this.#cacheable = Boolean(cacheable);
+        this.#cache = !noCache;
+
         this.#pageDataStore = pageDataStore;
         this.#pageSnippetStore = pageSnippetStore;
         this.#templateStore = templateStore;
 
-        if (this.#caching) {
-            const regenerateCache = this.rengerateCache.bind(this);
-            eventBus.on(`PageDataStore:update:${ pageId }`, regenerateCache);
-            eventBus.on('PageSnippetStore:update', regenerateCache);
-            eventBus.on('TemplateStore:update', regenerateCache);
-        }
+        this.bindEventListeners();
     }
 
-    isCacheable() {
-        return this.#caching && !this.#isDynamic;
+
+    /**
+     * @public
+     */
+    bindEventListeners() {
+        // Override this to bind data store event listeners for cache busting.
     }
 
     /**
      * @public
      */
-    async generateJSON(req) {
+    async generateJSON(request) {
         let page = await this.getPageData();
         page = page || {};
 
@@ -84,10 +115,10 @@ export default class BasePage {
             page.snippets = {};
         }
 
-        const data = await this.getDynamicData(req.pathnameParams);
+        const data = await this.getDynamicData(request);
 
         const decorations = {
-            canonical_url: req.url.href,
+            canonical_url: request.url.href,
         };
 
         return Object.assign(decorations, page, data);
@@ -97,8 +128,9 @@ export default class BasePage {
      * @public
      */
     async generateHTML(req) {
-        if (this.#cachedHTML) {
-            return this.#cachedHTML;
+        const { href } = req.url;
+        if (this.#cachedHTML.has(href)) {
+            return this.#cachedHTML.get(href);
         }
 
         const page = await this.generateJSON(req);
@@ -106,8 +138,8 @@ export default class BasePage {
 
         const html = template(page);
 
-        if (this.isCacheable()) {
-            this.#cachedHTML = html;
+        if (this.#cache && this.#cacheable) {
+            this.#cachedHTML.set(href, html);
         }
 
         return html;
@@ -116,40 +148,29 @@ export default class BasePage {
     /**
      * @private
      */
-    async rengerateCache() {
-        const name = this.constructor.name;
-        const pageId = this.#pageId;
+    deleteCache() {
+        const { pageId } = this;
+        this.logger.info('deleting page cache', { pageId });
 
-        this.#logger.info('regenerating page cache', { name, pageId });
-
-        try {
-            this.#cachedHTML = null;
-            this.#cachedPageData = null;
-            this.#cachedContentSnippets = null;
-            this.#cachedTemplate = null;
-            await this.generateHTML();
-        } catch (cause) {
-            const error = new OperationalError(
-                `Error regenerating page cache in ${ name }:${ pageId }`,
-                { fatal: true, cause }
-            );
-            this.#eventBus.emit('error', error);
-        }
+        this.#cachedHTML.clear();
+        this.#cachedPageData = null;
+        this.#cachedContentSnippets = null;
+        this.#cachedTemplate = null;
     }
 
     /**
      * @private
      */
-    getPageData() {
+    async getPageData() {
         if (this.#cachedPageData) {
             return this.#cachedPageData;
         }
 
-        const pageData = this.#pageDataStore.fetch(this.#pageId);
+        const pageData = await this.#pageDataStore.fetch(this.pageId);
 
-        // We don't cache page data for static pages, since we cache the full HTML
-        // content utf8 for static pages.
-        if (this.#caching && this.#isDynamic) {
+        // If the page is cacheable, then we cache the full HTML content utf8 so there is
+        // no need to cache this data.
+        if (this.#cache && !this.#cacheable) {
             this.#cachedPageData = pageData;
         }
 
@@ -159,16 +180,16 @@ export default class BasePage {
     /**
      * @private
      */
-    getContentSnippets(snippetIds) {
+    async getContentSnippets(snippetIds) {
         if (this.#cachedContentSnippets) {
             return this.#cachedContentSnippets;
         }
 
-        const snippets = this.#pageSnippetStore.fetchBatch(snippetIds);
+        const snippets = await this.#pageSnippetStore.fetchBatch(snippetIds);
 
-        // We don't cache snippets for static pages, since we cache the full HTML
-        // content utf8 for static pages.
-        if (this.#caching && this.#isDynamic) {
+        // If the page is cacheable, then we cache the full HTML content utf8 so there is
+        // no need to cache this data.
+        if (this.#cache && !this.#cacheable) {
             this.#cachedContentSnippets = snippets;
         }
 
@@ -189,9 +210,9 @@ export default class BasePage {
             throw new NotFoundError(`Template "${ this.#templateId }" could not be found`);
         }
 
-        // We don't cache templates for static pages, since we cache the full HTML
-        // content utf8 for static pages.
-        if (this.#caching && this.#isDynamic) {
+        // If the page is cacheable, then we cache the full HTML content utf8 so there is
+        // no need to cache this data.
+        if (this.#cache && !this.#cacheable) {
             this.#cachedTemplate = template;
         }
 
@@ -203,6 +224,6 @@ export default class BasePage {
      * @private
      */
     getDynamicData() {
-        return null;
+        return {};
     }
 }

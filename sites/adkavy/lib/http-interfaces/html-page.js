@@ -1,13 +1,11 @@
 import { KixxAssert } from '../../dependencies.js';
-import BasePage from '../pages/base-page.js';
+import StaticPage from '../pages/static-page.js';
 import { NotFoundError } from '../errors.js';
 
 const { isNonEmptyString, isPlainObject, assert } = KixxAssert;
 
 
 export default class HTMLPage {
-
-    #caching = true;
 
     #logger = null;
     #eventBus = null;
@@ -47,39 +45,46 @@ export default class HTMLPage {
         }
     }
 
-    async renderPage(req, res, params) {
-        const pageId = params.page;
-        const templateId = params.template;
+    async renderPage(request, response, options) {
+        const pageId = options.page;
+        const templateId = options.template;
+        // TODO: Handle cache-control header.
+        // const { cacheControl } = options;
 
         assert(isNonEmptyString(pageId), 'pageId isNonEmptyString');
         assert(isNonEmptyString(templateId), 'templateId isNonEmptyString');
 
         const page = this.#getPageInstance(pageId, templateId);
 
-        const requestJSON = req.url.pathname.endsWith('.json');
+        const requestJSON = request.url.pathname.endsWith('.json');
+
+        let json;
+        let html;
 
         if (requestJSON) {
-            const json = await page.generateJSON(req);
-            return res.respondWithJSON(200, json, { whiteSpace: true });
+            json = await page.generateJSON(request);
+        } else {
+            html = await page.generateHTML(request);
         }
 
         // TODO: Handle HEAD request.
-        // TODO: Handle cache-control header.
 
-        const html = await page.generateHTML(req);
-        return res.respondWithHTML(200, html);
+        if (json) {
+            return response.respondWithJSON(200, json, { whiteSpace: true });
+        }
+
+        return response.respondWithHTML(200, html);
     }
 
     #getPageInstance(pageId, templateId) {
+        // Use the existing page instance if it has already been created.
         if (this.#pagesById.has(pageId)) {
             return this.#pagesById.get(pageId);
         }
 
-        const page = new BasePage({
+        const page = new StaticPage({
             pageId,
             templateId,
-            caching: this.#caching,
-            isDynamic: false,
             logger: this.#logger,
             eventBus: this.#eventBus,
             pageDataStore: this.#pageDataStore,
