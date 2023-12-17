@@ -40,6 +40,7 @@ export default class BasePage {
 
     #cachedPageData = null;
     #cachedContentSnippets = null;
+    #watchedSnippetIds = [];
     #cachedTemplate = null;
     #cachedHTML = new Map();
 
@@ -89,17 +90,20 @@ export default class BasePage {
         this.#pageDataStore = pageDataStore;
         this.#pageSnippetStore = pageSnippetStore;
         this.#templateStore = templateStore;
-
-        this.bindEventListeners();
     }
-
 
     /**
      * @public
      */
-    bindEventListeners() {
-        // Override this to bind data store event listeners for cache busting.
+    async initialize() {
+        this.#bindEventListeners();
+
+        const page = await this.getPageData();
+        this.#watchedSnippetIds = page.snippets || [];
+
+        return this;
     }
+
 
     /**
      * @public
@@ -225,5 +229,36 @@ export default class BasePage {
      */
     getDynamicData() {
         return {};
+    }
+
+    /**
+     * @private
+     */
+    #bindEventListeners() {
+        this.eventBus.on('PageDataStore:updateItem', this.#onPageDataStoreUpdate.bind(this));
+        this.eventBus.on('PageSnippetStore:updateItem', this.#onPageSnippetStoreUpdate.bind(this));
+    }
+
+    /**
+     * @private
+     */
+    #onPageDataStoreUpdate(page) {
+        if (page.id === this.pageId) {
+            this.#watchedSnippetIds = page.snippets || [];
+            const { pageId } = this;
+            this.logger.log('detected page data update', { pageId });
+            this.deleteCache();
+        }
+    }
+
+    /**
+     * @private
+     */
+    #onPageSnippetStoreUpdate({ id }) {
+        if (this.#watchedSnippetIds.includes(id)) {
+            const { pageId } = this;
+            this.logger.log('detected snippet update', { pageId, snippet: id });
+            this.deleteCache();
+        }
     }
 }

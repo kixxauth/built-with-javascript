@@ -1,5 +1,5 @@
 import { KixxAssert } from '../../dependencies.js';
-import StaticPage from '../pages/static-page.js';
+import BasePage from '../pages/base-page.js';
 import { NotFoundError } from '../errors.js';
 
 const { isNonEmptyString, isPlainObject, assert } = KixxAssert;
@@ -33,6 +33,9 @@ export default class HTMLPage {
         this.#templateStore = templateStore;
     }
 
+    initialize() {
+    }
+
     handleError(error, request, response) {
         const { requestId } = request;
 
@@ -54,7 +57,7 @@ export default class HTMLPage {
         assert(isNonEmptyString(pageId), 'pageId isNonEmptyString');
         assert(isNonEmptyString(templateId), 'templateId isNonEmptyString');
 
-        const page = this.#getPageInstance(pageId, templateId);
+        const page = await this.#getPageInstance(pageId, templateId);
 
         const requestJSON = request.url.pathname.endsWith('.json');
 
@@ -82,7 +85,7 @@ export default class HTMLPage {
             return this.#pagesById.get(pageId);
         }
 
-        const page = new StaticPage({
+        const page = new BasePage({
             pageId,
             templateId,
             logger: this.#logger,
@@ -95,6 +98,7 @@ export default class HTMLPage {
         // Stash the page instance by pageId to use later.
         this.#pagesById.set(pageId, page);
 
-        return page;
+        // Returns a Promise.
+        return page.initialize();
     }
 }

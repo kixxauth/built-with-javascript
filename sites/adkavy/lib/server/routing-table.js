@@ -88,6 +88,12 @@ export default class RoutingTable {
         }
     }
 
+    async initialize() {
+        for (const component of this.#httpInterfacesByName.values()) {
+            await component.initialize();
+        }
+    }
+
     async routeRequest(request, response) {
         const route = this.#findRoute(request);
 

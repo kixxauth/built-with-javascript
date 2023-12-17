@@ -142,6 +142,8 @@ async function start() {
 
     routingTable.registerRoutes(routes);
 
+    await routingTable.initialize();
+
     const server = http.createServer((req, res) => {
 
         req.on('error', (error) => {

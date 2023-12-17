@@ -31,6 +31,9 @@ export default class StaticFileServer {
         this.#publicDirectory = publicDirectory;
     }
 
+    initialize() {
+    }
+
     handleError(error, request, response) {
         const { requestId } = request;
 

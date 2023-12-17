@@ -55,6 +55,9 @@ export default class Observations {
         // });
     }
 
+    initialize() {
+    }
+
     handleError(error, req, res) {
         const jsonResponse = { errors: [] };
 
