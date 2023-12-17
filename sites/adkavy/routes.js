@@ -83,40 +83,45 @@ export default [
     },
     {
         pattern: '/incident-reports/',
-        HTTPInterface: 'IncidentReports',
+        HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
-                method: 'listIncidentReports',
+                method: 'renderPage',
+                options: {
+                    page: 'incident-reports',
+                    template: 'incident-reports.html',
+                    cacheControl: 'public, max-age=129600',
+                },
             },
             HEAD: {},
         },
     },
     {
-        pattern: '/incident-reports/:reportId',
-        HTTPInterface: 'IncidentReports',
+        pattern: '/incident-reports/2022-02-12-angel-slides',
+        HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
-                method: 'viewIncidentReport',
+                method: 'renderPage',
+                options: {
+                    page: 'incident-reports/2022-02-12-angel-slides',
+                    template: 'incident-reports/2022-02-12-angel-slides.html',
+                    cacheControl: 'public, max-age=129600',
+                },
             },
             HEAD: {},
         },
     },
     {
         pattern: '/events/',
-        HTTPInterface: 'Events',
+        HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
-                method: 'listEvents',
-            },
-            HEAD: {},
-        },
-    },
-    {
-        pattern: '/events/:eventId',
-        HTTPInterface: 'Events',
-        methods: {
-            GET: {
-                method: 'viewEvent',
+                method: 'renderPage',
+                options: {
+                    page: 'events',
+                    template: 'events.html',
+                    cacheControl: 'public, max-age=129600',
+                },
             },
             HEAD: {},
         },

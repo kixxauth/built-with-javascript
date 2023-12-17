@@ -1,5 +1,4 @@
 import path from 'node:path';
-import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import vm from 'node:vm';
 import Handlebars from 'handlebars';
@@ -9,20 +8,10 @@ export default class TemplateStore {
 
     #directory = null;
     #logger = null;
-    #eventBus = null;
 
-    constructor({ directory, logger, eventBus }) {
+    constructor({ directory, logger }) {
         this.#directory = directory;
         this.#logger = logger.createChild({ name: 'TemplateStore' });
-        this.#eventBus = eventBus;
-    }
-
-    initialize() {
-        const onFileChange = this.#onFileChange.bind(this);
-        const options = { persistant: false };
-        fs.watch(path.join(this.#directory, 'pages'), options, onFileChange);
-        fs.watch(path.join(this.#directory, 'partials'), options, onFileChange);
-        fs.watch(path.join(this.#directory, 'helpers'), options, onFileChange);
     }
 
     async fetch(templateId) {
@@ -48,27 +37,6 @@ export default class TemplateStore {
         this.#logger.debug('compiling template', { templateId, filename });
 
         return handlebars.compile(utf8);
-    }
-
-    #onFileChange(eventType, filename) {
-        this.#logger.debug('emitting change for', { filename });
-        this.#eventBus.emit('TemplateStore:update', {});
-    }
-
-    async #safelyReadDirectory(dirname) {
-        let entries;
-
-        try {
-            entries = await fsp.readdir(dirname);
-        } catch (cause) {
-            if (cause.code === 'ENOENT') {
-                return [];
-            }
-
-            throw cause;
-        }
-
-        return entries.map((entry) => path.join(dirname, entry));
     }
 
     async #registerPartialTemplates(handlebars) {
@@ -115,5 +83,21 @@ export default class TemplateStore {
 
         handlebars.registerHelper(name, helper);
         return true;
+    }
+
+    async #safelyReadDirectory(dirname) {
+        let entries;
+
+        try {
+            entries = await fsp.readdir(dirname);
+        } catch (cause) {
+            if (cause.code === 'ENOENT') {
+                return [];
+            }
+
+            throw cause;
+        }
+
+        return entries.map((entry) => path.join(dirname, entry));
     }
 }

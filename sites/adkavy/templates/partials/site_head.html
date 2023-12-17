@@ -2,15 +2,17 @@
 <html lang="en-US" itemscope itemtype="http://schema.org/WebPage">
 <head>
 	<meta charset="utf-8">
-	<title>{{ page_title }}</title>
-	<meta name="description" content="{{ page_description }}">
+	<title>{{ pageTitle }}</title>
+	<meta name="description" content="{{ pageDescription }}">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<meta property="og:type" content="{{ page_type }}">
-	<meta property="og:title" content="{{ page_title }}">
-	<meta property="og:description" content="{{ page_description }}">
-	<meta property="og:url" content="{{ canonical_url }}">
-	<meta property="og:image" content="{{ page_image.url }}">
+	<meta property="og:type" content="{{ pageType }}">
+	<meta property="og:title" content="{{ pageTitle }}">
+	<meta property="og:description" content="{{ pageDescription }}">
+	<meta property="og:url" content="{{ canonicalURL }}">
+	{{#if pageImage }}
+	<meta property="og:image" content="{{ pageImage.url }}">
+	{{/if}}
 
 	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">

@@ -1,4 +1,5 @@
 import { KixxAssert } from '../../dependencies.js';
+import Page from '../models/page.js';
 import Observation from '../models/observation.js';
 
 
@@ -11,6 +12,7 @@ const ALLOWED_ENVIRONMENTS = [
 ];
 
 const MODELS_BY_TYPE = new Map([
+    [ 'page', Page ],
     [ 'observation', Observation ],
 ]);
 
@@ -39,6 +41,11 @@ export default class DataStore {
         this.#logger.log('fetch record', { type, id });
 
         const Model = MODELS_BY_TYPE.get(type);
+
+        if (!Model) {
+            throw new Error(`No DataStore Model registered for type "${ type }"`);
+        }
+
         const spec = await this.#dynamoDbClient.getItem(this.#entityTable, { type, id });
 
         if (spec) {

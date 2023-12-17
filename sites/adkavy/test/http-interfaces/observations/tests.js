@@ -4,7 +4,7 @@ import test_updateObservation from './test_update-observation.js';
 import test_addMedia from './test_add-media.js';
 import test_updateMedia from './test_update-media.js';
 
-export default async function test_AwsS3Client() {
+export default async function test_Observations_HTTPInterface() {
     await test_handleError();
     await test_createObservation();
     await test_updateObservation();

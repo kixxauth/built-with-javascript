@@ -9,8 +9,8 @@ export default class HTMLPage {
 
     #logger = null;
     #eventBus = null;
-    #pageDataStore = null;
-    #pageSnippetStore = null;
+    #dataStore = null;
+    #blobStore = null;
     #templateStore = null;
 
     #pagesById = new Map();
@@ -21,15 +21,15 @@ export default class HTMLPage {
         const {
             logger,
             eventBus,
-            pageDataStore,
-            pageSnippetStore,
+            dataStore,
+            blobStore,
             templateStore,
         } = spec;
 
         this.#logger = logger.createChild({ name: 'HTMLPage' });
         this.#eventBus = eventBus;
-        this.#pageDataStore = pageDataStore;
-        this.#pageSnippetStore = pageSnippetStore;
+        this.#dataStore = dataStore;
+        this.#blobStore = blobStore;
         this.#templateStore = templateStore;
     }
 
@@ -90,8 +90,8 @@ export default class HTMLPage {
             templateId,
             logger: this.#logger,
             eventBus: this.#eventBus,
-            pageDataStore: this.#pageDataStore,
-            pageSnippetStore: this.#pageSnippetStore,
+            dataStore: this.#dataStore,
+            blobStore: this.#blobStore,
             templateStore: this.#templateStore,
         });
 

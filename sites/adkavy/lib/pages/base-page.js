@@ -31,8 +31,8 @@ export default class BasePage {
     logger = null;
     eventBus = null;
 
-    #pageDataStore = null;
-    #pageSnippetStore = null;
+    #dataStore = null;
+    #blobStore = null;
     #templateStore = null;
 
     #cacheable = false;
@@ -49,8 +49,8 @@ export default class BasePage {
         assert(isNonEmptyString(spec.templateId), 'spec.templateId isNonEmptyString');
         assert(spec.logger);
         assert(spec.eventBus);
-        assert(spec.pageDataStore);
-        assert(spec.pageSnippetStore);
+        assert(spec.dataStore);
+        assert(spec.blobStore);
         assert(spec.templateStore);
 
         const {
@@ -62,8 +62,8 @@ export default class BasePage {
             noCache,
             logger,
             eventBus,
-            pageDataStore,
-            pageSnippetStore,
+            dataStore,
+            blobStore,
             templateStore,
         } = spec;
 
@@ -87,8 +87,8 @@ export default class BasePage {
         this.#cacheable = Boolean(cacheable);
         this.#cache = !noCache;
 
-        this.#pageDataStore = pageDataStore;
-        this.#pageSnippetStore = pageSnippetStore;
+        this.#dataStore = dataStore;
+        this.#blobStore = blobStore;
         this.#templateStore = templateStore;
     }
 
@@ -99,7 +99,10 @@ export default class BasePage {
         this.#bindEventListeners();
 
         const page = await this.getPageData();
-        this.#watchedSnippetIds = page.snippets || [];
+
+        if (page) {
+            this.#watchedSnippetIds = page.snippets || [];
+        }
 
         return this;
     }
@@ -122,7 +125,7 @@ export default class BasePage {
         const data = await this.getDynamicData(request);
 
         const decorations = {
-            canonical_url: request.url.href,
+            canonicalURL: request.url.href,
         };
 
         return Object.assign(decorations, page, data);
@@ -133,6 +136,7 @@ export default class BasePage {
      */
     async generateHTML(req) {
         const { href } = req.url;
+
         if (this.#cachedHTML.has(href)) {
             return this.#cachedHTML.get(href);
         }
@@ -170,7 +174,16 @@ export default class BasePage {
             return this.#cachedPageData;
         }
 
-        const pageData = await this.#pageDataStore.fetch(this.pageId);
+        const page = await this.#dataStore.fetch({
+            type: 'page',
+            id: this.pageId,
+        });
+
+        if (!page) {
+            return null;
+        }
+
+        const pageData = Object.assign({}, page.attributes);
 
         // If the page is cacheable, then we cache the full HTML content utf8 so there is
         // no need to cache this data.
@@ -189,7 +202,7 @@ export default class BasePage {
             return this.#cachedContentSnippets;
         }
 
-        const snippets = await this.#pageSnippetStore.fetchBatch(snippetIds);
+        const snippets = await this.#blobStore.fetchBatch(snippetIds);
 
         // If the page is cacheable, then we cache the full HTML content utf8 so there is
         // no need to cache this data.
