@@ -9,7 +9,7 @@ import HTMLPage from '../../../lib/http-interfaces/html-page.js';
 import { fromFileUrl } from '../../../lib/utils.js';
 import { FakeLoggerWrapper } from '../../testing-utils.js';
 
-const { assertEqual } = KixxAssert;
+const { assert, assertEqual } = KixxAssert;
 
 
 const DIRNAME = fromFileUrl(new URL('./', import.meta.url));
@@ -78,34 +78,29 @@ export default async function test_renderPage_asJSON() {
     });
 
     const request = {
-        url: new URL('index.json', 'https://www.adkavy.org'),
+        url: new URL('/', 'https://www.adkavy.org'),
     };
 
     const response = {
-        respondWithJSON() {
+        respondWithHTML() {
         },
     };
 
-    sinon.spy(response, 'respondWithJSON');
+    sinon.spy(response, 'respondWithHTML');
 
     await subject.renderPage(request, response, {
         page: 'home',
         template: 'home.html',
     });
 
-    assertEqual(1, response.respondWithJSON.callCount);
+    assertEqual(1, response.respondWithHTML.callCount);
 
-    const [ status, body ] = response.respondWithJSON.firstCall.args;
+    const [ status, body ] = response.respondWithHTML.firstCall.args;
 
     assertEqual(200, status);
 
-    assertEqual(pageRecord.pageType, body.pageType);
-    assertEqual(pageRecord.pageTitle, body.pageTitle);
-    assertEqual(pageRecord.pageDescription, body.pageDescription);
-    assertEqual(null, body.pageImage);
-    assertEqual(pageRecord.heroImage.url, body.heroImage.url);
-    assertEqual(pageRecord.heroImage.alt, body.heroImage.alt);
-    assertEqual('https://www.adkavy.org/index.json', body.canonicalURL);
+    assert(body.startsWith('<!DOCTYPE html>'));
+    assert(body.endsWith('</html>\n'));
 
     assertEqual(1, dynamoDbClient.getItem.callCount);
 

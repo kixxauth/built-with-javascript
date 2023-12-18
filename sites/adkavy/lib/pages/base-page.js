@@ -112,8 +112,7 @@ export default class BasePage {
      * @public
      */
     async generateJSON(request) {
-        let page = await this.getPageData();
-        page = page || {};
+        const page = await this.getPageData();
 
         if (Array.isArray(page.snippets) && page.snippets.length > 0) {
             // The snippets Array is converted to an Object here.
@@ -180,7 +179,7 @@ export default class BasePage {
         });
 
         if (!page) {
-            return null;
+            throw new NotFoundError(`Page "${ this.pageId }" could not be found`);
         }
 
         const pageData = Object.assign({}, page.attributes);
@@ -203,6 +202,12 @@ export default class BasePage {
         }
 
         const snippets = await this.#blobStore.fetchBatch(snippetIds);
+
+        snippets.forEach((snippet, index) => {
+            if (!snippet) {
+                throw new NotFoundError(`Page snippet "${ this.pageId }:${ snippetIds[index] }" could not be found`);
+            }
+        });
 
         // If the page is cacheable, then we cache the full HTML content utf8 so there is
         // no need to cache this data.
