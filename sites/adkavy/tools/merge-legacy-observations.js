@@ -40,7 +40,13 @@ async function main() {
 
             newFormatRecord.id = legacyRecord.id;
         } else {
-            newFormatRecords.unshift(transformLegacyRecord(legacyRecord));
+            const newFormatRecord = findNewFormatRecord(newFormatRecords, legacyRecord);
+
+            if (newFormatRecord) {
+                newFormatRecord.id = legacyRecord.id;
+            } else {
+                newFormatRecords.unshift(transformLegacyRecord(legacyRecord));
+            }
         }
     }
 
