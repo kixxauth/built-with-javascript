@@ -9,13 +9,10 @@ import HTTPRequestTarget from './lib/server/http-request-target.js';
 import StaticFileServer from './lib/http-interfaces/static-file-server.js';
 import HTMLPage from './lib/http-interfaces/html-page.js';
 import Observations from './lib/http-interfaces/observations.js';
-import Events from './lib/http-interfaces/events.js';
-import IncidentReports from './lib/http-interfaces/incident-reports.js';
 import AwsDynamoDbClient from './lib/aws-dynamodb-client/mod.js';
 import ObjectManagementClient from './lib/object-management-client/mod.js';
 import DataStore from './lib/stores/data-store.js';
-import PageDataStore from './lib/stores/page-data-store.js';
-import PageSnippetStore from './lib/stores/page-snippet-store.js';
+import BlobStore from './lib/stores/blob-store.js';
 import TemplateStore from './lib/stores/template-store.js';
 import routes from './routes.js';
 import { fromFileUrl } from './lib/utils.js';
@@ -81,23 +78,13 @@ async function start() {
     const dynamoDbClient = AwsDynamoDbClient.fromConfig(logger, config);
     const objectManagementClient = ObjectManagementClient.fromConfig(logger, config);
 
-    const datastore = new DataStore({
+    const dataStore = new DataStore({
         config,
         logger,
         dynamoDbClient,
     });
 
-    const pageDataStore = new PageDataStore({
-        directory: path.join(ROOT_DIR, 'pages'),
-        logger,
-        eventBus,
-    });
-
-    const pageSnippetStore = new PageSnippetStore({
-        directory: path.join(ROOT_DIR, 'pages-snippets'),
-        logger,
-        eventBus,
-    });
+    const blobStore = new BlobStore();
 
     const templateStore = new TemplateStore({
         directory: path.join(ROOT_DIR, 'templates'),
@@ -116,8 +103,8 @@ async function start() {
     routingTable.registerHTTPInterface('HTMLPage', new HTMLPage({
         logger,
         eventBus,
-        pageDataStore,
-        pageSnippetStore,
+        dataStore,
+        blobStore,
         templateStore,
     }));
 
@@ -125,19 +112,9 @@ async function start() {
         config,
         logger,
         eventBus,
-        datastore,
+        dataStore,
         objectManagementClient,
-        pageDataStore,
-        pageSnippetStore,
         templateStore,
-    }));
-
-    routingTable.registerHTTPInterface('Events', new Events({
-        logger,
-    }));
-
-    routingTable.registerHTTPInterface('IncidentReports', new IncidentReports({
-        logger,
     }));
 
     routingTable.registerRoutes(routes);

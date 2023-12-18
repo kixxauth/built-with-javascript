@@ -8,16 +8,13 @@ import fsp from 'node:fs/promises';
 import http from 'node:http';
 import https from 'node:https';
 
-// !!IMPORTANT
-// TODO: Copy over existing observation IDs from current site
-
 
 if (!process.argv[2]) {
     throw new Error('A source file is required');
 }
 
 // Should be something like:
-// tmp/observations_records.json
+// tmp/merged-observations.json
 const sourceFilepath = path.resolve(process.argv[2]);
 
 // Something like:
@@ -32,16 +29,15 @@ if (!fs.statSync(sourceFilepath).isFile()) {
 async function main() {
     const records = await readJSONFile(sourceFilepath);
 
-    await createObservation(records[1]);
-    await updateObservation(records[1]);
-    await uploadAllMedia(records[1]);
+    await createObservation(records[0]);
+    await updateObservation(records[0]);
+    await uploadAllMedia(records[0]);
 }
 
 async function createObservation(record) {
     const body = JSON.stringify({
         data: {
             type: 'observation',
-            // TODO: Copy over existing ID from current site
             id: record.id,
             attributes: {
                 csv: record.attributes.csv,
@@ -114,15 +110,25 @@ async function updateObservation(record) {
 }
 
 async function uploadAllMedia(record) {
-    if (record.attributes.csv.hasPhotos) {
+    if (record.attributes.csv && record.attributes.csv.hasPhotos) {
         const { row } = record.attributes.csv;
         const dir = path.join(path.dirname(sourceFilepath), 'observation-media', row.toString());
 
         const entries = fs.readdirSync(dir);
 
         for (const entry of entries) {
-            const filename = await attachMedia(record, path.join(dir, entry));
-            await updateMediaMetadata(record, filename);
+            const mediaId = await attachMedia(record, path.join(dir, entry));
+            if (mediaId) {
+                await updateMediaMetadata(record, { title: record.attributes.title }, mediaId);
+            }
+        }
+    } else if (record.attributes.photos && record.attributes.photos.length > 0) {
+        for (const { filename, title, details } of record.attributes.photos) {
+            const filepath = path.join(path.dirname(sourceFilepath), 'observation-media', filename);
+            const mediaId = await attachMedia(record, filepath);
+            if (mediaId) {
+                await updateMediaMetadata(record, { title, details }, mediaId);
+            }
         }
     }
 }
@@ -151,24 +157,24 @@ async function attachMedia(record, filepath) {
     if (data) {
         // eslint-disable-next-line no-console
         console.log(record.id, 'attached observation media', data.id, data.attributes.contentType);
-    } else {
-        // eslint-disable-next-line no-console
-        console.log(record.id, 'observation media already exists', filepath);
+        return data.id;
     }
 
-    return filename;
+    // eslint-disable-next-line no-console
+    console.log(record.id, 'observation media already exists', filepath);
+    return null;
 }
 
-async function updateMediaMetadata(record, filename) {
-    const { title } = record.attributes;
+async function updateMediaMetadata(record, attributes, mediaId) {
+    const { title, details } = attributes;
 
     const method = 'PATCH';
-    const url = new URL(`/observations/${ record.id }/media/${ filename }`, endpoint);
+    const url = new URL(`/observations/${ record.id }/media/${ mediaId }`, endpoint);
 
     const body = JSON.stringify({
         data: {
             type: 'media',
-            attributes: { title },
+            attributes: { title, details },
         },
     });
 

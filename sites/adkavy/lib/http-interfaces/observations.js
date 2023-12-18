@@ -156,6 +156,8 @@ export default class Observations {
         const body = await request.json();
 
         // TODO: Validate JSON API input.
+        // TODO: Either do not allow a user assigned ID, or check to ensure the observation
+        //       record does not already exist.
         let observation = Observation.fromJsonAPI(body.data).ensureId();
 
         observation.validateBeforeSave();
@@ -254,6 +256,9 @@ export default class Observations {
 
         const existingMediaItems = observation.relationships.media || [];
 
+        // TODO: Prevent uploading duplicate files by NOT using the media items index
+        //       as a file name. Maybe use the hash instead?
+        //       Or maybe filename + contentType + contentLength?
         const result = await job.uploadObservationAttachment(request.getReadStream(), {
             observationId,
             // The index for a new observation is the latest index + 1, which is .length:

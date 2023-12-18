@@ -26,6 +26,12 @@ export default class HTMLPage {
             templateStore,
         } = spec;
 
+        assert(logger);
+        assert(eventBus);
+        assert(dataStore);
+        assert(blobStore);
+        assert(templateStore);
+
         this.#logger = logger.createChild({ name: 'HTMLPage' });
         this.#eventBus = eventBus;
         this.#dataStore = dataStore;

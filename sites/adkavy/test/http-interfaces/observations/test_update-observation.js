@@ -65,16 +65,13 @@ export default async function test_createObservation() {
             dataStore,
         });
 
-        const observationDateTime = new Date();
-        observationDateTime.setYear(2022);
-
         const data = {
             id: 'foo-bar-baz',
             type: 'observation',
             attributes: {
                 email: 'emily@example.com',
                 aspect: 'ne',
-                observationDateTime: observationDateTime.toISOString(),
+                observationDateTime: '2023-04-01T12:12:00-04:00',
             },
         };
 
@@ -108,8 +105,8 @@ export default async function test_createObservation() {
         assertEqual('skiing_or_snowboarding', body.data.attributes.travelMode);
         assertEqual('2300', body.data.attributes.elevation);
         assertEqual('emily@example.com', body.data.attributes.email);
-        assertEqual('ne', body.data.attributes.aspect);
-        assertEqual(observationDateTime.toISOString(), body.data.attributes.observationDateTime);
+        assertEqual('NE', body.data.attributes.aspect);
+        assertEqual('2023-04-01T12:12:00-04:00', body.data.attributes.observationDateTime);
         assertMatches(ISO_DATE_PATTERN, body.meta.created);
         assertMatches(ISO_DATE_PATTERN, body.meta.updated);
         assertNotEqual(body.meta.created, body.meta.updated);
@@ -133,8 +130,8 @@ export default async function test_createObservation() {
         assertEqual('skiing_or_snowboarding', obj.attributes.travelMode);
         assertEqual('2300', obj.attributes.elevation);
         assertEqual('emily@example.com', body.data.attributes.email);
-        assertEqual('ne', body.data.attributes.aspect);
-        assertEqual(body.data.attributes.observationDateTime, obj.key_observationDateTime);
+        assertEqual('NE', body.data.attributes.aspect);
+        assertEqual('2023-04-01T16:12:00.000Z', obj.key_observationDateTime);
         assertEqual(recordDate.toISOString(), obj.meta.created);
         assertMatches(ISO_DATE_PATTERN, obj.meta.updated);
         assertNotEqual(obj.meta.created, obj.meta.updated);

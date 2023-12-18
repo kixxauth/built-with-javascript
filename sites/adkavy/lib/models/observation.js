@@ -15,6 +15,8 @@ export default class Observation extends BaseDataStoreModel {
     mapAttributes(attrs) {
         attrs = attrs || {};
 
+        const aspect = isNonEmptyString(attrs.aspect) ? attrs.aspect.toUpperCase() : null;
+
         return {
             // Tempory for CSV record correlation during initial DB seeding.
             csv: attrs.csv || {},
@@ -23,16 +25,16 @@ export default class Observation extends BaseDataStoreModel {
             // A person email.
             email: attrs.email || null,
             title: attrs.title || null,
-            // The date time string of the observation in the field.
+            // The date time string (timezone aware) of the observation in the field.
             observationDateTime: attrs.observationDateTime || null,
-            // The date time string represented when this record was initially created.
+            // The date time string (timezone aware) when this record was initially created.
             reportedDateTime: attrs.reportedDateTime || null,
             travelMode: attrs.travelMode || null,
             triggeredAvalanche: Boolean(attrs.triggeredAvalanche),
             observedAvalanche: Boolean(attrs.observedAvalanche),
             location: attrs.location || null,
             elevation: attrs.elevation || null,
-            aspect: attrs.aspect || null,
+            aspect,
             redFlags: attrs.redFlags || [],
             details: attrs.details || null,
             triggeredAvalancheType: attrs.triggeredAvalancheType || null,
@@ -89,7 +91,13 @@ export default class Observation extends BaseDataStoreModel {
      * @public
      */
     assignDerivedDatastoreProperties(item) {
-        item.key_observationDateTime = this.attributes.observationDateTime;
+        const { observationDateTime } = this.attributes;
+
+        if (observationDateTime) {
+            item.key_observationDateTime = new Date(observationDateTime).toISOString();
+        } else {
+            item.key_observationDateTime = null;
+        }
     }
 
     /**

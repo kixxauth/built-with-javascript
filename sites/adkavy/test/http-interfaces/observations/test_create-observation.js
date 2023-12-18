@@ -42,13 +42,10 @@ export default async function test_createObservation() {
             dataStore,
         });
 
-        const observationDateTime = new Date();
-        observationDateTime.setYear(2022);
-
         const data = {
             type: 'observation',
             attributes: {
-                observationDateTime: observationDateTime.toISOString(),
+                observationDateTime: '2023-04-01T12:12:00-04:00',
                 name: 'Emily Riddle',
                 travelMode: 'skiing_or_snowboarding',
                 elevation: '2300',
@@ -81,7 +78,7 @@ export default async function test_createObservation() {
         assertEqual('Emily Riddle', body.data.attributes.name);
         assertEqual('skiing_or_snowboarding', body.data.attributes.travelMode);
         assertEqual('2300', body.data.attributes.elevation);
-        assertEqual(observationDateTime.toISOString(), body.data.attributes.observationDateTime);
+        assertEqual('2023-04-01T12:12:00-04:00', body.data.attributes.observationDateTime);
         assertMatches(ISO_DATE_PATTERN, body.meta.created);
         assertMatches(ISO_DATE_PATTERN, body.meta.updated);
         assertUndefined(body.data.key_observationDateTime);
@@ -96,7 +93,7 @@ export default async function test_createObservation() {
         assertEqual('Emily Riddle', obj.attributes.name);
         assertEqual('skiing_or_snowboarding', obj.attributes.travelMode);
         assertEqual('2300', obj.attributes.elevation);
-        assertEqual(body.data.attributes.observationDateTime, obj.key_observationDateTime);
+        assertEqual('2023-04-01T16:12:00.000Z', obj.key_observationDateTime);
         assertMatches(ISO_DATE_PATTERN, obj.meta.created);
         assertMatches(ISO_DATE_PATTERN, obj.meta.updated);
 
