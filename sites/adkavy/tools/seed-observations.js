@@ -29,9 +29,11 @@ if (!fs.statSync(sourceFilepath).isFile()) {
 async function main() {
     const records = await readJSONFile(sourceFilepath);
 
-    await createObservation(records[0]);
-    await updateObservation(records[0]);
-    await uploadAllMedia(records[0]);
+    for (const record of records) {
+        await createObservation(record);
+        await updateObservation(record);
+        await uploadAllMedia(record);
+    }
 }
 
 async function createObservation(record) {
@@ -264,6 +266,8 @@ function contentTypeByFileExtension(filename) {
     switch (extname) {
         case '.mov':
             return 'video/quicktime';
+        case '.m4v':
+            return 'video/mp4';
         case '.heif':
             return 'image/heif';
         case '.heic':
