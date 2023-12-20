@@ -47,6 +47,7 @@ export default class HTMLPage {
 
         switch (error.code) {
             case NotFoundError.CODE:
+                this.#logger.warn('page not found error', { error });
                 return response.respondWithPlainText(404, 'Page not found\n');
             default:
                 this.#logger.error('caught unexpected error', { requestId, error });

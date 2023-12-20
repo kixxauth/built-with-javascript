@@ -1,0 +1,54 @@
+{{> site_head }}
+{{> header }}
+<article id="page-list-observations">
+<section class="hero-section">
+	<img src="{{ hero_image.url }}?ar=2:1&fit=crop&w=600"
+		srcset="{{ hero_image.url }}?ar=2:1&fit=crop&w=600 600w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1000 1000w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1500 1500w, {{ hero_image.url }}?ar=2:1&fit=crop&w=3000 3000w" 
+		sizes="100vw"
+		alt="A skier carving turns through powder snow in back country mountains">
+	<div class="hero-section__scrim">
+		<div class="width-wrapper">
+			<div class="hero-section__content">
+				<h2>Community Observations</h2>
+				<p>The Adirondack backcountry community sharing snowpack, avalanche, and weather observations.</p>
+			</div>
+		</div>
+	</div>
+</section>
+<nav class="post-hero-navigation">
+	<div class="post-hero-navigation__links width-wrapper">
+		<a href="/create-observation" class="button button--secondary button--filled button--icon-start">
+			<i class="button__icon material-symbols-outlined">edit_square</i>
+			<span class="button__label">Post Observation</span>
+		</a>
+	</div>
+</nav>
+<div id="observations-list" class="width-wrapper">
+	<div class="observations-list__disclaimer">
+		<h2 class="heading2--light">Understand The Risks</h2>
+		<p>Adirondack Community Avalanche Project cannot vouch for the quality or accuracy of observations from the general public. These observations are a tool to help mitigate risk, but in no way are they a complete representation of the avalanche hazards in the backcountry. We encourage users to take avalanche education courses, make their own observations, and understand the consequences of traveling in avalanche terrain, especially in the Adirondacks where there is no forecasting service. Use at your own risk.
+		</p>
+	</div>
+	{{#each observations}}
+	<section class="observation-card observation-card--{{observation_type_classname this}}" data-id="{{ this.id }}">
+		<a href="/observations/{{ this.id }}" class="observation-card__header">
+			<h4 class="observation-card__header-info">
+				<i class="observation-card__type-icon"></i>
+				<span class="observation-card__type">{{observation_type this }}</span>
+				<span class="observation-card__date">{{locale_date this.date }}</span>
+				{{#if this.name}}
+				<span class="observation-card__author">by {{ this.name }}</span>
+				{{/if}}
+				{{#if this.hasPhotos}}
+				<i class="observation-card__has-photos material-symbols-outlined">local_see</i>
+				{{/if}}
+			</h4>
+			<h2 class="observation-card__title">{{ this.title }}</h2>
+			<h3 class="observation-card__location">{{ this.location }}</h3>
+		</a>
+	</section>
+	{{/each}}
+</div>
+</article>
+{{> footer }}
+{{> site_foot }}

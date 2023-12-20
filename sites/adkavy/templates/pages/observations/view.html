@@ -1,0 +1,98 @@
+{{> site_head }}
+{{> header }}
+
+<article id="page-view-observation" data-id="{{ observation.id }}" class="width-wrapper observation-card observation-card--{{observation_type_classname observation}}">
+	<header class="observation-card__header">
+		<h4 class="observation-card__header-info">
+			<i class="observation-card__type-icon"></i>
+			<span class="observation-card__type">{{observation_type observation }}</span>
+			<span class="observation-card__date">{{locale_date observation.date }}</span>
+			{{#if observation.name}}
+			<span class="observation-card__author">by {{ observation.name }}</span>
+			{{/if}}
+			{{#if observation.hasPhotos}}
+			<i class="observation-card__has-photos material-symbols-outlined">local_see</i>
+			{{/if}}
+		</h4>
+		<h2 class="observation-card__title">{{ observation.title }}</h2>
+		<h3 class="observation-card__location">{{ observation.location }}</h3>
+	</header>
+	<div class="observation-card__body">
+		<div class="observation-card__table table">
+			<div class="table-row">
+				<span>Date &amp; Time</span>
+				<span>{{locale_date observation.date }} <i class="material-symbols-outlined">alternate_email</i> {{locale_time observation.time }}</span>
+			</div>
+			<div class="table-row">
+				<span>Location</span>
+				<span>{{ observation.location }}</span>
+			</div>
+			<div class="table-row">
+				<span>Elevation &amp; Aspect</span>
+				<span>{{observation_elevation_and_aspect observation }}</span>
+			</div>
+			<div class="table-row">
+				<span>Mode of Travel</span>
+				<span>{{observation_travel_mode observation }}</span>
+			</div>
+			{{#if observation.redFlags}}
+			<div class="table-row red-flags">
+				<span>Red Flags</span>
+				<span>{{observation_red_flags observation.redFlags }}</span>
+			</div>
+			{{/if}}
+		</div>
+
+		<div class="observation-card__details">
+			{{#if observation.triggeredAvalanche}}
+			<h3 class="heading3--light">Triggered Avalanche</h3>
+			<h4>{{avalanche_type observation.triggeredAvalancheType }}</h4>
+			<h4>{{avalanche_size observation.triggeredAvalancheSize }}</h4>
+			<p>{{ observation.triggeredAvalancheComments }}</p>
+			{{/if}}
+
+			{{#if observation.observedAvalanche}}
+			<h3 class="heading3--light">Observed Avalanche</h3>
+			<h4>{{avalanche_type observation.observedAvalancheType }}</h4>
+			<h4>{{avalanche_size observation.observedAvalancheSize }}</h4>
+			<p>{{ observation.observedAvalancheComments }}</p>
+			{{/if}}
+
+			{{#if observation.details}}
+			<h3 class="heading3--light">Observation Details</h3>
+			<p>{{multiline_text observation.details }}</p>
+			{{/if}}
+		</div>
+	</div>
+
+	{{#if observation.photos}}
+	<h3 class="heading3--light">Observation Photos</h3>
+	{{/if}}
+
+	<div class="observation-card__photos">
+		{{#each observation.photos }}
+		<div class="observation-card__photo">
+			<h4>{{ this.title }} <a href="{{ this.url }}" class="observation-card__photo-link"><i class="material-symbols-outlined">open_in_new</i> full size</a></h4>
+			<div class="image-wrapper">
+				<img src="{{ this.url }}">
+			</div>
+			<p>{{ this.details }}</p>
+		</div>
+		{{/each}}
+	</div>
+</article>
+<nav class="post-hero-navigation">
+	<div class="post-hero-navigation__links width-wrapper">
+		<a href="/observations" class="button button--secondary button--outlined button--icon-start">
+			<i class="button__icon material-symbols-outlined">dynamic_feed</i>
+			<span class="button__label">View Observations</span>
+		</a>
+		<a href="/create-observation" class="button button--secondary button--filled button--icon-start">
+			<i class="button__icon material-symbols-outlined">edit_square</i>
+			<span class="button__label">Post Observation</span>
+		</a>
+	</div>
+</nav>
+
+{{> footer }}
+{{> site_foot }}

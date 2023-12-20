@@ -1,0 +1,403 @@
+{{> site_head }}
+{{> header }}
+
+<header id="observation-form-header" class="width-wrapper">
+	<h1>Submit an Observation</h1>
+</header>
+
+<section id="observation-form-intro" class="width-wrapper">
+	<div id="observation-form-intro__image-wrapper">
+		<img
+			src="https://kixx-stage.imgix.net/73ee7080-0cd3-4eb7-b98b-0e062f742e47.jpg?ar=1:1&fit=crop&w=300"
+			srcset="https://kixx-stage.imgix.net/73ee7080-0cd3-4eb7-b98b-0e062f742e47.jpg?ar=1:1&fit=crop&w=300 300w, https://kixx-stage.imgix.net/73ee7080-0cd3-4eb7-b98b-0e062f742e47.jpg?ar=1:1&fit=crop&w=600 600w, https://kixx-stage.imgix.net/73ee7080-0cd3-4eb7-b98b-0e062f742e47.jpg?ar=1:1&fit=crop&w=900 900w, https://kixx-stage.imgix.net/73ee7080-0cd3-4eb7-b98b-0e062f742e47.jpg?ar=1:1&fit=crop&w=1200 1200w"
+			sizes="(min-width: 40rem) 50vw, 98vw"
+			alt="A placeholder image">
+	</div>
+	<div id="observation-form-intro__content">
+		<p>Use the form below to submit your <a href="/making-observations">snowpack, avalanche, and weather observations</a>. This form is optimized for mobile devices to make it easier to upload photos from your mobile phone as part of your observations.</p>
+		<p>Visit our information page about <a href="/making-observations">making observations</a> to learn more about providing useful information for the community.</p>
+		{{! The "top-of-form" element is the scroll target when the page changes}}
+		<p id="top-of-form">Once it is submitted, your observation will be posted for the public to view on the observations page.</p>
+	</div>
+</section>
+
+<form id="observation-form" class="width-wrapper">
+
+	<div id="observation-form__section-1" class="form-section form-section--active">
+		<h2>Basic Info</h2>
+
+		<div class="form-field form-field--vertical form-field--date-input form-field--required">
+			<label for="observation-form__date">Date of Observation <span>*required</span></label>
+			<input type="date" name="date" id="observation-form__date" autocomplete="off" value="{{ iso_date }}" max="{{ iso_date }}">
+		</div>
+
+		<div class="form-field form-field--vertical form-field--select">
+			<label for="observation-form__travel_mode">Mode of Travel</label>
+			<select id="observation-form__travel_mode" name="travelMode" autocomplete="off">
+				<option value="">Choose One</option>
+				<option value="skiing_or_snowboarding">Skiing/Snowboarding</option>
+				<option value="xc_skiing_or_snowshoeing">XC Skiing/Snowshoeing</option>
+				<option value="walking_hiking">Walking/Hiking</option>
+				<option value="snowmobiling">Snowmobiling</option>
+				<option value="driving">Driving</option>
+				<option value="other">Other</option>
+			</select>
+		</div>
+
+		<fieldset class="form-field form-field--vertical form-field--checkbox-fieldset">
+			<legend>Did you trigger, or witness any avalanches?</legend>
+			<ul>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="radio" name="observationType" value="triggeredAvalanche" id="observation-form__type-triggered" autocomplete="off">
+					</div>
+					<label for="observation-form__type-triggered">
+						<p class="form-field__label">Triggered an avalanche</p>
+						<p class="form-field__help">You or your party triggered an avalanche.</p>
+					</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="radio" name="observationType" value="observedAvalanche" id="observation-form__type-observed" autocomplete="off">
+					</div>
+					<label for="observation-form__type-observed">
+						<p class="form-field__label">Witnessed an avalanche</p>
+						<p class="form-field__help">Your or your party observed an avalanche you did not trigger.</p>
+					</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="radio" name="observationType" value="conditions" id="observation-form__type-conditions" autocomplete="off">
+					</div>
+					<label for="observation-form__type-conditions">
+						<p class="form-field__label">No avalanche activity observed</p>
+						<p class="form-field__help">Making a snow conditions observation.</p>
+					</label>
+				</li>
+			</ul>
+		</fieldset>
+
+		<div class="form-field form-field--vertical form-field--text-input form-field--required">
+			<label for="observation-form__location">Location <span>*required</span></label>
+			<input type="text" name="location" id="observation-form__location" autocomplete="off">
+			<p class="form-field__help">A known place name like "Johns Brook Valley", mountain name, or GPS coordinates.</p>
+		</div>
+
+		<div class="form-field form-field--vertical form-field--text-input form-field--required">
+			<label for="observation-form__title">Brief Title <span>*required</span></label>
+			<input type="text" name="title" id="observation-form__title" autocomplete="off">
+			<p class="form-field__help">Keep it short so observations are easy for readers to scan. (eg. "Snow Observations on Wright Peak).</p>
+		</div>
+
+		<div class="observation-form__section-actions">
+			<button class="observation-form__next-button button--icon-end button--filled">
+				<span class="button__label">Next</span>
+				<i class="button__icon material-symbols-outlined">navigate_next</i>
+			</button>
+		</div>
+
+		<div class="alert alert--error">
+			<i class="alert__icon material-symbols-outlined">error</i>
+			<p>The date, location, and title fields are required.</p>
+		</div>
+	</div>
+
+	<div id="observation-form__section-2" class="form-section">
+		<h2>Avalanche Details</h2>
+
+		<div class="form-field form-field--vertical form-field--select form-field--required">
+			<label>Avalanche Type <span>*required</span></label>
+			<select name="avalancheType" autocomplete="off">
+				<option value="">Select One</option>
+				<option value="sluff">Dry Loose (sluff)</option>
+				<option value="wet_loose">Wet Loose</option>
+				<option value="slab">Slab</option>
+				<option value="other">Other</option>
+			</select>
+		</div>
+
+		<fieldset class="form-field form-field--vertical form-field--checkbox-fieldset form-field--required">
+			<legend>Avalanche Size (destructive potential) <span>*required</span></legend>
+			<ul>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="radio" name="avalancheSize" value="d1" id="observation-form__avalanche-size1" autocomplete="off">
+					</div>
+					<label for="observation-form__avalanche-size1">
+						<p class="form-field__label">D1</p>
+						<p class="form-field__help">Relatively harmless to people</p>
+					</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="radio" name="avalancheSize" value="d2" id="observation-form__avalanche-size2" autocomplete="off">
+					</div>
+					<label for="observation-form__avalanche-size2">
+						<p class="form-field__label">D2</p>
+						<p class="form-field__help">Could bury, injur, or kill a person</p>
+					</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="radio" name="avalancheSize" value="d3" id="observation-form__avalanche-size3" autocomplete="off">
+					</div>
+					<label for="observation-form__avalanche-size3">
+						<p class="form-field__label">D3</p>
+						<p class="form-field__help">Could bury and destroy a car, damage a truck, destroy a wood frame house, or break a few trees</p>
+					</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="radio" name="avalancheSize" value="d4" id="observation-form__avalanche-size4" autocomplete="off">
+					</div>
+					<label for="observation-form__avalanche-size4">
+						<p class="form-field__label">D4</p>
+						<p class="form-field__help">Could destroy a railway car, large truck, several buildings, or a substantial amount of forest</p>
+					</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="radio" name="avalancheSize" value="d5" id="observation-form__avalanche-size5" autocomplete="off">
+					</div>
+					<label for="observation-form__avalanche-size5">
+						<p class="form-field__label">D5</p>
+						<p class="form-field__help">Could gouge the landscape. Largest snow avalanche known</p>
+					</label>
+				</li>
+			</ul>
+		</fieldset>
+
+		<div class="form-field form-field--vertical form-field--textarea form-field--required">
+			<label>Details of this Specific Avalanche <span>*required</span></label>
+			<textarea name="avalancheComments" autocomplete="off"></textarea>
+			<p class="form-field__help">Location, path, depth/width/length, local impact, etc.</p>
+		</div>
+
+		<div class="observation-form__section-actions">
+			<button class="observation-form__back-button button--icon-start button--outlined">
+				<i class="button__icon material-symbols-outlined">navigate_before</i>
+				<span class="button__label">Back</span>
+			</button>
+			<button class="observation-form__next-button button--icon-end button--filled">
+				<span class="button__label">Next</span>
+				<i class="button__icon material-symbols-outlined">navigate_next</i>
+			</button>
+		</div>
+
+		<div class="alert alert--error">
+			<i class="alert__icon material-symbols-outlined">error</i>
+			<p>The type, size, and details fields are required.</p>
+		</div>
+	</div>
+
+	<div id="observation-form__section-3" class="form-section">
+		<h2>Additional Details</h2>
+
+		<div class="form-field form-field--vertical form-field--time-input form-field--required">
+			<label for="observation-form__time">Time of Observation <span>*required</span></label>
+			<input type="time" name="time" id="observation-form__time" value="10:10" autocomplete="off">
+			<p class="form-field__help">A "fuzzy" time is ok. Your best guess is more important than precision.</p>
+		</div>
+
+		<div class="form-fieldset--2column">
+
+			<div class="form-field form-field--vertical form-field--text-input form-field--required">
+				<label for="observation-form__elevation">Elevation</label>
+				<input type="text" name="elevation" id="observation-form__elevation" autocomplete="off">
+				<p class="form-field__help">The approximate elevation in feet above see level. Enter numbers only; no other characters</p>
+			</div>
+
+			<div class="form-field form-field--vertical form-field--select">
+				<label>Aspect</label>
+				<select name="aspect" autocomplete="off">
+					<option value="">Choose One</option>
+					<option value="n">North</option>
+					<option value="ne">Northeast</option>
+					<option value="e">East</option>
+					<option value="se">Southeast</option>
+					<option value="s">South</option>
+					<option value="sw">Southwest</option>
+					<option value="w">West</option>
+					<option value="nw">Northwest</option>
+				</select>
+				<p class="form-field__help">The compass point toward which the slope faces.</p>
+			</div>
+
+		</div>
+
+		<fieldset class="form-field form-field--vertical form-field--checkbox-fieldset">
+			<legend>Red Flags</legend>
+			<ul>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="checkbox" name="redFlags" value="recent_avalanches" id="observation-form__red_flags1" autocomplete="off">
+					</div>
+					<label for="observation-form__red_flags1">Recent avalanches</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="checkbox" name="redFlags" value="shooting_cracks" id="observation-form__red_flags2" autocomplete="off">
+					</div>
+					<label for="observation-form__red_flags2">Shooting cracks</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="checkbox" name="redFlags" value="whumpfing_collapsing" id="observation-form__red_flags3" autocomplete="off">
+					</div>
+					<label for="observation-form__red_flags3">Whumpfing, collapsing</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="checkbox" name="redFlags" value="heavy_precipitation" id="observation-form__red_flags4" autocomplete="off">
+					</div>
+					<label for="observation-form__red_flags4">Heavy snowfall or other precipitation</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="checkbox" name="redFlags" value="rapid_warming" id="observation-form__red_flags5" autocomplete="off">
+					</div>
+					<label for="observation-form__red_flags5">Rapid warming</label>
+				</li>
+				<li>
+					<div class="form-field__checkbox">
+						<input type="checkbox" name="redFlags" value="drifting_snow" id="observation-form__red_flags6" autocomplete="off">
+					</div>
+					<label for="observation-form__red_flags6">Drifting snow / wind loading</label>
+				</li>
+			</ul>
+		</fieldset>
+
+		<div class="form-field form-field--vertical form-field--textarea form-field--required">
+			<label for="observation-form__details">What did you observe? <span>*required</span></label>
+			<textarea name="details" id="observation-form__details" autocomplete="off"></textarea>
+			<p class="form-field__help">This may include more detailed information about where you traveled; aspects, elevations, routes, etc. Did you seek out or avoid specific terrain? You can also include snowpack test results, riding conditions, weather observations, red flags observed, and anything else you think helps frame the observation.</p>
+		</div>
+
+		<div class="observation-form__section-actions">
+			<button class="observation-form__back-button button--icon-start button--outlined">
+				<i class="button__icon material-symbols-outlined">navigate_before</i>
+				<span class="button__label">Back</span>
+			</button>
+			<button class="observation-form__next-button button--icon-end button--filled">
+				<span class="button__label">Next</span>
+				<i class="button__icon material-symbols-outlined">navigate_next</i>
+			</button>
+		</div>
+
+		<div class="alert alert--error">
+			<i class="alert__icon material-symbols-outlined">error</i>
+			<p>The time, elevation, and details fields are required. Elevation must be entered using numbers only.</p>
+		</div>
+	</div>
+
+	<div id="observation-form__section-4" class="form-section">
+		<h2>Photos</h2>
+		<p>Adding photos to your observation is great way to add important details which are valuable to other winter backcountry enthusiasts.
+		</p>
+
+		<div id="observation-form__photos-field" class="form-field form-field--vertical form-field--media-input media-input-field">
+			<div class="form-field form-field--vertical form-field--file-input">
+				<label for="observation-form__photos">Attach Photos to Your Post</label>
+				<input type="file" name="photos" accept="image/jpeg,image/png" multiple style="display:none">
+				<p class="form-field__file-input-action">
+					<button class="form-field__file-select-button button--icon-start button--filled">
+						<i class="button__icon material-symbols-outlined">add_a_photo</i>
+						<span class="button__label">Select Photos</span>
+					</button>
+				</p>
+			</div>
+
+			<div class="media-input-field__thumbnails"></div>
+
+			<div class="media-input-field__add-more">
+				<p>Like to add more photos to your post?</p>
+				<button class="form-field__file-select-button button--icon-start button--outlined">
+					<i class="button__icon material-symbols-outlined">add_a_photo</i>
+					<span class="button__label">Select More Photos</span>
+				</button>
+				<p>Done uploading photos?</p>
+			</div>
+
+			<!-- image card template -->
+			<script type="text/html" id="template_image-card">
+				<div class="media-preview-thumbnail__image-wrapper">
+					<img src="" alt="Preview thumbnail">
+				</div>
+				<div class="media-preview-thumbnail__preview-actions">
+					<button class="button--outlined button--icon-start media-preview-thumbnail__remove-button">
+						<i class="button__icon material-symbols-outlined">cancel</i>
+						<span class="button__label">Remove Photo</span>
+					</button>
+				</div>
+				<div class="form-field form-field--vertical form-field--text-input form-field--required">
+					<label for="observation-form__location">Photo Title <span>*required</span></label>
+					<input type="text" name="photo_title" autocomplete="off">
+				</div>
+				<div class="form-field form-field--vertical form-field--textarea">
+					<label>Photo Details</label>
+					<textarea name="photo_details" autocomplete="off"></textarea>
+					<p class="form-field__help">Add details to provide context for the photo.</p>
+				</div>
+				<div class="media-preview-thumbnail__upload-actions">
+					<button class="button--filled button--icon-start media-preview-thumbnail__upload-button">
+						<i class="button__icon material-symbols-outlined">publish</i>
+						<span class="button__label">Upload Photo</span>
+					</button>
+				</div>
+			</script>
+		</div>
+
+		<div class="observation-form__section-actions">
+			<button class="observation-form__back-button button--icon-start button--outlined">
+				<i class="button__icon material-symbols-outlined">navigate_before</i>
+				<span class="button__label">Back</span>
+			</button>
+			<button class="observation-form__next-button button--icon-end button--filled">
+				<span class="button__label">Next</span>
+				<i class="button__icon material-symbols-outlined">navigate_next</i>
+			</button>
+		</div>
+
+		<div class="alert alert--error">
+			<i class="alert__icon material-symbols-outlined">error</i>
+			<p>The photo title field is required.</p>
+		</div>
+	</div>
+
+	<div id="observation-form__section-5" class="form-section">
+		<h2>Submit Your Observation</h2>
+
+		<div class="form-field form-field--vertical form-field--text-input">
+			<label for="observation-form__name">Name</label>
+			<input type="text" name="name" id="observation-form__name" autocomplete="off">
+		</div>
+
+		<div class="form-field form-field--vertical form-field--text-input">
+			<label for="observation-form__email">Email</label>
+			<input type="email" name="email" id="observation-form__email" autocomplete="off">
+			<p class="form-field__help">Your email address will not be shared publicly.</p>
+		</div>
+
+		<div class="observation-form__section-actions">
+			<button class="observation-form__back-button button--icon-start button--outlined">
+				<i class="button__icon material-symbols-outlined">navigate_before</i>
+				<span class="button__label">Back</span>
+			</button>
+			<button class="observation-form__next-button button--filled">Submit</button>
+		</div>
+	</div>
+
+	<div id="observation-form__section-6" class="form-section">
+		<h2>Thank you for your submission!</h2>
+		<p>Use the "Back" button below to go back and update it.</p>
+		<div class="observation-form__section-actions">
+			<button class="observation-form__back-button button--icon-start button--outlined">
+				<i class="button__icon material-symbols-outlined">navigate_before</i>
+				<span class="button__label">Back</span>
+			</button>
+		</div>
+	</div>
+</form>
+
+{{> footer }}
+{{> site_foot }}

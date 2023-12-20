@@ -1,4 +1,4 @@
 TODO
 ====
 
-- [ ] Add a page_image to each page .toml file (for social card image).
+- [ ] Add a pageImage to each page record (for social card image - get from site owners).
