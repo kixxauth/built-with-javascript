@@ -12,7 +12,7 @@ import { KixxAssert } from '../../dependencies.js';
 import { createLogger } from '../../lib/logger.js';
 import AwsDynamoDbClient from '../../lib/aws-dynamodb-client/mod.js';
 
-const { assert } = KixxAssert;
+const { assert, assertEqual, isNonEmptyString } = KixxAssert;
 
 
 // Should be something like './end-to-end-tests/aws-dynamodb/config/good.json'.
@@ -42,14 +42,19 @@ async function main() {
         awsSecretKey: config.awsSecretKey,
     });
 
-    const items = await client.query({
-        type: 'Foo',
-        queryName: 'observations_by_datetime',
-        exclusiveStartKey: { id: 'foo-bar-baz' },
+    const table = `adkavy_${ ENVIRONMENT }_entities`;
+    const index = `adkavy_${ ENVIRONMENT }_observations_by_datetime`;
+
+    const res = await client.query(table, index, {
+        type: 'observation',
+        exclusiveStartKey: null,
         limit: 10,
     });
 
-    assert(Array.isArray(items));
+    assert(Array.isArray(res.items));
+    assert(isNonEmptyString(res.lastEvaluatedKey.id));
+    assertEqual('observation', res.lastEvaluatedKey.type);
+    assert(isNonEmptyString(res.lastEvaluatedKey.key_observationDateTime));
 }
 
 async function loadConfig() {

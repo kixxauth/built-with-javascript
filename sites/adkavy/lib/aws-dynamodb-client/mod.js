@@ -82,29 +82,32 @@ export default class AwsDynamoDbClient {
         return true;
     }
 
-    async query() {
-        // TODO: DynamoDB Query
-        // const {
-        //     type,
-        //     queryName,
-        //     limit,
-        //     exclusiveStartKey,
-        // } = options;
+    async query(table, index, options) {
+        const {
+            type,
+            limit,
+            exclusiveStartKey,
+        } = options;
 
-        // const command = {
-        //     TableName: this.#entityTableName,
-        //     IndexName: `adkavy_${ this.#environment }_${ queryName }`,
-        //     KeyConditionExpression: '#type_key = :type_value',
-        //     ExpressionAttributeNames: { '#type_key': 'type' },
-        //     ExpressionAttributeValues: { ':type_value': { S: type } },
-        //     Limit: limit,
-        // };
+        const command = {
+            TableName: table,
+            IndexName: index,
+            KeyConditionExpression: '#type_key = :type_value',
+            ExpressionAttributeNames: { '#type_key': 'type' },
+            ExpressionAttributeValues: { ':type_value': { S: type } },
+            Limit: limit,
+        };
 
-        // if (exclusiveStartKey) {
-        //     command.ExclusiveStartKey = serializeObject(exclusiveStartKey);
-        // }
+        if (exclusiveStartKey) {
+            command.ExclusiveStartKey = serializeObject(exclusiveStartKey);
+        }
 
-        // await this.#makeDynamoDbRequest('Query', command);
+        const res = await this.#makeDynamoDbRequest('Query', command);
+
+        return {
+            items: res.Items.map(deserializeObject),
+            lastEvaluatedKey: deserializeObject(res.LastEvaluatedKey),
+        };
     }
 
     /**
