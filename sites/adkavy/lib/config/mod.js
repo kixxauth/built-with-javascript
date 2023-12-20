@@ -36,6 +36,10 @@ export default class Config {
                 enumerable: true,
                 value: new ObjectServiceConfig(config.objectService),
             },
+            pages: {
+                enumerable: true,
+                value: new PagesConfig(config.pages),
+            },
         });
     }
 
@@ -127,5 +131,17 @@ class ObjectServiceConfig {
 
     getToken() {
         return this.#config.token;
+    }
+}
+
+class PagesConfig {
+    #config = null;
+
+    constructor(config) {
+        this.#config = config;
+    }
+
+    getCache() {
+        return this.#config.cache;
     }
 }

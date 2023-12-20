@@ -106,6 +106,7 @@ async function start() {
         dataStore,
         blobStore,
         templateStore,
+        noCache: !config.pages.getCache(),
     }));
 
     routingTable.registerHTTPInterface('Observations', new Observations({
@@ -113,8 +114,9 @@ async function start() {
         logger,
         eventBus,
         dataStore,
-        objectManagementClient,
         templateStore,
+        objectManagementClient,
+        noCache: !config.pages.getCache(),
     }));
 
     routingTable.registerRoutes(routes);
@@ -124,7 +126,7 @@ async function start() {
     const server = http.createServer((req, res) => {
 
         req.on('error', (error) => {
-            printErrorAndExit('request error event', error);
+            logger.warn('request error event', { name: error.name, code: error.code, message: error.message });
         });
 
         httpRequestTarget.handleRequest(req, res).catch(function onRequestError(error) {

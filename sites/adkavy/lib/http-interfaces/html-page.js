@@ -12,6 +12,7 @@ export default class HTMLPage {
     #dataStore = null;
     #blobStore = null;
     #templateStore = null;
+    #noCache = false;
 
     #pagesById = new Map();
 
@@ -37,9 +38,11 @@ export default class HTMLPage {
         this.#dataStore = dataStore;
         this.#blobStore = blobStore;
         this.#templateStore = templateStore;
+        this.#noCache = Boolean(spec.noCache);
     }
 
     initialize() {
+        this.#logger.info('initialize', { noCache: this.#noCache });
     }
 
     handleError(error, request, response) {
@@ -100,6 +103,7 @@ export default class HTMLPage {
             dataStore: this.#dataStore,
             blobStore: this.#blobStore,
             templateStore: this.#templateStore,
+            noCache: this.#noCache,
         });
 
         // Stash the page instance by pageId to use later.

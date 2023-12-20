@@ -25,3 +25,7 @@ secretAccessKey = ""
 endpoint = ""
 scope = "adkavy-development"
 token = ""
+
+[pages]
+# Set to true to enable page caching.
+cache = true

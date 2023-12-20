@@ -28,8 +28,24 @@ export default [
             HEAD: {},
         },
     },
+    // This route is here just to get the JSON representation for the home page
+    // {
+    //     pattern: '/home.json',
+    //     HTTPInterface: 'HTMLPage',
+    //     methods: {
+    //         GET: {
+    //             method: 'renderPage',
+    //             options: {
+    //                 page: 'home',
+    //                 template: 'home.html',
+    //                 cacheControl: 'public, max-age=129600',
+    //             },
+    //         },
+    //         HEAD: {},
+    //     },
+    // },
     {
-        pattern: '/create-observation',
+        pattern: '/create-observation(.json)?',
         HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
@@ -44,7 +60,7 @@ export default [
         },
     },
     {
-        pattern: '/observations/',
+        pattern: '/observations',
         HTTPInterface: 'Observations',
         methods: {
             GET: {
@@ -82,14 +98,14 @@ export default [
         },
     },
     {
-        pattern: '/incident-reports/',
+        pattern: '/incident-reports(.json)?',
         HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
                 method: 'renderPage',
                 options: {
                     page: 'incident-reports',
-                    template: 'incident-reports.html',
+                    template: 'incident-reports/list.html',
                     cacheControl: 'public, max-age=129600',
                 },
             },
@@ -97,14 +113,14 @@ export default [
         },
     },
     {
-        pattern: '/incident-reports/2022-02-12-angel-slides',
+        pattern: '/incident-reports/2022-02-12-angel-slides(.json)?',
         HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
                 method: 'renderPage',
                 options: {
-                    page: 'incident-reports/2022-02-12-angel-slides',
-                    template: 'incident-reports/2022-02-12-angel-slides.html',
+                    page: 'incident-reports__2022-02-12-angel-slides',
+                    template: 'incident-reports/view.html',
                     cacheControl: 'public, max-age=129600',
                 },
             },
@@ -112,7 +128,7 @@ export default [
         },
     },
     {
-        pattern: '/events/',
+        pattern: '/events(.json)?',
         HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
@@ -127,7 +143,7 @@ export default [
         },
     },
     {
-        pattern: '/weather',
+        pattern: '/weather(.json)?',
         HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
@@ -142,7 +158,7 @@ export default [
         },
     },
     {
-        pattern: '/education',
+        pattern: '/education(.json)?',
         HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
@@ -157,7 +173,7 @@ export default [
         },
     },
     {
-        pattern: '/making-observations',
+        pattern: '/making-observations(.json)?',
         HTTPInterface: 'HTMLPage',
         methods: {
             GET: {
@@ -172,7 +188,7 @@ export default [
         },
     },
     {
-        pattern: '/donate',
+        pattern: '/donate(.json)?',
         HTTPInterface: 'HTMLPage',
         methods: {
             GET: {

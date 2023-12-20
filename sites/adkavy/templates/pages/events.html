@@ -2,10 +2,7 @@
 {{> header }}
 <article id="page-events" class="page-article">
 <section class="hero-section">
-	<img src="{{ hero_image.url }}?ar=2:1&fit=crop&w=600"
-		srcset="{{ hero_image.url }}?ar=2:1&fit=crop&w=600 600w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1000 1000w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1500 1500w, {{ hero_image.url }}?ar=2:1&fit=crop&w=3000 3000w" 
-		sizes="100vw"
-		alt="A skier carving turns through powder snow in back country mountains">
+	{{> hero_image }}
 	<div class="hero-section__scrim">
 		<div class="width-wrapper">
 			<div class="hero-section__content">
