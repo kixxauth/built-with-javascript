@@ -275,6 +275,8 @@ function contentTypeByFileExtension(filename) {
         case '.jpg':
         case '.jpeg':
             return 'image/jpeg';
+        case '.png':
+            return 'image/png';
         default:
             throw new Error(`No content type registered for file extension "${ extname }"`);
     }
