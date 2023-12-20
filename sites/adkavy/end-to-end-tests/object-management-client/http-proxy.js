@@ -22,6 +22,9 @@ async function main() {
     const config = await loadConfig();
 
     const server = http.createServer((req, res) => {
+        // eslint-disable-next-line no-console
+        console.log('request', req.url);
+
         const url = new URL(req.url, config.endpoint);
         const { method, headers } = req;
 
