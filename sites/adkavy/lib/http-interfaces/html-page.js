@@ -58,7 +58,7 @@ export default class HTMLPage {
         }
     }
 
-    async renderPage(request, response, options) {
+    async renderPage(request, response, options, args) {
         const pageId = options.page;
         const templateId = options.template;
         // TODO: Handle cache-control header.
@@ -66,6 +66,12 @@ export default class HTMLPage {
 
         assert(isNonEmptyString(pageId), 'pageId isNonEmptyString');
         assert(isNonEmptyString(templateId), 'templateId isNonEmptyString');
+
+        const { href } = request.url;
+
+        const baseData = {
+            canonicalURL: href,
+        };
 
         const page = await this.#getPageInstance(pageId, templateId);
 
@@ -75,9 +81,9 @@ export default class HTMLPage {
         let html;
 
         if (requestJSON) {
-            json = await page.generateJSON(request);
+            json = await page.generateJSON(baseData, args);
         } else {
-            html = await page.generateHTML(request);
+            html = await page.generateHTML(href, baseData, args);
         }
 
         // TODO: Handle HEAD request.

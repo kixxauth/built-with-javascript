@@ -21,7 +21,7 @@ export default class DataStore {
 
     #logger = null;
     #dynamoDbClient = null;
-    #entityTable = null;
+    #tablePrefix = null;
 
     constructor({ config, logger, dynamoDbClient }) {
         const environment = config.dataStore.getEnvironment();
@@ -34,11 +34,11 @@ export default class DataStore {
 
         this.#logger = logger.createChild({ name: 'DataStore' });
         this.#dynamoDbClient = dynamoDbClient;
-        this.#entityTable = `adkavy_${ environment }_entities`;
+        this.#tablePrefix = `adkavy_${ environment }`;
     }
 
     async fetch({ type, id }) {
-        this.#logger.log('fetch record', { type, id });
+        this.#logger.debug('fetch record', { type, id });
 
         const Model = MODELS_BY_TYPE.get(type);
 
@@ -46,7 +46,8 @@ export default class DataStore {
             throw new Error(`No DataStore Model registered for type "${ type }"`);
         }
 
-        const spec = await this.#dynamoDbClient.getItem(this.#entityTable, { type, id });
+        const table = `${ this.#tablePrefix }_entities`;
+        const spec = await this.#dynamoDbClient.getItem(table, { type, id });
 
         if (spec) {
             return new Model(spec);
@@ -56,7 +57,7 @@ export default class DataStore {
     }
 
     async save(obj) {
-        this.#logger.log('save record', { type: obj.type, id: obj.id });
+        this.#logger.debug('save record', { type: obj.type, id: obj.id });
 
         obj = obj.updateMeta();
 
@@ -70,8 +71,24 @@ export default class DataStore {
 
         obj.assignDerivedDatastoreProperties(item);
 
-        await this.#dynamoDbClient.putItem(this.#entityTable, item);
+        const table = `${ this.#tablePrefix }_entities`;
+        await this.#dynamoDbClient.putItem(table, item);
 
         return obj;
+    }
+
+    async observationsByDateTime({ exclusiveStartKey, limit }) {
+        this.#logger.debug('query observations_by_datetime', { limit, exclusiveStartKey });
+
+        const table = `${ this.#tablePrefix }_entities`;
+        const index = `${ this.#tablePrefix }_observations_by_datetime`;
+
+        const res = await this.#dynamoDbClient.query(table, index, {
+            type: 'observation',
+            exclusiveStartKey,
+            limit,
+        });
+
+        return res;
     }
 }

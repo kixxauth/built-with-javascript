@@ -1,5 +1,6 @@
 import { KixxAssert } from '../../dependencies.js';
 import Observation from '../models/observation.js';
+import ListObservationsPage from '../pages/list-observations-page.js';
 import {
     ValidationError,
     NotFoundError,
@@ -22,40 +23,44 @@ const {
 export default class Observations {
 
     #logger = null;
+    #eventBus = null;
     #dataStore = null;
+    #blobStore = null;
+    #templateStore = null;
     #objectManagementClient = null;
-    #viewObservationPage = null;
+    #noCache = false;
+
+    #pagesById = new Map();
 
     constructor(spec) {
         assert(isPlainObject(spec), 'isPlainObject');
 
         const {
             logger,
-            // Put these back when we actually need them.
-            // eventBus,
-            // pageDataStore,
-            // pageSnippetStore,
-            // templateStore,
+            eventBus,
             dataStore,
+            blobStore,
+            templateStore,
             objectManagementClient,
         } = spec;
 
-        this.#logger = logger.createChild({ name: 'Observations' });
-        this.#dataStore = dataStore;
-        this.#objectManagementClient = objectManagementClient;
+        assert(logger);
+        assert(eventBus);
+        assert(dataStore);
+        assert(blobStore);
+        assert(templateStore);
 
-        // Put this back when we actually start using it.
-        // this.#viewObservationPage = new ViewObservationPage({
-        //     logger,
-        //     eventBus,
-        //     pageDataStore,
-        //     pageSnippetStore,
-        //     templateStore,
-        //     dataStore,
-        // });
+        this.#logger = logger.createChild({ name: 'Observations' });
+        this.#eventBus = eventBus;
+        this.#dataStore = dataStore;
+        this.#blobStore = blobStore;
+        this.#templateStore = templateStore;
+        this.#objectManagementClient = objectManagementClient;
+        this.#noCache = Boolean(spec.noCache);
     }
 
     initialize() {
+        this.#logger.info('initialize', { noCache: this.#noCache });
     }
 
     handleError(error, req, res) {
@@ -131,25 +136,38 @@ export default class Observations {
         return res.respondWithJSON(status, jsonResponse);
     }
 
-    async viewObservation(req, res) {
-        const id = req.pathnameParams.observationId;
-        assert(isNonEmptyString(id), 'observationId isNonEmptyString');
-        const page = this.#viewObservationPage;
-        const requestJSON = req.url.pathname.endsWith('.json');
-
-        if (requestJSON) {
-            const json = await page.generateJSON({ id });
-            return res.respondWithJSON(json);
-        }
-
-        // TODO: Handle HEAD requests.
-        // TODO: Set cache-control header.
-
-        const html = await page.generateHTML({ id });
-        return res.respondWithHTML(html);
+    viewObservation() {
     }
 
-    listObservations() {
+    async listObservations(request, response, options) {
+        const pageId = options.page;
+        const templateId = options.template;
+        // TODO: Handle cache-control header.
+        // const { cacheControl } = options;
+
+        assert(isNonEmptyString(pageId), 'pageId isNonEmptyString');
+        assert(isNonEmptyString(templateId), 'templateId isNonEmptyString');
+
+        const page = await this.#getListItemsPage(pageId, templateId);
+
+        const requestJSON = request.url.pathname.endsWith('.json');
+
+        let json;
+        let html;
+
+        if (requestJSON) {
+            json = await page.generateJSON(request);
+        } else {
+            html = await page.generateHTML(request);
+        }
+
+        // TODO: Handle HEAD request.
+
+        if (json) {
+            return response.respondWithJSON(200, json, { whiteSpace: true });
+        }
+
+        return response.respondWithHTML(200, html);
     }
 
     async createObservation(request, response) {
@@ -317,5 +335,29 @@ export default class Observations {
         const data = observation.getMediaItemById(mediaId);
 
         return response.respondWithJSON(200, { data });
+    }
+
+    #getListItemsPage(pageId, templateId) {
+        // Use the existing page instance if it has already been created.
+        if (this.#pagesById.has(pageId)) {
+            return this.#pagesById.get(pageId);
+        }
+
+        const page = new ListObservationsPage({
+            pageId,
+            templateId,
+            logger: this.#logger,
+            eventBus: this.#eventBus,
+            dataStore: this.#dataStore,
+            blobStore: this.#blobStore,
+            templateStore: this.#templateStore,
+            noCache: this.#noCache,
+        });
+
+        // Stash the page instance by pageId to use later.
+        this.#pagesById.set(pageId, page);
+
+        // Returns a Promise.
+        return page.initialize();
     }
 }

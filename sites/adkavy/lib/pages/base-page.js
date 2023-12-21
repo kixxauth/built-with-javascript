@@ -111,7 +111,7 @@ export default class BasePage {
     /**
      * @public
      */
-    async generateJSON(request) {
+    async generateJSON(baseData, args) {
         const page = await this.getPageData();
 
         if (Array.isArray(page.snippets) && page.snippets.length > 0) {
@@ -121,32 +121,26 @@ export default class BasePage {
             page.snippets = {};
         }
 
-        const data = await this.getDynamicData(request);
+        const data = await this.getDynamicData(args);
 
-        const decorations = {
-            canonicalURL: request.url.href,
-        };
-
-        return Object.assign(decorations, page, data);
+        return Object.assign(baseData, page, data);
     }
 
     /**
      * @public
      */
-    async generateHTML(req) {
-        const { href } = req.url;
-
-        if (this.#cachedHTML.has(href)) {
-            return this.#cachedHTML.get(href);
+    async generateHTML(key, baseData, args) {
+        if (this.#cachedHTML.has(key)) {
+            return this.#cachedHTML.get(key);
         }
 
-        const page = await this.generateJSON(req);
+        const page = await this.generateJSON(baseData, args);
         const template = await this.getTemplate();
 
         const html = template(page);
 
         if (this.#cache && this.#cacheable) {
-            this.#cachedHTML.set(href, html);
+            this.#cachedHTML.set(key, html);
         }
 
         return html;
@@ -253,6 +247,7 @@ export default class BasePage {
      * @private
      */
     #bindEventListeners() {
+        // TODO: Implement data store events and test them out for caching
         this.eventBus.on('PageDataStore:updateItem', this.#onPageDataStoreUpdate.bind(this));
         this.eventBus.on('PageSnippetStore:updateItem', this.#onPageSnippetStoreUpdate.bind(this));
     }
