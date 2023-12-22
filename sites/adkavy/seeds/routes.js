@@ -3,7 +3,7 @@ export default [
         patterns: [ '/assets/(.*)' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'StaticFileServer',
+            component: 'StaticFileServer',
             options: {
                 folder: '',
                 cacheControl: 'public, max-age=14400',
@@ -14,19 +14,19 @@ export default [
         patterns: [ '/', '/index.json' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'HTMLPage',
+            component: 'HTMLPage',
             options: {
                 page: 'home',
                 template: 'home.html',
                 cacheControl: 'public, max-age=129600',
             },
-        }]
+        }],
     },
     {
         patterns: [ '/create-observation(.json)?' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'HTMLPage',
+            component: 'HTMLPage',
             options: {
                 page: 'observations__form',
                 template: 'observations/form.html',
@@ -38,7 +38,7 @@ export default [
         patterns: [ '/observations', '/observations.json' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'ObservationsList',
+            component: 'ObservationsList',
             options: {
                 page: 'observations__list',
                 template: 'observations/list.html',
@@ -50,7 +50,7 @@ export default [
         patterns: [ '/observations/:observationId(.json)' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'ObservationsView',
+            component: 'ObservationsView',
             options: {
                 page: 'observations__view',
                 template: 'observations/view.html',
@@ -62,14 +62,14 @@ export default [
         patterns: [ '/observations/:observationId/media/:filename' ],
         targets: [{
             methods: [ 'PUT' ],
-            name: 'ObservationsAddMedia',
+            component: 'ObservationsAddMedia',
         }],
     },
     {
         patterns: [ '/incident-reports', '/incident-reports.json' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'HTMLPage',
+            component: 'HTMLPage',
             options: {
                 page: 'incident-reports__list',
                 template: 'incident-reports/list.html',
@@ -81,7 +81,7 @@ export default [
         patterns: [ '/incident-reports/2022-02-12-angel-slides(.json)?' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'HTMLPage',
+            component: 'HTMLPage',
             options: {
                 page: 'incident-reports__view',
                 template: 'incident-reports/view.html',
@@ -93,7 +93,7 @@ export default [
         patterns: [ '/events(.json)?' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'HTMLPage',
+            component: 'HTMLPage',
             options: {
                 page: 'events',
                 template: 'events.html',
@@ -105,7 +105,7 @@ export default [
         patterns: [ '/weather(.json)?' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'HTMLPage',
+            component: 'HTMLPage',
             options: {
                 page: 'weather',
                 template: 'weather.html',
@@ -117,7 +117,7 @@ export default [
         patterns: [ '/education(.json)?' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'HTMLPage',
+            component: 'HTMLPage',
             options: {
                 page: 'education',
                 template: 'education.html',
@@ -129,7 +129,7 @@ export default [
         patterns: [ '/making-observations(.json)?' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'HTMLPage',
+            component: 'HTMLPage',
             options: {
                 page: 'making-observations',
                 template: 'making-observations.html',
@@ -141,7 +141,7 @@ export default [
         patterns: [ '/donate(.json)?' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'HTMLPage',
+            component: 'HTMLPage',
             options: {
                 page: 'donate',
                 template: 'donate.html',
@@ -154,7 +154,7 @@ export default [
         patterns: [ ':basename.(png|ico|svg|xml|webmanifest)' ],
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            name: 'StaticFileServer',
+            component: 'StaticFileServer',
             options: {
                 folder: 'root',
                 cacheControl: 'public, max-age=14400',
