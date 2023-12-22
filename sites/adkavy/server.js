@@ -1,21 +1,14 @@
-import http from 'node:http';
 import path from 'node:path';
-import { parseArgs } from 'node:util';
+import http from 'node:http';
+import util from 'node:util';
 import { EventEmitter } from 'node:events';
+import Kixx from './kixx/mod.js';
 import Config from './lib/config/mod.js';
 import { createLogger } from './lib/logger.js';
-import RoutingTable from './lib/server/routing-table.js';
-import HTTPRequestTarget from './lib/server/http-request-target.js';
-import StaticFileServer from './lib/http-interfaces/static-file-server.js';
-import HTMLPage from './lib/http-interfaces/html-page.js';
-import Observations from './lib/http-interfaces/observations.js';
-import AwsDynamoDbClient from './lib/aws-dynamodb-client/mod.js';
-import ObjectManagementClient from './lib/object-management-client/mod.js';
-import DataStore from './lib/stores/data-store.js';
-import BlobStore from './lib/stores/blob-store.js';
-import TemplateStore from './lib/stores/template-store.js';
-import routes from './routes.js';
 import { fromFileUrl } from './lib/utils.js';
+
+const { ConfigStore, ModuleFileStorageEngine } = Kixx.Stores;
+const { HTTPRequestTarget, Route } = Kixx.HTTP;
 
 
 const ROOT_DIR = fromFileUrl(new URL('./', import.meta.url));
@@ -29,8 +22,7 @@ const ALLOWED_ENVIRONMENTS = [
 
 
 async function start() {
-    const args = parseArgs({
-        args: process.argv.slice(2),
+    const args = util.parseArgs({
         options: {
             environment: {
                 type: 'string',
@@ -54,16 +46,8 @@ async function start() {
 
     const logger = createLogger({
         name: NAME,
-        level: config.logger.getLevel(),
-        makePretty: config.logger.getMakePretty(),
-    });
-
-    logger.log('starting server', { environment });
-
-    const eventBus = new EventEmitter();
-
-    eventBus.on('error', (error) => {
-        printErrorAndExit('Error event on EventBus', error);
+        level: config.logger.level,
+        makePretty: config.logger.makePretty,
     });
 
     function printErrorAndExit(message, error) {
@@ -75,53 +59,35 @@ async function start() {
         }, 200);
     }
 
-    const dynamoDbClient = AwsDynamoDbClient.fromConfig(logger, config);
-    const objectManagementClient = ObjectManagementClient.fromConfig(logger, config);
+    const eventBus = new EventEmitter();
 
-    const dataStore = new DataStore({
-        config,
-        logger,
-        dynamoDbClient,
+    eventBus.on('error', (error) => {
+        // TODO: How do we shut down the server here?
+        printErrorAndExit('Error event on EventBus', error);
     });
 
-    const blobStore = new BlobStore();
+    const configStoreEngine = new ModuleFileStorageEngine();
 
-    const templateStore = new TemplateStore({
-        directory: path.join(ROOT_DIR, 'templates'),
-        logger,
+    const configStore = new ConfigStore({
         eventBus,
+        logger,
+        engine: configStoreEngine,
     });
 
-    const routingTable = new RoutingTable({ logger });
-    const httpRequestTarget = new HTTPRequestTarget({ logger, routingTable });
+    const componentFactories = {};
 
-    routingTable.registerHTTPInterface('StaticFileServer', new StaticFileServer({
-        logger,
-        publicDirectory: path.join(ROOT_DIR, 'public'),
-    }));
+    const routeSpecs = configStore.fetch('routes');
 
-    routingTable.registerHTTPInterface('HTMLPage', new HTMLPage({
-        logger,
-        eventBus,
-        dataStore,
-        blobStore,
-        templateStore,
-        noCache: !config.pages.getCache(),
-    }));
+    const routes = routeSpecs.map((spec) => {
+        return new Route(spec, { eventBus });
+    });
 
-    routingTable.registerHTTPInterface('Observations', new Observations({
-        config,
-        logger,
-        eventBus,
-        dataStore,
-        templateStore,
-        objectManagementClient,
-        noCache: !config.pages.getCache(),
-    }));
+    const httpRequestTarget = new HTTPRequestTarget({ logger });
 
-    routingTable.registerRoutes(routes);
-
-    await routingTable.initialize();
+    for (const route of routes) {
+        await route.initialize(componentFactories);
+        httpRequestTarget.registerRoute(route);
+    }
 
     const server = http.createServer((req, res) => {
 
@@ -152,9 +118,8 @@ async function start() {
         logger.log(`server running at http://localhost:${ port }`);
     });
 
-    server.listen(config.server.getPort());
+    server.listen(config.server.port);
 }
-
 
 start().catch((error) => {
     /* eslint-disable no-console */
