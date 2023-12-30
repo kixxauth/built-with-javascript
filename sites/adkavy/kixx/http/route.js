@@ -1,9 +1,11 @@
 import PathToRegexp from 'path-to-regexp';
 import { KixxAssert } from '../../dependencies.js';
-import { WrappedError } from '../errors.js';
+import {
+    WrappedError,
+    NotFoundError,
+    MethodNotAllowedError } from '../errors.js';
 
-
-const { assert, isFunction, isNonEmptyString } = KixxAssert;
+const { assert } = KixxAssert;
 
 
 export default class Route {
@@ -11,16 +13,15 @@ export default class Route {
     #eventBus = null;
     #targets = [];
     #patternMatchers = [];
-    #allowedMethods = [];
-    #components = new Map();
 
-    constructor(spec, options) {
+    constructor(options) {
         const {
+            eventBus,
             patterns,
             targets,
-        } = spec;
+        } = options;
 
-        const { eventBus } = options;
+        assert(eventBus, 'Route eventBus is required');
 
         assert(
             Array.isArray(patterns),
@@ -32,87 +33,44 @@ export default class Route {
             'Route targets must be an array'
         );
 
-        const patternMatchers = patterns.map((pattern) => {
+        this.#eventBus = eventBus;
+
+        this.#targets = targets;
+
+        this.#patternMatchers = patterns.map((pattern) => {
             return PathToRegexp.match(pattern, { decode: decodeURIComponent });
         });
-
-        let allowedMethods = [];
-
-        for (const target of targets) {
-            assert(
-                isNonEmptyString(target.component),
-                'Route target component must be a non empty string'
-            );
-            assert(
-                Array.isArray(target.methods),
-                'Route target methods must be an array'
-            );
-
-            allowedMethods = allowedMethods.concat(target.methods);
-        }
-
-        this.#eventBus = eventBus;
-        this.#targets = targets;
-        this.#patternMatchers = patternMatchers;
-        this.#allowedMethods = Object.freeze(allowedMethods);
-    }
-
-    async initialize(componentFactories) {
-        for (const target of this.#targets) {
-            const factory = componentFactories[target.component];
-
-            assert(
-                factory,
-                `Component factory "${ target.component }" is not registered`
-            );
-
-            assert(
-                isFunction(factory),
-                `Component factory "${ target.component }" is not a function`
-            );
-
-            const component = await factory(target.options);
-
-            this.#components.set(target.component, component);
-        }
-    }
-
-    matchURL(url) {
-        for (const matcher of this.#patternMatchers) {
-            const match = matcher(url.pathname);
-
-            if (match) {
-                return {
-                    route: this,
-                    pathnameParams: match.params,
-                };
-            }
-        }
-
-        return null;
     }
 
     async handleRequest(request, response) {
-        if (!this.#allowedMethods.includes(request.method)) {
-            return this.#returnNotAllowedResponse(request, response);
-        }
+        const { url } = request;
 
-        const target = this.#getTargetForMethod(request.method);
-        const component = this.#components.get(target.component);
+        // Will throw a NotFoundError if the URL pathname does not match any
+        // of the patterns for this route.
+        url.pathnameParams = this.#matchPathname(request);
+
+        let target;
+
+        try {
+            target = this.#matchMethod(request);
+        } catch (error) {
+            if (error.code === MethodNotAllowedError.CODE) {
+                return this.returnMethodNotAllowedResponse(request, response);
+            }
+            throw error;
+        }
 
         let res;
 
         // By using `await route.handleRequest()` we cast the result to a Promise and catch any errors
         // appropriately no matter if the handeRequest() function is async or blocking.
         try {
-            res = await component.handleRequest(request, response, target.options);
+            res = await target.handleRequest(request, response);
         } catch (error) {
-            if (isFunction(component.handleError)) {
-                res = component.handleError(error, request, response, target.options);
-            }
+            res = target.handleError(error, request, response);
 
             if (!res) {
-                res = this.handleError(error, request, response, target.options);
+                res = this.handleError(error, request, response, target);
             }
 
             if (!(error instanceof WrappedError) || error.fatal) {
@@ -123,24 +81,54 @@ export default class Route {
         return res;
     }
 
-    #getTargetForMethod(method) {
+    returnMethodNotAllowedResponse(request, response) {
+        const { method, url } = request;
+        const allowedMethods = this.getAllowedMethodsAsArray();
+
+        let body = `The HTTP method ${ method } is not allowed on the URL pathname ${ url.pathname }.\n`;
+        body += `Use ${ allowedMethods.join(', ') } instead.\n`;
+
+        return response.respondWithPlainText(405, body, {
+            allowed: allowedMethods.join(', '),
+        });
+    }
+
+    handleError(error, request, response) {
+        return response.respondWithPlainText(500, 'Internal server error.\n');
+    }
+
+    getAllowedMethodsAsArray() {
+        let allowedMethods = [];
+
         for (const target of this.#targets) {
-            if (target.methods.includes(method)) {
+            allowedMethods = allowedMethods.concat(target.methods);
+        }
+
+        return allowedMethods;
+    }
+
+    #matchPathname(request) {
+        const { pathname } = request.url;
+
+        for (const matcher of this.#patternMatchers) {
+            const match = matcher(pathname);
+            if (match) {
+                return match.params;
+            }
+        }
+
+        throw new NotFoundError(`No match found for URL pathname ${ pathname }`);
+    }
+
+    #matchMethod(request) {
+        const { method, url } = request;
+
+        for (const target of this.#targets) {
+            if (target.allowsMethod(method)) {
                 return target;
             }
         }
 
-        return null;
-    }
-
-    #returnNotAllowedResponse(request, response) {
-        const { method, url } = request;
-
-        let body = `The HTTP method ${ method } is not allowed on the URL path ${ url.pathname }.\n`;
-        body += `Use ${ this.#allowedMethods.join(', ') } instead.\n`;
-
-        response.headers.set('allowed', this.#allowedMethods.join(', '));
-
-        return response.respondWithPlainText(405, body);
+        throw new MethodNotAllowedError(`Method ${ method } not allowed on URL pathname ${ url.pathname }`);
     }
 }
