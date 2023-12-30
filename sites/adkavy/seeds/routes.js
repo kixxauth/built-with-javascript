@@ -1,9 +1,10 @@
 export default [
     {
         patterns: [ '/assets/(.*)' ],
+        routeName: 'StaticFileServer',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'StaticFileServer',
+            targetName: 'StaticFileServer',
             options: {
                 folder: '',
                 cacheControl: 'public, max-age=14400',
@@ -12,9 +13,10 @@ export default [
     },
     {
         patterns: [ '/', '/index.json' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'HTMLPage',
+            targetName: 'HTMLPage',
             options: {
                 page: 'home',
                 template: 'home.html',
@@ -24,9 +26,10 @@ export default [
     },
     {
         patterns: [ '/create-observation(.json)?' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'HTMLPage',
+            targetName: 'HTMLPage',
             options: {
                 page: 'observations__form',
                 template: 'observations/form.html',
@@ -36,10 +39,12 @@ export default [
     },
     {
         patterns: [ '/observations', '/observations.json' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'ObservationsList',
+            targetName: 'ListEntities',
             options: {
+                type: 'observation',
                 page: 'observations__list',
                 template: 'observations/list.html',
                 cacheControl: 'public, no-cache',
@@ -48,10 +53,12 @@ export default [
     },
     {
         patterns: [ '/observations/:observationId(.json)' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'ObservationsView',
+            targetName: 'ViewEntity',
             options: {
+                type: 'observation',
                 page: 'observations__view',
                 template: 'observations/view.html',
                 cacheControl: 'public, no-cache',
@@ -60,16 +67,18 @@ export default [
     },
     {
         patterns: [ '/observations/:observationId/media/:filename' ],
+        routeName: 'DefaultRoute',
         targets: [{
             methods: [ 'PUT' ],
-            component: 'ObservationsAddMedia',
+            targetName: 'ObservationsAddMedia',
         }],
     },
     {
         patterns: [ '/incident-reports', '/incident-reports.json' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'HTMLPage',
+            targetName: 'HTMLPage',
             options: {
                 page: 'incident-reports__list',
                 template: 'incident-reports/list.html',
@@ -79,9 +88,10 @@ export default [
     },
     {
         patterns: [ '/incident-reports/2022-02-12-angel-slides(.json)?' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'HTMLPage',
+            targetName: 'HTMLPage',
             options: {
                 page: 'incident-reports__view',
                 template: 'incident-reports/view.html',
@@ -91,9 +101,10 @@ export default [
     },
     {
         patterns: [ '/events(.json)?' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'HTMLPage',
+            targetName: 'HTMLPage',
             options: {
                 page: 'events',
                 template: 'events.html',
@@ -103,9 +114,10 @@ export default [
     },
     {
         patterns: [ '/weather(.json)?' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'HTMLPage',
+            targetName: 'HTMLPage',
             options: {
                 page: 'weather',
                 template: 'weather.html',
@@ -115,9 +127,10 @@ export default [
     },
     {
         patterns: [ '/education(.json)?' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'HTMLPage',
+            targetName: 'HTMLPage',
             options: {
                 page: 'education',
                 template: 'education.html',
@@ -127,9 +140,10 @@ export default [
     },
     {
         patterns: [ '/making-observations(.json)?' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'HTMLPage',
+            targetName: 'HTMLPage',
             options: {
                 page: 'making-observations',
                 template: 'making-observations.html',
@@ -139,9 +153,10 @@ export default [
     },
     {
         patterns: [ '/donate(.json)?' ],
+        routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'HTMLPage',
+            targetName: 'HTMLPage',
             options: {
                 page: 'donate',
                 template: 'donate.html',
@@ -149,12 +164,24 @@ export default [
             },
         }],
     },
+    {
+        patterns: [ '/observations-rpc' ],
+        routeName: 'JsonRPC',
+        targets: [{
+            methods: [ 'POST' ],
+            targetName: 'ObservationsRPC',
+            options: {
+                allowedUsers: [ 'anonymous' ],
+            },
+        }],
+    },
     // Static root files. This should always go last in the lookup order.
     {
         patterns: [ ':basename.(png|ico|svg|xml|webmanifest)' ],
+        routeName: 'StaticFileServer',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            component: 'StaticFileServer',
+            targetName: 'StaticFileServer',
             options: {
                 folder: 'root',
                 cacheControl: 'public, max-age=14400',

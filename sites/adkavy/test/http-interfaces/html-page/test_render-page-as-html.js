@@ -86,7 +86,7 @@ export default async function test_renderPage_asJSON() {
         },
     };
 
-    sinon.spy(response, 'respondWithHTML');
+    sandbox.spy(response, 'respondWithHTML');
 
     await subject.renderPage(request, response, {
         page: 'home',
