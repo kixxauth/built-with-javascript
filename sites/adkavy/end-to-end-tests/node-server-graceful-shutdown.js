@@ -33,7 +33,10 @@ const server = http.createServer((req, res) => {
 
         // This will also succeed in killing the server, but will close the
         // connections to the clients and emit ECONNRESET error on any open requests.
-        server.closeAllConnections();
+        // server.closeAllConnections();
+        // server.close();
+
+        // The server will shutdown after all requests have been returned.
         server.close();
     }
 
