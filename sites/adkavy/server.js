@@ -4,10 +4,26 @@ import util from 'node:util';
 import { EventEmitter } from 'node:events';
 import Kixx from './kixx/mod.js';
 import ConfigManager from './lib/config-manager/config-manager.js';
+
+import StaticFileServerRoute from './lib/http-routes/static-file-server.js';
+import HTMLPageRoute from './lib/http-routes/html-page.js';
+import JsonRPCRoute from './lib/http-routes/json-rpc.js';
+
+import StaticFileServerTarget from './lib/http-targets/static-file-server.js';
+import HTMLPageTarget from './lib/http-targets/html-page.js';
+import ListEntitiesTarget from './lib/http-targets/list-entities.js';
+import ViewEntityTarget from './lib/http-targets/view-entity.js';
+
+import ObservationsRPCTarget from './lib/http-targets/observations-rpc.js';
+import ObservationsAddMediaTarget from './lib/http-targets/observations-add-media.js';
+
 import { createLogger } from './lib/logger.js';
 import { fromFileUrl } from './lib/utils.js';
 
-const { NodeHTTPRouter } = Kixx.HTTP;
+import routes from './seeds/routes.js';
+
+
+const { NodeHTTPRouter, Route } = Kixx.HTTP;
 
 
 const NAME = 'adkavy';
@@ -64,6 +80,99 @@ async function main() {
         logger: logger.createChild({ name: 'HTTPRouter' }),
         eventBus,
     });
+
+    router.registerRouteFactory('DefaultRoute', ({ patterns, targets }) => {
+        return new Route({
+            eventBus,
+            patterns,
+            targets,
+        });
+    });
+
+    router.registerRouteFactory('StaticFileServer', ({ patterns, targets }) => {
+        return new StaticFileServerRoute({
+            eventBus,
+            logger: logger.createChild({ name: 'StaticFileServerRoute' }),
+            patterns,
+            targets,
+        });
+    });
+
+    router.registerRouteFactory('HTMLPage', ({ patterns, targets }) => {
+        return new HTMLPageRoute({
+            eventBus,
+            logger: logger.createChild({ name: 'HTMLPageRoute' }),
+            patterns,
+            targets,
+        });
+    });
+
+    router.registerRouteFactory('JsonRPC', ({ patterns, targets }) => {
+        return new JsonRPCRoute({
+            eventBus,
+            logger: logger.createChild({ name: 'JsonRPCRoute' }),
+            patterns,
+            targets,
+        });
+    });
+
+    router.registerTargetFactory('StaticFileServer', ({ methods, options }) => {
+        return new StaticFileServerTarget({
+            eventBus,
+            logger: logger.createChild({ name: 'StaticFileServerTarget' }),
+            methods,
+            options,
+        });
+    });
+
+    router.registerTargetFactory('HTMLPage', ({ methods, options }) => {
+        return new HTMLPageTarget({
+            eventBus,
+            logger: logger.createChild({ name: 'HTMLPageTarget' }),
+            methods,
+            options,
+        });
+    });
+
+    router.registerTargetFactory('ListEntities', ({ methods, options }) => {
+        return new ListEntitiesTarget({
+            eventBus,
+            logger: logger.createChild({ name: 'ListEntitiesTarget' }),
+            methods,
+            options,
+        });
+    });
+
+    router.registerTargetFactory('ViewEntity', ({ methods, options }) => {
+        return new ViewEntityTarget({
+            eventBus,
+            logger: logger.createChild({ name: 'ViewEntityTarget' }),
+            methods,
+            options,
+        });
+    });
+
+    router.registerTargetFactory('ObservationsRPC', ({ methods, options }) => {
+        return new ObservationsRPCTarget({
+            eventBus,
+            logger: logger.createChild({ name: 'ObservationsRPCTarget' }),
+            methods,
+            options,
+        });
+    });
+
+    router.registerTargetFactory('ObservationsAddMedia', ({ methods, options }) => {
+        return new ObservationsAddMediaTarget({
+            eventBus,
+            logger: logger.createChild({ name: 'ObservationsAddMediaTarget' }),
+            methods,
+            options,
+        });
+    });
+
+    for (const routeSpec of routes) {
+        router.registerRoute(routeSpec);
+    }
 
     const server = http.createServer((req, res) => {
 

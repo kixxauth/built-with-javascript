@@ -65,7 +65,7 @@ export default class HTTPRouter {
         const targetInstances = targets.map(({ methods, targetName, options }) => {
             assert(
                 this.#registeredTargetFactories.has(targetName),
-                `No Target registered for "${ targetName }`
+                `No Target registered for "${ targetName }"`
             );
 
             const createTarget = this.#registeredTargetFactories.get(targetName);
