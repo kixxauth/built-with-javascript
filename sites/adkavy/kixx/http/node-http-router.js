@@ -31,7 +31,7 @@ export default class NodeHTTPRouter extends HTTPRouter {
         try {
             newResponse = await this.routeRequest(request, response);
         } catch (error) {
-            if (error.code === NotFoundError.code) {
+            if (error.code === NotFoundError.CODE) {
                 newResponse = this.returnNotFoundResponse(error, request, response);
             } else {
                 throw error;

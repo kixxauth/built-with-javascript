@@ -3,7 +3,7 @@ import { KixxAssert } from '../../dependencies.js';
 import {
     WrappedError,
     NotFoundError,
-    MethodNotAllowedError } from '../errors.js';
+    MethodNotAllowedError } from '../errors/mod.js';
 
 const { assert } = KixxAssert;
 

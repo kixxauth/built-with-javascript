@@ -90,7 +90,7 @@ export default class HTTPRouter {
             try {
                 newResponse = await route.handleRequest(request, response);
             } catch (error) {
-                if (error.code !== NotFoundError.code) {
+                if (error.code !== NotFoundError.CODE) {
                     this.eventBus.emit('error', error);
                     return this.handleError(error, request, response);
                 }

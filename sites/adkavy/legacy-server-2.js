@@ -3,15 +3,17 @@ import http from 'node:http';
 import util from 'node:util';
 import { EventEmitter } from 'node:events';
 import Kixx from './kixx/mod.js';
-import ConfigManager from './lib/config-manager/config-manager.js';
+import Config from './lib/config/mod.js';
 import { createLogger } from './lib/logger.js';
 import { fromFileUrl } from './lib/utils.js';
 
-const { NodeHTTPRouter } = Kixx.HTTP;
+const { ConfigStore, ModuleFileStorageEngine } = Kixx.Stores;
+const { HTTPRequestTarget, Route } = Kixx.HTTP;
 
+
+const ROOT_DIR = fromFileUrl(new URL('./', import.meta.url));
 
 const NAME = 'adkavy';
-const ROOT_DIR = fromFileUrl(new URL('./', import.meta.url));
 
 const ALLOWED_ENVIRONMENTS = [
     'development',
@@ -19,8 +21,7 @@ const ALLOWED_ENVIRONMENTS = [
 ];
 
 
-async function main() {
-
+async function start() {
     const args = util.parseArgs({
         options: {
             environment: {
@@ -37,14 +38,11 @@ async function main() {
         throw new Error(`Invalid environment argument: "${ environment }"`);
     }
 
-    const configManager = new ConfigManager({
+    const config = new Config({
         rootConfigDir: path.join(ROOT_DIR, 'config'),
     });
 
-    const config = await configManager.load(environment);
-
-    // Uncomment to debug config
-    // console.log(JSON.stringify(config, null, 4));
+    await config.load(environment);
 
     const logger = createLogger({
         name: NAME,
@@ -52,18 +50,44 @@ async function main() {
         makePretty: config.logger.makePretty,
     });
 
+    function printErrorAndExit(message, error) {
+        logger.error(message, { error });
+
+        // Allow time for the error message to print before exiting.
+        setTimeout(() => {
+            process.exit(1);
+        }, 200);
+    }
+
     const eventBus = new EventEmitter();
 
     eventBus.on('error', (error) => {
-        logger.fatal('fatal error emitted on event bus', { error });
-        logger.fatal('will attempt shutdown');
-        gracefullyExit();
+        // TODO: How do we shut down the server here?
+        printErrorAndExit('Error event on EventBus', error);
     });
 
-    const router = new NodeHTTPRouter({
-        logger: logger.createChild({ name: 'HTTPRouter' }),
+    const configStoreEngine = new ModuleFileStorageEngine();
+
+    const configStore = new ConfigStore({
         eventBus,
+        logger,
+        engine: configStoreEngine,
     });
+
+    const componentFactories = {};
+
+    const routeSpecs = configStore.fetch('routes');
+
+    const routes = routeSpecs.map((spec) => {
+        return new Route(spec, { eventBus });
+    });
+
+    const httpRequestTarget = new HTTPRequestTarget({ logger });
+
+    for (const route of routes) {
+        await route.initialize(componentFactories);
+        httpRequestTarget.registerRoute(route);
+    }
 
     const server = http.createServer((req, res) => {
 
@@ -71,10 +95,7 @@ async function main() {
             logger.warn('request error event', { name: error.name, code: error.code, message: error.message });
         });
 
-        router.handleRequest(req, res).catch(function onRequestError(error) {
-            logger.fatal('fatal error in request router', { error });
-            logger.fatal('will attempt shutdown');
-
+        httpRequestTarget.handleRequest(req, res).catch(function onRequestError(error) {
             const body = 'Internal server error.\n';
 
             res.writeHead(500, 'Internal Server Error', {
@@ -84,14 +105,12 @@ async function main() {
 
             res.end(body);
 
-            gracefullyExit();
+            printErrorAndExit('internal server error', error);
         });
     });
 
     server.on('error', (error) => {
-        logger.fatal('fatal error emitted on server', { error });
-        logger.fatal('will attempt shutdown');
-        gracefullyExit();
+        printErrorAndExit('server error event', error);
     });
 
     server.on('listening', () => {
@@ -100,20 +119,9 @@ async function main() {
     });
 
     server.listen(config.server.port);
-
-    function gracefullyExit() {
-        // Give the server some time to gracefully shutdown before forcing an exit.
-        const shutdownTimeout = setTimeout(() => {
-            process.exit(1);
-        }, 20 * 1000);
-
-        server.close(() => {
-            clearTimeout(shutdownTimeout);
-        });
-    }
 }
 
-main().catch((error) => {
+start().catch((error) => {
     /* eslint-disable no-console */
     console.error('Error starting server:');
     console.error(error);
