@@ -18,6 +18,7 @@ import { fromFileUrl } from './lib/utils.js';
 import routes from './seeds/routes.js';
 
 const { NodeHTTPRouter, Route } = Kixx.HTTP;
+const { DataStore, BlobStore } = Kixx.Stores;
 const { CachedHTMLPage } = Kixx.Pages;
 const { HTMLPageRoute, JsonRPCRoute } = Kixx.Routes;
 const {
@@ -76,6 +77,14 @@ async function main() {
         logger.fatal('will attempt shutdown');
         gracefullyExit();
     });
+
+    const dataStore = new DataStore({
+        logger: logger.createChild({ name: 'DataStore' }),
+        eventBus,
+        engine: dynamoDBEngine,
+    });
+
+    const blobStore = new BlobStore();
 
     const templateStore = new TemplateStore({
         directory: path.join(ROOT_DIR, 'templates'),

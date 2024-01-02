@@ -54,10 +54,10 @@ export default class AwsDynamoDbClient {
         this.#awsDynamoDbEndpoint = awsDynamoDbEndpoint;
     }
 
-    async getItem(table, { type, id }) {
+    async getItem(table, key) {
         const command = {
             TableName: table,
-            Key: serializeObject({ type, id }),
+            Key: serializeObject(key),
         };
 
         // Returns { Item: {} }
@@ -114,6 +114,8 @@ export default class AwsDynamoDbClient {
      * @private
      */
     async #makeDynamoDbRequest(target, params) {
+        this.#logger.debug('request', { endpoint: this.#awsDynamoDbEndpoint, target });
+
         const method = 'POST';
         const url = new URL('/', this.#awsDynamoDbEndpoint);
         const data = Buffer.from(JSON.stringify(params), 'utf8');

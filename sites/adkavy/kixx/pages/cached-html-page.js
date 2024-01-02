@@ -239,8 +239,8 @@ export default class CachedHTMLPage {
      */
     bindEventListeners() {
         // TODO: Implement data store events and test them out for caching
-        this.eventBus.on('PageDataStore:updateItem', this.#onPageDataStoreUpdate.bind(this));
-        this.eventBus.on('PageSnippetStore:updateItem', this.#onPageSnippetStoreUpdate.bind(this));
+        this.eventBus.on('DataStore:updateItem', this.#onPageDataStoreUpdate.bind(this));
+        this.eventBus.on('BlobStore:updateItem', this.#onPageSnippetStoreUpdate.bind(this));
     }
 
     /**
