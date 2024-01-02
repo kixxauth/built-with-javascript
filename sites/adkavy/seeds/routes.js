@@ -166,7 +166,7 @@ export default [
     },
     {
         patterns: [ '/observations-rpc' ],
-        routeName: 'JsonRPC',
+        routeName: 'ObservationsRPC',
         targets: [{
             methods: [ 'POST' ],
             targetName: 'ObservationsRPC',

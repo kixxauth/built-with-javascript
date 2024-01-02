@@ -11,29 +11,29 @@ const ALLOWED_ENVIRONMENTS = [
 
 export default class DynamoDBEngine {
 
-    #dynamoDbClient = null;
+    #dynamoDBClient = null;
     #tablePrefix = null;
 
-    constructor({ environment, dynamoDbClient }) {
+    constructor({ environment, dynamoDBClient }) {
         assertIncludes(
             environment,
             ALLOWED_ENVIRONMENTS,
             `DataStore environment must be one of "${ ALLOWED_ENVIRONMENTS.join('","') }"`
         );
 
-        this.#dynamoDbClient = dynamoDbClient;
+        this.#dynamoDBClient = dynamoDBClient;
         this.#tablePrefix = `adkavy_${ environment }`;
     }
 
     async fetch(type, id) {
         const table = `${ this.#tablePrefix }_entities`;
-        const record = await this.#dynamoDbClient.getItem(table, { type, id });
+        const record = await this.#dynamoDBClient.getItem(table, { type, id });
         return record || null;
     }
 
     async save(type, id, record) {
         const table = `${ this.#tablePrefix }_entities`;
-        await this.#dynamoDbClient.putItem(table, record);
+        await this.#dynamoDBClient.putItem(table, record);
         return record;
     }
 }

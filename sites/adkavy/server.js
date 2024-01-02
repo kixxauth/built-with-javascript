@@ -4,13 +4,16 @@ import util from 'node:util';
 import { EventEmitter } from 'node:events';
 import Kixx from './kixx/mod.js';
 import ConfigManager from './lib/config-manager/config-manager.js';
-import TemplateStore from './lib/template-store/template-store.js';
 
-import StaticFileServerRoute from './lib/http-routes/static-file-server.js';
-import StaticFileServerTarget from './lib/http-targets/static-file-server.js';
+import {
+    createDataStore,
+    createBlobStore,
+    createTemplateStore
+} from './lib/stores/mod.js';
 
-import ObservationsRPCTarget from './lib/http-targets/observations-rpc.js';
-import ObservationsAddMediaTarget from './lib/http-targets/observations-add-media.js';
+import { registerStaticFileServer } from './lib/static-file-server/mod.js';
+import { registerStaticHTMLPage } from './lib/static-html-page/mod.js';
+import { registerObservations } from './lib/observations/mod.js';
 
 import { createLogger } from './lib/logger.js';
 import { fromFileUrl } from './lib/utils.js';
@@ -18,14 +21,6 @@ import { fromFileUrl } from './lib/utils.js';
 import routes from './seeds/routes.js';
 
 const { NodeHTTPRouter, Route } = Kixx.HTTP;
-const { DataStore, BlobStore } = Kixx.Stores;
-const { CachedHTMLPage } = Kixx.Pages;
-const { HTMLPageRoute, JsonRPCRoute } = Kixx.Routes;
-const {
-    HTMLPageTarget,
-    ListEntitiesTarget,
-    ViewEntityTarget,
-} = Kixx.Targets;
 
 
 const NAME = 'adkavy';
@@ -78,18 +73,27 @@ async function main() {
         gracefullyExit();
     });
 
-    const dataStore = new DataStore({
-        logger: logger.createChild({ name: 'DataStore' }),
+    const dataStore = createDataStore({
+        config,
         eventBus,
-        engine: dynamoDBEngine,
+        logger: logger.createChild({ name: 'DataStore' }),
     });
 
-    const blobStore = new BlobStore();
+    const blobStore = createBlobStore();
 
-    const templateStore = new TemplateStore({
-        directory: path.join(ROOT_DIR, 'templates'),
+    const templateStore = createTemplateStore({
         logger: logger.createChild({ name: 'TemplateStore' }),
+        directory: path.join(ROOT_DIR, 'templates'),
     });
+
+    const components = {
+        config,
+        eventBus,
+        logger,
+        dataStore,
+        blobStore,
+        templateStore,
+    };
 
     const router = new NodeHTTPRouter({
         logger: logger.createChild({ name: 'HTTPRouter' }),
@@ -104,97 +108,10 @@ async function main() {
         });
     });
 
-    router.registerRouteFactory('StaticFileServer', ({ patterns, targets }) => {
-        return new StaticFileServerRoute({
-            eventBus,
-            logger: logger.createChild({ name: 'StaticFileServerRoute' }),
-            patterns,
-            targets,
-        });
-    });
-
-    router.registerRouteFactory('HTMLPage', ({ patterns, targets }) => {
-        return new HTMLPageRoute({
-            eventBus,
-            logger: logger.createChild({ name: 'HTMLPageRoute' }),
-            patterns,
-            targets,
-        });
-    });
-
-    router.registerRouteFactory('JsonRPC', ({ patterns, targets }) => {
-        return new JsonRPCRoute({
-            eventBus,
-            logger: logger.createChild({ name: 'JsonRPCRoute' }),
-            patterns,
-            targets,
-        });
-    });
-
-    router.registerTargetFactory('StaticFileServer', ({ methods, options }) => {
-        return new StaticFileServerTarget({
-            eventBus,
-            logger: logger.createChild({ name: 'StaticFileServerTarget' }),
-            methods,
-            options,
-        });
-    });
-
-    router.registerTargetFactory('HTMLPage', ({ methods, options }) => {
-        const page = new CachedHTMLPage({
-            pageId: options.page,
-            templateId: options.template,
-            cacheable: true,
-            noCache: !config.pages.cache,
-            logger: logger.createChild({ name: 'HTMLPageTarget' }),
-            eventBus,
-            dataStore,
-            blobStore,
-            templateStore,
-        });
-
-        return new HTMLPageTarget({
-            methods,
-            options,
-            page,
-        });
-    });
-
-    router.registerTargetFactory('ListEntities', ({ methods, options }) => {
-        return new ListEntitiesTarget({
-            eventBus,
-            logger: logger.createChild({ name: 'ListEntitiesTarget' }),
-            methods,
-            options,
-        });
-    });
-
-    router.registerTargetFactory('ViewEntity', ({ methods, options }) => {
-        return new ViewEntityTarget({
-            eventBus,
-            logger: logger.createChild({ name: 'ViewEntityTarget' }),
-            methods,
-            options,
-        });
-    });
-
-    router.registerTargetFactory('ObservationsRPC', ({ methods, options }) => {
-        return new ObservationsRPCTarget({
-            eventBus,
-            logger: logger.createChild({ name: 'ObservationsRPCTarget' }),
-            methods,
-            options,
-        });
-    });
-
-    router.registerTargetFactory('ObservationsAddMedia', ({ methods, options }) => {
-        return new ObservationsAddMediaTarget({
-            eventBus,
-            logger: logger.createChild({ name: 'ObservationsAddMediaTarget' }),
-            methods,
-            options,
-        });
-    });
+    // Register plugins:
+    registerStaticFileServer(components, router);
+    registerStaticHTMLPage(components, router);
+    registerObservations(components, router);
 
     for (const routeSpec of routes) {
         router.registerRoute(routeSpec);

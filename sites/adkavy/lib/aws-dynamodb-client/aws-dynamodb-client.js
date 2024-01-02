@@ -9,22 +9,7 @@ const DYNAMODB_CONTENT_TYPE = 'application/x-amz-json-1.0';
 const DYNAMODB_API_VERSION = 'DynamoDB_20120810';
 
 
-export default class AwsDynamoDbClient {
-
-    static fromConfig(logger, config) {
-        const awsRegion = config.dynamoDB.getRegion();
-        const awsAccessKey = config.dynamoDB.getAccessKeyId();
-        const awsSecretKey = config.dynamoDB.getSecretAccessKey();
-        const awsDynamoDbEndpoint = config.dynamoDB.getEndpoint();
-
-        return new AwsDynamoDbClient({
-            logger,
-            awsRegion,
-            awsDynamoDbEndpoint,
-            awsAccessKey,
-            awsSecretKey,
-        });
-    }
+export default class AwsDynamoDBClient {
 
     #logger = null;
     #awsAccessKey = null;
@@ -46,7 +31,7 @@ export default class AwsDynamoDbClient {
         assert(isNonEmptyString(awsSecretKey), 'AWS secretKey must be a non empty String');
         assert(isNonEmptyString(awsDynamoDbEndpoint), 'AWS DynamoDBEndpoint must be a non empty String');
 
-        this.#logger = logger.createChild({ name: 'DynamoDBClient' });
+        this.#logger = logger;
 
         this.#awsAccessKey = awsAccessKey;
         this.#awsSecretKey = awsSecretKey;
