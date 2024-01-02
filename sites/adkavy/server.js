@@ -4,6 +4,7 @@ import util from 'node:util';
 import { EventEmitter } from 'node:events';
 import Kixx from './kixx/mod.js';
 import ConfigManager from './lib/config-manager/config-manager.js';
+import TemplateStore from './lib/template-store/template-store.js';
 
 import StaticFileServerRoute from './lib/http-routes/static-file-server.js';
 import StaticFileServerTarget from './lib/http-targets/static-file-server.js';
@@ -74,6 +75,11 @@ async function main() {
         logger.fatal('fatal error emitted on event bus', { error });
         logger.fatal('will attempt shutdown');
         gracefullyExit();
+    });
+
+    const templateStore = new TemplateStore({
+        directory: path.join(ROOT_DIR, 'templates'),
+        logger: logger.createChild({ name: 'TemplateStore' }),
     });
 
     const router = new NodeHTTPRouter({

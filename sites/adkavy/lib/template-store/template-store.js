@@ -11,7 +11,7 @@ export default class TemplateStore {
 
     constructor({ directory, logger }) {
         this.#directory = directory;
-        this.#logger = logger.createChild({ name: 'TemplateStore' });
+        this.#logger = logger;
     }
 
     async fetch(templateId) {
