@@ -6,13 +6,7 @@ import Kixx from './kixx/mod.js';
 import ConfigManager from './lib/config-manager/config-manager.js';
 
 import StaticFileServerRoute from './lib/http-routes/static-file-server.js';
-import HTMLPageRoute from './lib/http-routes/html-page.js';
-import JsonRPCRoute from './lib/http-routes/json-rpc.js';
-
 import StaticFileServerTarget from './lib/http-targets/static-file-server.js';
-import HTMLPageTarget from './lib/http-targets/html-page.js';
-import ListEntitiesTarget from './lib/http-targets/list-entities.js';
-import ViewEntityTarget from './lib/http-targets/view-entity.js';
 
 import ObservationsRPCTarget from './lib/http-targets/observations-rpc.js';
 import ObservationsAddMediaTarget from './lib/http-targets/observations-add-media.js';
@@ -22,8 +16,14 @@ import { fromFileUrl } from './lib/utils.js';
 
 import routes from './seeds/routes.js';
 
-
 const { NodeHTTPRouter, Route } = Kixx.HTTP;
+const { CachedHTMLPage } = Kixx.Pages;
+const { HTMLPageRoute, JsonRPCRoute } = Kixx.Routes;
+const {
+    HTMLPageTarget,
+    ListEntitiesTarget,
+    ViewEntityTarget,
+} = Kixx.Targets;
 
 
 const NAME = 'adkavy';
@@ -126,11 +126,22 @@ async function main() {
     });
 
     router.registerTargetFactory('HTMLPage', ({ methods, options }) => {
-        return new HTMLPageTarget({
-            eventBus,
+        const page = new CachedHTMLPage({
+            pageId: options.page,
+            templateId: options.template,
+            cacheable: true,
+            noCache: !config.pages.cache,
             logger: logger.createChild({ name: 'HTMLPageTarget' }),
+            eventBus,
+            dataStore,
+            blobStore,
+            templateStore,
+        });
+
+        return new HTMLPageTarget({
             methods,
             options,
+            page,
         });
     });
 
