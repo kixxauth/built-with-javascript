@@ -29,28 +29,6 @@ export default class DataStoreModel {
         });
     }
 
-    /**
-     * @public
-     */
-    mergeRelationships(rel) {
-        if (!isPlainObject(rel)) {
-            return this;
-        }
-
-        const Model = this.constructor;
-        const { type } = Model;
-        const { id, attributes, meta } = this;
-        const relationships = Object.assign({}, this.relationships, rel);
-
-        return new Model({
-            type,
-            id,
-            attributes,
-            relationships,
-            meta,
-        });
-    }
-
     beforeSave() {
         // Override me.
         return this;
@@ -110,10 +88,7 @@ export default class DataStoreModel {
             throw new NotFoundError(`DataStore update() ${ type }:${ id } does not exist`);
         }
 
-        model = model
-            .mergeAttributes(attributes)
-            .mergeRelationships(relationships)
-            .beforeSave();
+        model = model.mergeAttributes(attributes).beforeSave();
 
         const record = await dataStore.save(model);
 
@@ -129,7 +104,7 @@ export default class DataStoreModel {
         let model = await Model.load(dataStore, id);
 
         if (model) {
-            model = model.mergeAttributes(attributes).mergeRelationships(relationships);
+            model = model.mergeAttributes(attributes);
         } else {
             model = new Model({
                 id,

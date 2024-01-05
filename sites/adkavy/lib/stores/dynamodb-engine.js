@@ -36,4 +36,7 @@ export default class DynamoDBEngine {
         await this.#dynamoDBClient.putItem(table, record);
         return record;
     }
+
+    async queryView() {
+    }
 }
