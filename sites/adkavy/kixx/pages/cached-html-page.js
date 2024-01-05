@@ -15,7 +15,9 @@ Short Summary:
  */
 
 import { KixxAssert } from '../../dependencies.js';
-import { NotFoundError } from '../errors/mod.js';
+import Errors from '../errors/mod.js';
+
+const { NotFoundError } = Errors;
 
 const {
     assert,

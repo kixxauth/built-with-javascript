@@ -1,5 +1,7 @@
-import { JSONParsingError } from '../errors/mod.js';
+import Errors from '../errors/mod.js';
 import { objectToHeaders } from './http-utils.js';
+
+const { JSONParsingError } = Errors;
 
 
 export default class NodeHTTPRequest {

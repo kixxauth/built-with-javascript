@@ -1,7 +1,7 @@
-import { EOL } from 'node:os';
+import { getFullStack } from './utils.js';
 
 
-export class WrappedError extends Error {
+class WrappedError extends Error {
 
     constructor(message, spec, sourceFunction) {
         spec = spec || {};
@@ -30,38 +30,11 @@ export class WrappedError extends Error {
     }
 }
 
-export class OperationalError extends WrappedError {
+class OperationalError extends WrappedError {
+    static CODE = 'OPERATIONAL_ERROR';
 }
 
-export class BadRequestError extends WrappedError {
-    static CODE = 'BAD_REQUEST_ERROR';
-}
-
-export class UnauthorizedError extends WrappedError {
-    static CODE = 'UNAUTHORIZED_ERROR';
-}
-
-export class ForbiddenError extends WrappedError {
-    static CODE = 'FORBIDDEN_ERROR';
-}
-
-export class NotFoundError extends WrappedError {
-    static CODE = 'NOT_FOUND_ERROR';
-}
-
-export class ConflictError extends WrappedError {
-    static CODE = 'CONFLICT_ERROR';
-}
-
-export class MethodNotAllowedError extends WrappedError {
-    static CODE = 'METHOD_NOT_ALLOWED_ERROR';
-}
-
-export class NotImplementedError extends WrappedError {
-    static CODE = 'NOT_IMPLEMENTED_ERROR';
-}
-
-export class ValidationError extends WrappedError {
+class ValidationError extends WrappedError {
     static CODE = 'VALIDATION_ERROR';
 
     errors = [];
@@ -83,32 +56,49 @@ export class ValidationError extends WrappedError {
     }
 }
 
-export class JSONParsingError extends WrappedError {
+class BadRequestError extends WrappedError {
+    static CODE = 'BAD_REQUEST_ERROR';
+}
+
+class UnauthorizedError extends WrappedError {
+    static CODE = 'UNAUTHORIZED_ERROR';
+}
+
+class ForbiddenError extends WrappedError {
+    static CODE = 'FORBIDDEN_ERROR';
+}
+
+class NotFoundError extends WrappedError {
+    static CODE = 'NOT_FOUND_ERROR';
+}
+
+class ConflictError extends WrappedError {
+    static CODE = 'CONFLICT_ERROR';
+}
+
+class MethodNotAllowedError extends WrappedError {
+    static CODE = 'METHOD_NOT_ALLOWED_ERROR';
+}
+
+class NotImplementedError extends WrappedError {
+    static CODE = 'NOT_IMPLEMENTED_ERROR';
+}
+
+class JSONParsingError extends WrappedError {
     static CODE = 'JSON_PARSING_ERROR';
 }
 
-export function getFullStack(err) {
-    if (!err) {
-        return 'Null or undefined error';
-    }
-
-    const stack = [];
-
-    function recursivelyConcat(cause) {
-        if (cause && cause.stack) {
-            stack.push(cause.stack);
-        } else if (typeof cause === 'string') {
-            stack.push(cause);
-        } else {
-            stack.push('No stack trace');
-        }
-
-        if (cause && cause.cause) {
-            recursivelyConcat(cause.cause);
-        }
-    }
-
-    recursivelyConcat(err);
-
-    return stack.join(`${ EOL }caused by:${ EOL }`);
-}
+export default {
+    WrappedError,
+    OperationalError,
+    ValidationError,
+    BadRequestError,
+    UnauthorizedError,
+    ForbiddenError,
+    NotFoundError,
+    ConflictError,
+    MethodNotAllowedError,
+    NotImplementedError,
+    JSONParsingError,
+    getFullStack,
+};

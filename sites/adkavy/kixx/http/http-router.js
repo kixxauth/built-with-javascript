@@ -1,7 +1,8 @@
 import { KixxAssert } from '../../dependencies.js';
-import { NotImplementedError, NotFoundError } from '../errors/mod.js';
+import Errors from '../errors/mod.js';
 import Route from './route.js';
 
+const { NotImplementedError, NotFoundError } = Errors;
 const { assert, isFunction, isNonEmptyString } = KixxAssert;
 
 export default class HTTPRouter {

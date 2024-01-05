@@ -1,10 +1,11 @@
-import { NotFoundError } from '../errors/mod.js';
+import Errors from '../errors/mod.js';
 import HTTPRouter from './http-router.js';
 import NodeHTTPRequest from './node-http-request.js';
 import NodeHTTPResponse from './node-http-response.js';
 import { headersToObject } from './http-utils.js';
 import { KixxAssert } from '../../dependencies.js';
 
+const { NotFoundError } = Errors;
 const { isFunction } = KixxAssert;
 
 

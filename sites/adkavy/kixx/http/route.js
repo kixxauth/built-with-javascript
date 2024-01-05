@@ -1,9 +1,12 @@
 import PathToRegexp from 'path-to-regexp';
 import { KixxAssert } from '../../dependencies.js';
-import {
+import Errors from '../errors/mod.js';
+
+const {
     WrappedError,
     NotFoundError,
-    MethodNotAllowedError } from '../errors/mod.js';
+    MethodNotAllowedError,
+} = Errors;
 
 const { assert } = KixxAssert;
 
