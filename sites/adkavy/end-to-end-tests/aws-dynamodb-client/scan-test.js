@@ -10,9 +10,9 @@ import path from 'node:path';
 import fsp from 'node:fs/promises';
 import { KixxAssert } from '../../dependencies.js';
 import { createLogger } from '../../lib/logger.js';
-import AwsDynamoDbClient from '../../lib/aws-dynamodb-client/mod.js';
+import AwsDynamoDbClient from '../../lib/aws-dynamodb-client/aws-dynamodb-client.js';
 
-const { assert, assertEqual, isNonEmptyString } = KixxAssert;
+const { assert, isNonEmptyString } = KixxAssert;
 
 
 // Should be something like './end-to-end-tests/aws-dynamodb/config/good.json'.
@@ -35,7 +35,6 @@ async function main() {
 
     const client = new AwsDynamoDbClient({
         logger,
-        environment: ENVIRONMENT,
         awsRegion: config.awsRegion,
         awsDynamoDbEndpoint: config.dynamodbEndpoint,
         awsAccessKey: config.awsAccessKey,
@@ -43,18 +42,18 @@ async function main() {
     });
 
     const table = `adkavy_${ ENVIRONMENT }_entities`;
-    const index = `adkavy_${ ENVIRONMENT }_observations_by_datetime`;
 
-    const res = await client.query(table, index, {
-        type: 'observation',
+    const res = await client.scan(table, {
         exclusiveStartKey: null,
         limit: 10,
     });
 
+    // Uncomment for debugging.
+    // console.log(JSON.stringify(res, null, 4));
+
     assert(Array.isArray(res.items));
     assert(isNonEmptyString(res.lastEvaluatedKey.id));
-    assertEqual('observation', res.lastEvaluatedKey.type);
-    assert(isNonEmptyString(res.lastEvaluatedKey.key_observationDateTime));
+    assert(isNonEmptyString(res.lastEvaluatedKey.type));
 }
 
 async function loadConfig() {

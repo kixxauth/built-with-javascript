@@ -1,5 +1,7 @@
 import { Logger, streams } from 'kixx-logger';
-import { getFullStack } from './errors.js';
+import Kixx from '../kixx/mod.js';
+
+const { getFullStack } = Kixx.Errors;
 
 
 export function createLogger({ name, level, makePretty }) {

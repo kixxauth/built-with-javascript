@@ -10,7 +10,7 @@ import path from 'node:path';
 import fsp from 'node:fs/promises';
 import { KixxAssert } from '../../dependencies.js';
 import { createLogger } from '../../lib/logger.js';
-import AwsDynamoDbClient from '../../lib/aws-dynamodb-client/mod.js';
+import AwsDynamoDbClient from '../../lib/aws-dynamodb-client/aws-dynamodb-client.js';
 
 const { assertEqual } = KixxAssert;
 
@@ -52,6 +52,9 @@ async function main() {
 
     const table = `adkavy_${ ENVIRONMENT }_entities`;
     const res = await client.putItem(table, item);
+
+    // Uncomment for debugging.
+    // console.log(JSON.stringify(res, null, 4));
 
     assertEqual(true, res);
 

@@ -67,31 +67,36 @@ export default class AwsDynamoDBClient {
         return true;
     }
 
-    async query(table, index, options) {
-        const {
-            type,
-            limit,
-            exclusiveStartKey,
-        } = options;
+    async scan(table, options) {
+        const { limit, exclusiveStartKey } = options;
 
         const command = {
             TableName: table,
-            IndexName: index,
-            KeyConditionExpression: '#type_key = :type_value',
-            ExpressionAttributeNames: { '#type_key': 'type' },
-            ExpressionAttributeValues: { ':type_value': { S: type } },
-            Limit: limit,
         };
+
+        if (limit) {
+            command.Limit = limit;
+        }
 
         if (exclusiveStartKey) {
             command.ExclusiveStartKey = serializeObject(exclusiveStartKey);
         }
 
-        const res = await this.#makeDynamoDbRequest('Query', command);
+        const res = await this.#makeDynamoDbRequest('Scan', command);
+
+        let items;
+
+        if (res && Array.isArray(res.Items)) {
+            items = res.Items.map(deserializeObject);
+        } else {
+            items = [];
+        }
+
+        const lastEvaluatedKey = deserializeObject(res.LastEvaluatedKey);
 
         return {
-            items: res.Items.map(deserializeObject),
-            lastEvaluatedKey: deserializeObject(res.LastEvaluatedKey),
+            items,
+            lastEvaluatedKey,
         };
     }
 
