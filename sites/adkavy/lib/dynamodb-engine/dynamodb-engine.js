@@ -38,5 +38,6 @@ export default class DynamoDBEngine {
     }
 
     async queryView() {
+        // IMPORTANT: BatchGetItem is limited to 100 items
     }
 }

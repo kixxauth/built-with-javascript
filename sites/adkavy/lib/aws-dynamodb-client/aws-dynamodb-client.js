@@ -67,6 +67,20 @@ export default class AwsDynamoDBClient {
         return true;
     }
 
+    async batchGetItem(table, keys) {
+        const command = { RequestItems: {} };
+
+        command.RequestItems[table] = {
+            Keys: keys.map(serializeObject),
+        };
+
+        // Returns an empty JSON object.
+        const res = await this.#makeDynamoDbRequest('BatchGetItem', command);
+        const items = res.Responses[table];
+
+        return items.map(deserializeObject);
+    }
+
     async scan(table, options) {
         const { limit, exclusiveStartKey } = options;
 
