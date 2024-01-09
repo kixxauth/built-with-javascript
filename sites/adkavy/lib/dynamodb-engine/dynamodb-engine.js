@@ -40,8 +40,6 @@ export default class DynamoDBEngine {
     }
 
     registerView(view) {
-        assert(isNonEmptyString(view.name), 'A view name must be a string');
-
         this.#views.set(view.name, view);
         this.#indexes.set(view.name, []);
     }

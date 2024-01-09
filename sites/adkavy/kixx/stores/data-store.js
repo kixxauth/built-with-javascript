@@ -23,9 +23,15 @@ export default class DataStore {
         });
     }
 
+    registerView(view) {
+        assert(isNonEmptyString(view.name), 'registerView() view name must be a string');
+        this.engine.registerView(view);
+    }
+
     async fetch(type, id) {
         assert(isNonEmptyString(type), 'fetch() type must by a non empty string');
         assert(isNonEmptyString(id), 'fetch() id must by a non empty string');
+
         this.logger.debug('fetch', { type, id });
 
         const record = await this.engine.fetch(type, id);
@@ -41,7 +47,6 @@ export default class DataStore {
         record = structuredClone(record);
 
         record.meta = record.meta || {};
-        record.relationships = record.relationships || {};
 
         const now = new Date();
 
@@ -63,5 +68,23 @@ export default class DataStore {
         }
 
         return record;
+    }
+
+    async queryViewIndex(viewName, options) {
+        const {
+            descending,
+            startKey,
+            limit,
+        } = options;
+
+        assert(isNonEmptyString(viewName), 'queryViewIndex() view name must be a string');
+
+        const { items, lastKey } = await this.engine.queryViewIndex(viewName, {
+            descending,
+            startKey,
+            limit,
+        });
+
+        return { items, lastKey };
     }
 }

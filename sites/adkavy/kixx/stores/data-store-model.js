@@ -2,71 +2,94 @@ import util from 'node:util';
 import { KixxAssert } from '../../dependencies.js';
 import { ConflictError, NotFoundError } from '../errors/mod.js';
 
-const { assert, isNonEmptyString } = KixxAssert;
+const { assert, isNonEmptyString, isPlainObject } = KixxAssert;
 
 
 export default class DataStoreModel {
 
+    constructor(spec) {
+        const { id, attributes, meta } = spec || {};
+
+        assert(
+            isNonEmptyString(this.constructor.type),
+            `The DataStoreModel "${ this.constructor.name }" does not have a type`
+        );
+
+        Object.defineProperties(this, {
+            type: {
+                enumerable: true,
+                value: this.constructor.type,
+            },
+            id: {
+                enumerable: true,
+                value: id || null,
+            },
+            meta: {
+                enumerable: true,
+                value: Object.freeze(meta || {}),
+            },
+            attributes: {
+                enumerable: true,
+                value: Object.freeze(attributes || {}),
+            },
+        });
+    }
+
     /**
      * @public
      */
-    mergeAttributes(attrs) {
-        if (!isPlainObject(attrs)) {
-            return this;
-        }
+    updateAttributes(attrs) {
+        assert(isPlainObject(attrs), 'update() attributes must be a plain object');
 
         const Model = this.constructor;
-        const { type } = Model;
-        const { id, relationships, meta } = this;
-        const attributes = Object.assign({}, this.attributes, attrs);
+        const { id, meta } = this;
+        const attributes = this.mergeAttributes(attrs);
 
         return new Model({
-            type,
             id,
             attributes,
-            relationships,
             meta,
         });
     }
 
-    beforeSave() {
-        // Override me.
-        return this;
+    /**
+     * Intended to override.
+     * @private
+     */
+    mergeAttributes(attrs) {
+        return Object.assign({}, this.attributes, attrs);
     }
 
     /**
      * @public
      */
     async save(dataStore) {
-        const model = this.beforeSave();
-        const record = await dataStore.save(model);
+        const Model = this.constructor;
+        const record = await dataStore.save(this);
         return new Model(record);
     }
 
     /**
      * @public
      */
-    static async create(dataStore, id, attributes, relationships) {
+    static async create(dataStore, id, attributes) {
         const Model = this;
-        const { type } = Model;
 
         if (id) {
             const existing = await Model.load(dataStore, id);
 
             if (existing) {
+                const { type } = Model;
                 throw new ConflictError(`DataStore create() ${ type }:${ id } already exists`);
             }
         } else {
             id = util.randomUUID();
         }
 
-        let model = new Model({
+        const model = new Model({
             id,
             attributes: attributes || {},
-            relationships: relationships || {},
         });
-
-        model = model.beforeSave();
 
         const record = await dataStore.save(model);
 
@@ -76,44 +99,40 @@ export default class DataStoreModel {
     /**
      * @public
      */
-    static async update(dataStore, id, attributes, relationships) {
+    static async update(dataStore, id, attributes) {
         assert(isNonEmptyString(id), 'Model.update() must have an id');
 
         const Model = this.constructor;
-        const { type } = Model;
 
         let model = await Model.load(dataStore, id);
 
         if (!model) {
+            const { type } = Model;
             throw new NotFoundError(`DataStore update() ${ type }:${ id } does not exist`);
         }
 
-        model = model.mergeAttributes(attributes).beforeSave();
+        model = model.updateAttributes(attributes);
 
         const record = await dataStore.save(model);
 
         return new Model(record);
     }
 
-    static async createOrUpdate(dataStore, id, attributes, relationships) {
+    static async createOrUpdate(dataStore, id, attributes) {
         assert(isNonEmptyString(id), 'Model.createOrUpdate() must have an id');
 
         const Model = this.constructor;
-        const { type } = Model;
 
         let model = await Model.load(dataStore, id);
 
         if (model) {
-            model = model.mergeAttributes(attributes);
+            model = model.updateAttributes(attributes);
         } else {
             model = new Model({
                 id,
                 attributes: attributes || {},
-                relationships: relationships || {},
             });
         }
-
-        model = model.beforeSave();
 
         const record = await dataStore.save(model);
 
@@ -125,7 +144,13 @@ export default class DataStoreModel {
      */
     static async load(dataStore, id) {
         const Model = this;
-        const type = Model.type;
+        const { type } = Model;
+
+        assert(
+            isNonEmptyString(type),
+            `The DataStoreModel "${ this.name }" does not have a type`
+        );
+
         const record = await dataStore.fetch(type, id);
 
         if (!record) {
