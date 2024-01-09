@@ -91,9 +91,9 @@ export default class Route {
         let body = `The HTTP method ${ method } is not allowed on the URL pathname ${ url.pathname }.\n`;
         body += `Use ${ allowedMethods.join(', ') } instead.\n`;
 
-        return response.respondWithPlainText(405, body, {
-            allowed: allowedMethods.join(', '),
-        });
+        response.headers.set('allowed', allowedMethods.join(', '));
+
+        return response.respondWithPlainText(405, body);
     }
 
     handleError(error, request, response) {
