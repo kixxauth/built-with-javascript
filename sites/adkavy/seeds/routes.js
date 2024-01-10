@@ -169,9 +169,6 @@ export default [
         targets: [{
             methods: [ 'POST' ],
             targetName: 'ObservationsRPC',
-            options: {
-                allowedUsers: [ 'anonymous' ],
-            },
         }],
     },
     // Static root files. This should always go last in the lookup order.

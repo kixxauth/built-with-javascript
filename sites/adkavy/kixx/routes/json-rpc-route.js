@@ -13,8 +13,11 @@ export default class JsonRPCRoute extends Route {
             id: null,
             error: {
                 code: 405,
-                message: `"${ method }" method not allowed`,
-                data: { allowedMethods },
+                message: 'HTTP method not allowed',
+                data: {
+                    detail: `HTTP "${ method }" method not allowed`,
+                    allowedMethods,
+                },
             },
         });
     }
@@ -24,8 +27,11 @@ export default class JsonRPCRoute extends Route {
             jsonrpc: '2.0',
             id: null,
             error: {
-                code: -32000,
-                message: 'Internal server error',
+                code: -32603,
+                message: 'Internal error',
+                data: {
+                    detail: 'Unspecified internal server error',
+                },
             },
         });
     }

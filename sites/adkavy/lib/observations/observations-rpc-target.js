@@ -1,7 +1,10 @@
 import Kixx from '../../kixx/mod.js';
 
-const { Target } = Kixx.Targets;
+const { JsonRPCTarget } = Kixx.Targets;
 
 
-export default class ObservationsRPCTarget extends Target {
+export default class ObservationsRPCTarget extends JsonRPCTarget {
+    authenticateUser() {
+        // Noop
+    }
 }
