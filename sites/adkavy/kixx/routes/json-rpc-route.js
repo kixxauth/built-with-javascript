@@ -1,4 +1,4 @@
-import Route from '../http/route.js';
+import Route from './route.js';
 
 export default class JsonRPCRoute extends Route {
 

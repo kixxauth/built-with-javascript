@@ -1,16 +1,16 @@
+import Kixx from '../../kixx/mod.js';
 import ObservationsRPCTarget from './observations-rpc-target.js';
-import ObservationsRPCRoute from './observations-rpc-route.js';
 import ObservationsAddMediaTarget from './observations-add-media-target.js';
+
+const { JsonRPCRoute } = Kixx.Routes;
+
 
 export function registerObservations(components, router) {
     const { eventBus } = components;
 
-    const jsonRPCLogger = components.logger.createChild({ name: 'ObservationsRPC' });
-
     router.registerRouteFactory('ObservationsRPC', ({ patterns, targets }) => {
-        return new ObservationsRPCRoute({
+        return new JsonRPCRoute({
             eventBus,
-            logger: jsonRPCLogger,
             patterns,
             targets,
         });
@@ -19,7 +19,7 @@ export function registerObservations(components, router) {
     router.registerTargetFactory('ObservationsRPC', ({ methods, options }) => {
         return new ObservationsRPCTarget({
             eventBus,
-            logger: jsonRPCLogger,
+            logger: components.logger.createChild({ name: 'ObservationsRPC' }),
             methods,
             options,
         });

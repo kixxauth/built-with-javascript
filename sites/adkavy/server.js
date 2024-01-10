@@ -12,7 +12,7 @@ import {
 } from './lib/stores/mod.js';
 
 import { registerStaticFileServer } from './lib/static-file-server/mod.js';
-import { registerStaticHTMLPage } from './lib/static-html-page/mod.js';
+import { registerHTMLPages } from './lib/html-pages/mod.js';
 import { registerObservations } from './lib/observations/mod.js';
 
 import { createLogger } from './lib/logger.js';
@@ -20,7 +20,7 @@ import { fromFileUrl } from './lib/utils.js';
 
 import routes from './seeds/routes.js';
 
-const { NodeHTTPRouter, Route } = Kixx.HTTP;
+const { NodeHTTPRouter } = Kixx.HTTP;
 
 
 const NAME = 'adkavy';
@@ -100,17 +100,9 @@ async function main() {
         eventBus,
     });
 
-    router.registerRouteFactory('DefaultRoute', ({ patterns, targets }) => {
-        return new Route({
-            eventBus,
-            patterns,
-            targets,
-        });
-    });
-
     // Register plugins:
     registerStaticFileServer(components, router);
-    registerStaticHTMLPage(components, router);
+    registerHTMLPages(components, router);
     registerObservations(components, router);
 
     for (const routeSpec of routes) {

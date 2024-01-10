@@ -1,4 +1,4 @@
-import Target from '../http/target.js';
+import Target from './target.js';
 
 
 export default class ViewEntityTarget extends Target {

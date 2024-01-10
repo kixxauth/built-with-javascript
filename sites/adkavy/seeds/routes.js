@@ -67,7 +67,6 @@ export default [
     },
     {
         patterns: [ '/observations/:observationId/media/:filename' ],
-        routeName: 'DefaultRoute',
         targets: [{
             methods: [ 'PUT' ],
             targetName: 'ObservationsAddMedia',

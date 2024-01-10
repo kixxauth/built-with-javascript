@@ -1,5 +1,5 @@
 import Kixx from '../../kixx/mod.js';
 
-const { Route } = Kixx.HTTP;
+const { Route } = Kixx.Routes;
 
 export default class StaticFileServerRoute extends Route {}

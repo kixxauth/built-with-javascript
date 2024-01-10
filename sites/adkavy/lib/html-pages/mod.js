@@ -5,7 +5,7 @@ const { HTMLPageRoute } = Kixx.Routes;
 const { HTMLPageTarget, ListEntitiesTarget, ViewEntityTarget } = Kixx.Targets;
 
 
-export function registerStaticHTMLPage(components, router) {
+export function registerHTMLPages(components, router) {
     const {
         config,
         eventBus,
