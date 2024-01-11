@@ -1,7 +1,8 @@
 import util from 'node:util';
 import { KixxAssert } from '../../dependencies.js';
-import { ConflictError, NotFoundError } from '../errors/mod.js';
+import Errors from '../errors/mod.js';
 
+const { ConflictError, NotFoundError } = Errors;
 const { assert, isNonEmptyString, isPlainObject } = KixxAssert;
 
 
@@ -102,7 +103,7 @@ export default class DataStoreModel {
     static async update(dataStore, id, attributes) {
         assert(isNonEmptyString(id), 'Model.update() must have an id');
 
-        const Model = this.constructor;
+        const Model = this;
 
         let model = await Model.load(dataStore, id);
 
@@ -121,7 +122,7 @@ export default class DataStoreModel {
     static async createOrUpdate(dataStore, id, attributes) {
         assert(isNonEmptyString(id), 'Model.createOrUpdate() must have an id');
 
-        const Model = this.constructor;
+        const Model = this;
 
         let model = await Model.load(dataStore, id);
 

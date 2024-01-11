@@ -44,6 +44,10 @@ export default class DataStore {
         assert(isNonEmptyString(record.id), 'save() record.id must by a non empty string');
         assert(isPlainObject(record.attributes), 'save() record.attributes must be an object');
 
+        const { type, id } = record;
+
+        this.logger.debug('save', { type, id });
+
         record = structuredClone(record);
 
         record.meta = record.meta || {};
@@ -56,7 +60,7 @@ export default class DataStore {
 
         record.meta.updated = now.toISOString();
 
-        await this.engine.save(record.type, record.id, record);
+        await this.engine.save(type, id, record);
 
         const event = structuredClone(record);
 
@@ -78,6 +82,8 @@ export default class DataStore {
         } = options;
 
         assert(isNonEmptyString(viewName), 'queryViewIndex() view name must be a string');
+
+        this.logger.debug('query view index', { viewName, limit });
 
         const { items, lastKey } = await this.engine.queryViewIndex(viewName, {
             descending,

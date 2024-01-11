@@ -26,7 +26,7 @@ const {
 } = KixxAssert;
 
 
-export default class CachedHTMLPage {
+export default class CacheablePage {
 
     #cachedPageData = null;
     #cachedTemplate = null;
