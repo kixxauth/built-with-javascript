@@ -3,14 +3,13 @@ import Target from './target.js';
 
 export default class HTMLPageTarget extends Target {
 
-    #page = null;
-    #options = {};
-
     constructor({ methods, page, options }) {
         super({ methods });
-        this.#page = page;
 
         Object.defineProperties(this, {
+            page: {
+                value: page,
+            },
             cacheControl: {
                 value: options?.cacheControl,
             },
@@ -18,30 +17,30 @@ export default class HTMLPageTarget extends Target {
     }
 
     async handleRequest(request, response) {
+        // TODO: Handle cacheControl.
+        const { method } = request;
         const { href, pathnameParams } = request.url;
+        // Convert searchParams Map to a plain object.
+        const searchParams = Object.fromEntries(request.url.searchParams);
 
         const baseData = {
             canonicalURL: href,
         };
 
-        const requestJSON = request.url.pathname.endsWith('.json');
-
-        let json;
-        let html;
+        const args = Object.assign({}, pathnameParams, searchParams);
+        const head = method === 'HEAD';
+        const requestJSON = request.url.pathname.toLowerCase().endsWith('.json');
 
         if (requestJSON) {
-            json = await this.#page.generateJSON(baseData, pathnameParams);
-        } else {
-            html = await this.#page.generateHTML(href, baseData, pathnameParams);
+            const json = await this.page.generateJSON(baseData, args);
+
+            return response.respondWithJSON(200, json, {
+                head,
+                whiteSpace: true,
+            });
         }
 
-        // TODO: Handle HEAD request.
-        // TODO: Handle cacheControl.
-
-        if (json) {
-            return response.respondWithJSON(200, json, { whiteSpace: true });
-        }
-
-        return response.respondWithHTML(200, html);
+        const utf8 = await this.page.generateMarkup(href, baseData, args);
+        return response.respondWithHTML(200, utf8, { head });
     }
 }

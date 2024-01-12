@@ -16,14 +16,11 @@ Short Summary:
 
 import { KixxAssert } from '../../dependencies.js';
 import Errors from '../errors/mod.js';
+import RootPage from './root-page.js';
 
 const { NotFoundError } = Errors;
 
-const {
-    assert,
-    isNonEmptyString,
-    isPlainObject,
-} = KixxAssert;
+const { assert, isNonEmptyString } = KixxAssert;
 
 
 export default class CacheablePage {
@@ -31,7 +28,7 @@ export default class CacheablePage {
     #cachedPageData = null;
     #cachedTemplate = null;
     #cachedContentSnippets = null;
-    #cachedHTML = new Map();
+    #cachedMarkup = new Map();
 
     constructor(spec) {
         assert(isNonEmptyString(spec.pageId), 'spec.pageId isNonEmptyString');
@@ -46,7 +43,7 @@ export default class CacheablePage {
             pageId,
             templateId,
             // Is the page HTML cacheable?
-            cacheable,
+            notCacheable,
             // Set to true to turn off caching.
             noCache,
             logger,
@@ -70,9 +67,9 @@ export default class CacheablePage {
             eventBus: {
                 value: eventBus,
             },
-            // Is the page HTML cacheable?
+            // Is the page markup cacheable?
             cacheable: {
-                value: Boolean(cacheable),
+                value: !notCacheable,
             },
             // Toggle all caching on/off.
             cache: {
@@ -114,34 +111,21 @@ export default class CacheablePage {
     /**
      * @public
      */
-    async generateHTML(key, baseData, args) {
-        if (this.#cachedHTML.has(key)) {
-            return this.#cachedHTML.get(key);
+    async generateMarkup(key, baseData, args) {
+        if (this.#cachedMarkup.has(key)) {
+            return this.#cachedMarkup.get(key);
         }
 
-        const page = await this.generateJSON(baseData, args);
+        const data = await this.generateJSON(baseData, args);
         const template = await this.getTemplate();
 
-        const html = template(page);
+        const utf8 = template(data);
 
         if (this.cache && this.cacheable) {
-            this.#cachedHTML.set(key, html);
+            this.#cachedMarkup.set(key, utf8);
         }
 
-        return html;
-    }
-
-    /**
-     * @private
-     */
-    deleteCache() {
-        const { pageId } = this;
-        this.logger.info('deleting page cache', { pageId });
-
-        this.#cachedHTML.clear();
-        this.#cachedPageData = null;
-        this.#cachedContentSnippets = null;
-        this.#cachedTemplate = null;
+        return utf8;
     }
 
     /**
@@ -152,12 +136,9 @@ export default class CacheablePage {
             return this.#cachedPageData;
         }
 
-        const { pageId } = this;
+        const { pageId, dataStore } = this;
 
-        const page = await this.dataStore.fetch({
-            type: 'page',
-            id: pageId,
-        });
+        const page = await RootPage.load(dataStore, pageId);
 
         if (!page) {
             throw new NotFoundError(`Page "${ pageId }" could not be found`);
@@ -182,16 +163,19 @@ export default class CacheablePage {
             return this.#cachedContentSnippets;
         }
 
-        const snippetsList = await this.blobStore.fetchBatch(snippetIds);
+        const { pageId, blobStore } = this;
+
+        const snippetsList = await blobStore.fetchBatch(snippetIds);
 
         const snippets = {};
 
         snippetsList.forEach((snippet, index) => {
+            const id = snippetIds[index];
             if (!snippet) {
-                throw new NotFoundError(`Page snippet "${ this.pageId }:${ snippetIds[index] }" could not be found`);
+                throw new NotFoundError(`Page snippet "${ pageId }:${ id }" could not be found`);
             }
 
-            snippets[snippet.id] = snippet.content;
+            snippets[id] = snippet;
         });
 
         // If the page is cacheable, then we cache the full HTML content utf8 so there is
@@ -211,17 +195,15 @@ export default class CacheablePage {
             return this.#cachedTemplate;
         }
 
-        const { templateId } = this;
+        const { templateId, templateStore } = this;
 
-        const template = await this.templateStore.fetch(templateId);
+        const template = await templateStore.fetch(templateId);
 
         if (!template) {
             throw new NotFoundError(`Template "${ templateId }" could not be found`);
         }
 
-        // If the page is cacheable, then we cache the full HTML content utf8 so there is
-        // no need to cache this data.
-        if (this.cache && !this.cacheable) {
+        if (this.cache) {
             this.#cachedTemplate = template;
         }
 
@@ -240,7 +222,6 @@ export default class CacheablePage {
      * @private
      */
     bindEventListeners() {
-        // TODO: Implement data store events and test them out for caching
         this.eventBus.on('DataStore:updateItem', this.#onPageDataStoreUpdate.bind(this));
         this.eventBus.on('BlobStore:updateItem', this.#onPageSnippetStoreUpdate.bind(this));
     }
@@ -248,29 +229,35 @@ export default class CacheablePage {
     /**
      * @private
      */
-    #onPageDataStoreUpdate({ id }) {
+    deleteCache() {
+        const { pageId } = this;
+        this.logger.info('deleting page cache', { pageId });
+
+        this.#cachedMarkup.clear();
+        this.#cachedPageData = null;
+        this.#cachedContentSnippets = null;
+        this.#cachedTemplate = null;
+    }
+
+    /**
+     * @private
+     */
+    #onPageDataStoreUpdate({ id, attributes }) {
         const { pageId } = this;
         if (id === pageId) {
             this.logger.log('detected page data update', { pageId });
             this.deleteCache();
+            this.#cachedPageData = structuredClone(attributes);
         }
     }
 
     /**
      * @private
      */
-    #onPageSnippetStoreUpdate({ id }) {
-        const page = this.getPageData();
+    async #onPageSnippetStoreUpdate({ id }) {
+        const page = await this.getPageData();
 
-        let snippetIds = [];
-
-        if (isPlainObject(page.snippets)) {
-            snippetIds = Object.keys(page.snippets).map((key) => {
-                return page.snippets[key];
-            });
-        }
-
-        if (snippetIds.includes(id)) {
+        if (Array.isArray(page.snippets) && page.snippets.includes(id)) {
             const { pageId } = this;
             this.logger.log('detected snippet update', { pageId, snippetId: id });
             this.deleteCache();

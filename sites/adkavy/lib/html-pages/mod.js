@@ -1,8 +1,8 @@
 import Kixx from '../../kixx/mod.js';
 
-const { CachedHTMLPage } = Kixx.Pages;
 const { HTMLPageRoute } = Kixx.Routes;
 const { HTMLPageTarget, ListEntitiesTarget, ViewEntityTarget } = Kixx.Targets;
+const { CacheablePage } = Kixx.CacheablePage;
 
 
 export function registerHTMLPages(components, router) {
@@ -21,17 +21,15 @@ export function registerHTMLPages(components, router) {
     router.registerRouteFactory('HTMLPage', ({ patterns, targets }) => {
         return new HTMLPageRoute({
             eventBus,
-            logger: components.logger.createChild({ name: 'StaticHTMLPage' }),
             patterns,
             targets,
         });
     });
 
     router.registerTargetFactory('HTMLPage', ({ methods, options }) => {
-        const page = new CachedHTMLPage({
+        const page = new CacheablePage({
             pageId: options.page,
             templateId: options.template,
-            cacheable: true,
             noCache: !config.pages.cache,
             logger: components.logger.createChild({ name: 'CachedHTMLPage' }),
             eventBus,

@@ -81,6 +81,7 @@ async function main() {
 
         const page = await RootPage.createOrUpdate(dataStore, id, attributes);
 
+        // eslint-disable-next-line no-console
         console.log('updated page', page.id);
     }
 }

@@ -54,45 +54,60 @@ export default class NodeHTTPResponse {
 
     respondWithJSON(statusCode, obj, options) {
         assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
+
+        const { head, whiteSpace } = options || {};
+
+        const utf8 = whiteSpace
+            ? JSON.stringify(obj, null, 4) + '\n'
+            : JSON.stringify(obj) + '\n';
+
         this.status = statusCode;
         this.statusMessage = statusMessagesByCode.get(statusCode);
-
-        if (options && options.whiteSpace) {
-            this.body = JSON.stringify(obj, null, 4) + '\n';
-        } else {
-            this.body = JSON.stringify(obj) + '\n';
-        }
 
         this.headers.set('content-type', 'application/json');
-        this.headers.set('content-length', Buffer.byteLength(this.body));
+        this.headers.set('content-length', Buffer.byteLength(utf8));
+
+        if (!head) {
+            this.body = utf8;
+        }
 
         return this;
     }
 
-    respondWithPlainText(statusCode, utf8) {
+    respondWithPlainText(statusCode, utf8, options) {
         assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
         assert(isNonEmptyString(utf8), ': response body must be a string');
+
+        const { head } = options || {};
+
         this.status = statusCode;
         this.statusMessage = statusMessagesByCode.get(statusCode);
-
-        this.body = utf8;
 
         this.headers.set('content-type', 'text/plain');
-        this.headers.set('content-length', Buffer.byteLength(this.body));
+        this.headers.set('content-length', Buffer.byteLength(utf8));
+
+        if (!head) {
+            this.body = utf8;
+        }
 
         return this;
     }
 
-    respondWithHTML(statusCode, utf8) {
+    respondWithHTML(statusCode, utf8, options) {
         assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
         assert(isNonEmptyString(utf8), ': response body must be a string');
+
+        const { head } = options || {};
+
         this.status = statusCode;
         this.statusMessage = statusMessagesByCode.get(statusCode);
 
-        this.body = utf8;
-
         this.headers.set('content-type', 'text/html');
-        this.headers.set('content-length', Buffer.byteLength(this.body));
+        this.headers.set('content-length', Buffer.byteLength(utf8));
+
+        if (!head) {
+            this.body = utf8;
+        }
 
         return this;
     }
