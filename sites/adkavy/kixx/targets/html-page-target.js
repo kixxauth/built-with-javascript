@@ -3,8 +3,8 @@ import Target from './target.js';
 
 export default class HTMLPageTarget extends Target {
 
-    constructor({ methods, page, options }) {
-        super({ methods });
+    constructor({ name, methods, page, options }) {
+        super({ name, methods });
 
         Object.defineProperties(this, {
             page: {

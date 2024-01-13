@@ -1,26 +1,46 @@
+import path from 'node:path';
+import { KixxAssert } from '../../dependencies.js';
 import StaticFileServerRoute from './static-file-server-route.js';
 import StaticFileServerTarget from './static-file-server-target.js';
 
+const { isNonEmptyString } = KixxAssert;
 
-export function registerStaticFileServer(components, router) {
-    const { eventBus } = components;
-    const logger = components.logger.createChild({ name: 'StaticFileServer' });
 
-    router.registerRouteFactory('StaticFileServer', ({ patterns, targets }) => {
+export function registerStaticFileServer(router, settings) {
+    const {
+        eventBus,
+        logger,
+        publicDirectory,
+    } = settings;
+
+    router.registerRouteFactory('StaticFileServer', ({ name, patterns, targets }) => {
         return new StaticFileServerRoute({
+            name,
             eventBus,
-            logger,
             patterns,
             targets,
         });
     });
 
-    router.registerTargetFactory('StaticFileServer', ({ methods, options }) => {
+    router.registerTargetFactory('StaticFileServer', ({ name, methods, options }) => {
+
+        const { folder, cacheControl } = options;
+
+        let rootPath = publicDirectory;
+
+        if (isNonEmptyString(folder)) {
+            const pathParts = folder.split('/').filter((x) => x);
+
+            // Use the provided folder name.
+            rootPath = path.join(publicDirectory, ...pathParts);
+        }
+
         return new StaticFileServerTarget({
-            eventBus,
-            logger,
+            name,
+            logger: logger.createChild({ name: 'StaticFileServer' }),
             methods,
-            options,
+            rootPath,
+            cacheControl,
         });
     });
 }

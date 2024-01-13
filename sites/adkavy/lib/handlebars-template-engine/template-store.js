@@ -54,7 +54,7 @@ export default class TemplateStore {
         parts.pop(); // Pop off the file extension.
         const name = parts.join('.');
 
-        this.#logger.debug('register partial', { filepath, name });
+        this.#logger.trace('register partial', { filepath, name });
 
         const html = await fsp.readFile(filepath, { encoding: 'utf8' });
 
@@ -73,8 +73,11 @@ export default class TemplateStore {
     }
 
     async #registerHelper(handlebars, filepath) {
+
+        this.#logger.trace('register helper', { filepath });
+
         const sourceCode = await fsp.readFile(filepath, { encoding: 'utf8' });
-        const context = { exports: { name: null, helper: null }, Handlebars };
+        const context = { exports: { helper: null }, Handlebars };
         const name = path.basename(filepath, '.js');
 
         vm.runInNewContext(sourceCode, context, { timeout: 100 });

@@ -42,12 +42,16 @@ export default class NodeHTTPResponse {
         return this;
     }
 
-    respondWithStream(statusCode, readStream) {
+    respondWithStream(statusCode, readStream, options) {
         assert(isNumberNotNaN(statusCode), ': statusCode must be a number');
+        const { head } = options || {};
+
         this.status = statusCode;
         this.statusMessage = statusMessagesByCode.get(statusCode);
 
-        this.body = readStream;
+        if (!head) {
+            this.body = readStream;
+        }
 
         return this;
     }
@@ -119,6 +123,7 @@ export default class NodeHTTPResponse {
         this.statusMessage = statusMessagesByCode.get(statusCode);
 
         this.headers.set('content-length', '0');
+        this.body = null;
 
         return this;
     }

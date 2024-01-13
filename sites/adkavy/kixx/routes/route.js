@@ -8,22 +8,23 @@ const {
     MethodNotAllowedError,
 } = Errors;
 
-const { assert } = KixxAssert;
+const { assert, isNonEmptyString } = KixxAssert;
 
 
 export default class Route {
 
-    #eventBus = null;
     #targets = [];
     #patternMatchers = [];
 
     constructor(options) {
         const {
+            name,
             eventBus,
             patterns,
             targets,
         } = options;
 
+        assert(isNonEmptyString(name), 'Route name is required');
         assert(eventBus, 'Route eventBus is required');
 
         assert(
@@ -36,7 +37,15 @@ export default class Route {
             'Route targets must be an array'
         );
 
-        this.#eventBus = eventBus;
+        Object.defineProperties(this, {
+            name: {
+                enumerable: true,
+                value: name,
+            },
+            eventBus: {
+                value: eventBus,
+            },
+        });
 
         this.#targets = targets;
 
@@ -63,6 +72,13 @@ export default class Route {
             throw error;
         }
 
+        this.eventBus.emit('KixxHTTPRequest', {
+            method: request.method,
+            url: request.url,
+            route: this.name,
+            target: target.name,
+        });
+
         let res;
 
         // By using `await route.handleRequest()` we cast the result to a Promise and catch any errors
@@ -77,7 +93,7 @@ export default class Route {
             }
 
             if (!(error instanceof WrappedError) || error.fatal) {
-                this.#eventBus.emit('error', error);
+                this.eventBus.emit('error', error);
             }
         }
 
@@ -86,6 +102,7 @@ export default class Route {
 
     returnMethodNotAllowedResponse(request, response) {
         const { method, url } = request;
+        const head = method === 'HEAD';
         const allowedMethods = this.getAllowedMethodsAsArray();
 
         let body = `The HTTP method ${ method } is not allowed on the URL pathname ${ url.pathname }.\n`;
@@ -93,11 +110,14 @@ export default class Route {
 
         response.headers.set('allowed', allowedMethods.join(', '));
 
-        return response.respondWithPlainText(405, body);
+        return response.respondWithPlainText(405, body, { head });
     }
 
     handleError(error, request, response) {
-        return response.respondWithPlainText(500, 'Internal server error.\n');
+        const { method } = request;
+        const head = method === 'HEAD';
+
+        return response.respondWithPlainText(500, 'Internal server error.\n', { head });
     }
 
     getAllowedMethodsAsArray() {

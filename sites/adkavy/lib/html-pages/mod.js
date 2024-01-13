@@ -5,33 +5,35 @@ const { HTMLPageTarget, ListEntitiesTarget, ViewEntityTarget } = Kixx.Targets;
 const { CacheablePage } = Kixx.CacheablePage;
 
 
-export function registerHTMLPages(components, router) {
+export function registerHTMLPages(router, settings) {
     const {
-        config,
         eventBus,
+        logger,
         dataStore,
         blobStore,
         templateStore,
-    } = components;
+        noCache,
+    } = settings;
 
     //
     // Static HTML pages
     //
 
-    router.registerRouteFactory('HTMLPage', ({ patterns, targets }) => {
+    router.registerRouteFactory('HTMLPage', ({ name, patterns, targets }) => {
         return new HTMLPageRoute({
+            name,
             eventBus,
             patterns,
             targets,
         });
     });
 
-    router.registerTargetFactory('HTMLPage', ({ methods, options }) => {
+    router.registerTargetFactory('HTMLPage', ({ name, methods, options }) => {
         const page = new CacheablePage({
             pageId: options.page,
             templateId: options.template,
-            noCache: !config.pages.cache,
-            logger: components.logger.createChild({ name: 'CachedHTMLPage' }),
+            noCache,
+            logger: logger.createChild({ name: 'CachedHTMLPage' }),
             eventBus,
             dataStore,
             blobStore,
@@ -39,6 +41,7 @@ export function registerHTMLPages(components, router) {
         });
 
         return new HTMLPageTarget({
+            name,
             methods,
             options,
             page,
@@ -49,19 +52,21 @@ export function registerHTMLPages(components, router) {
     // Dynamic HTML pages
     //
 
-    router.registerTargetFactory('ListEntities', ({ methods, options }) => {
+    router.registerTargetFactory('ListEntities', ({ name, methods, options }) => {
         return new ListEntitiesTarget({
+            name,
             eventBus,
-            logger: components.logger.createChild({ name: 'ListEntities' }),
+            logger: logger.createChild({ name: 'ListEntities' }),
             methods,
             options,
         });
     });
 
-    router.registerTargetFactory('ViewEntity', ({ methods, options }) => {
+    router.registerTargetFactory('ViewEntity', ({ name, methods, options }) => {
         return new ViewEntityTarget({
+            name,
             eventBus,
-            logger: components.logger.createChild({ name: 'ViewEntity' }),
+            logger: logger.createChild({ name: 'ViewEntity' }),
             methods,
             options,
         });

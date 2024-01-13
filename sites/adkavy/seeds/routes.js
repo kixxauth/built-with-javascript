@@ -173,7 +173,7 @@ export default [
     },
     // Static root files. This should always go last in the lookup order.
     {
-        patterns: [ ':basename.(png|ico|svg|xml|webmanifest)' ],
+        patterns: [ '/:basename.(png|ico|svg|xml|webmanifest)' ],
         routeName: 'StaticFileServer',
         targets: [{
             methods: [ 'GET', 'HEAD' ],

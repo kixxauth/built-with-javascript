@@ -6,27 +6,31 @@ import ObservationsAddMediaTarget from './observations-add-media-target.js';
 const { JsonRPCRoute } = Kixx.Routes;
 
 
-export function registerObservations(components, router) {
-    const { eventBus, logger } = components;
+export function registerObservations(router, settings) {
+    const { eventBus, logger } = settings;
 
-    router.registerRouteFactory('ObservationsRPC', ({ patterns, targets }) => {
+    router.registerRouteFactory('ObservationsRPC', ({ name, patterns, targets }) => {
         return new JsonRPCRoute({
+            name,
             eventBus,
             patterns,
             targets,
         });
     });
 
-    router.registerTargetFactory('ObservationsRPC', ({ methods }) => {
+    router.registerTargetFactory('ObservationsRPC', ({ name, methods }) => {
         const remoteProcedureCalls = new ObservationsRemoteProcedureCalls();
+
         return new ObservationsRPCTarget({
+            name,
             methods,
             remoteProcedureCalls,
         });
     });
 
-    router.registerTargetFactory('ObservationsAddMedia', ({ methods, options }) => {
+    router.registerTargetFactory('ObservationsAddMedia', ({ name, methods, options }) => {
         return new ObservationsAddMediaTarget({
+            name,
             eventBus,
             logger: logger.createChild({ name: 'ObservationsAddMediaTarget' }),
             methods,

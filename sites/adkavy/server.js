@@ -73,6 +73,11 @@ async function main() {
         gracefullyExit();
     });
 
+    eventBus.on('KixxHTTPRequest', (ev) => {
+        const { method, url, route, target } = ev;
+        logger.debug('kixx http request', { method, route, target, href: url.href });
+    });
+
     const dataStore = createDataStore({
         config,
         eventBus,
@@ -86,24 +91,38 @@ async function main() {
         directory: path.join(ROOT_DIR, 'templates'),
     });
 
-    const components = {
-        config,
-        eventBus,
-        logger,
-        dataStore,
-        blobStore,
-        templateStore,
-    };
-
     const router = new NodeHTTPRouter({
         logger: logger.createChild({ name: 'HTTPRouter' }),
         eventBus,
     });
 
+    //
     // Register plugins:
-    registerStaticFileServer(components, router);
-    registerHTMLPages(components, router);
-    registerObservations(components, router);
+    //
+
+    // Static File Server Plugin
+    registerStaticFileServer(router, {
+        eventBus,
+        logger,
+        publicDirectory: path.join(ROOT_DIR, 'public'),
+    });
+
+    // Cacheable HTML Page Plugin
+    registerHTMLPages(router, {
+        eventBus,
+        logger,
+        dataStore,
+        blobStore,
+        templateStore,
+        noCache: !config.pages.cache,
+    });
+
+    // ADK Observations Plugin
+    registerObservations(router, {
+        eventBus,
+        logger,
+    });
+
 
     for (const routeSpec of routes) {
         router.registerRoute(routeSpec);
@@ -115,21 +134,52 @@ async function main() {
             logger.warn('request error event', { name: error.name, code: error.code, message: error.message });
         });
 
-        router.handleRequest(req, res).catch(function onRequestError(error) {
+        const contentLength = req.headers['content-length'] ? parseInt(req.headers['content-length'], 10) : 0;
+
+        logger.info('http request', {
+            method: req.method,
+            url: req.url,
+            contentLength,
+        });
+
+        function onRequestSuccess(newResponse) {
+            const responseContentLength = newResponse.headers.has('content-length')
+                ? parseInt(newResponse.headers.get('content-length'), 10)
+                : 0;
+
+            logger.info('http response', {
+                status: newResponse.status,
+                method: req.method,
+                url: req.url,
+                contentLength: responseContentLength,
+            });
+        }
+
+        function onRequestError(error) {
             logger.fatal('fatal error in request router', { error });
-            logger.fatal('will attempt shutdown');
 
             const body = 'Internal server error.\n';
+            const responseContentLength = Buffer.byteLength(body);
+
+            logger.info('http response', {
+                status: 500,
+                method: req.method,
+                url: req.url,
+                contentLength: responseContentLength,
+            });
 
             res.writeHead(500, 'Internal Server Error', {
                 'content-type': 'text/plain',
-                'content-length': Buffer.byteLength(body),
+                'content-length': responseContentLength,
             });
 
             res.end(body);
 
+            logger.fatal('will attempt shutdown');
             gracefullyExit();
-        });
+        }
+
+        router.handleRequest(req, res).then(onRequestSuccess, onRequestError);
     });
 
     server.on('error', (error) => {

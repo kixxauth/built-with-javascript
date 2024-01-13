@@ -12,16 +12,6 @@ const { isFunction } = KixxAssert;
 export default class NodeHTTPRouter extends HTTPRouter {
 
     async handleRequest(req, res) {
-        const { method } = req;
-        const fullURL = req.url;
-        const contentLength = req.headers['content-length'] ? parseInt(req.headers['content-length'], 10) : 0;
-
-        this.logger.log('http request', {
-            method,
-            url: fullURL,
-            contentLength,
-        });
-
         const url = new URL(req.url, `${ this.#getProtocol(req) }://${ this.#getHost(req) }`);
 
         const request = new NodeHTTPRequest({ req, url });
@@ -46,15 +36,6 @@ export default class NodeHTTPRouter extends HTTPRouter {
             body,
         } = newResponse;
 
-        const responseContentLength = headers.has('content-length') ? parseInt(headers.get('content-length'), 10) : 0;
-
-        this.logger.log('http response', {
-            status,
-            method,
-            url: fullURL,
-            contentLength: responseContentLength,
-        });
-
         res.writeHead(status, statusMessage, headersToObject(headers));
 
         if (body) {
@@ -67,6 +48,8 @@ export default class NodeHTTPRouter extends HTTPRouter {
         } else {
             res.end();
         }
+
+        return newResponse;
     }
 
     #getProtocol(req) {

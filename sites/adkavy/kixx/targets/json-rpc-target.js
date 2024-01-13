@@ -17,8 +17,8 @@ const {
 
 export default class JsonRPCTarget extends Target {
 
-    constructor({ methods, remoteProcedureCalls }) {
-        super({ methods });
+    constructor({ name, methods, remoteProcedureCalls }) {
+        super({ name, methods });
 
         Object.defineProperties(this, {
             remoteProcedureCalls: {

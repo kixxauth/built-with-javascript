@@ -1,14 +1,19 @@
 import { KixxAssert } from '../../dependencies.js';
 
-const { assert } = KixxAssert;
+const { assert, isNonEmptyString } = KixxAssert;
 
 
 export default class Target {
 
-    constructor({ methods }) {
+    constructor({ name, methods }) {
+        assert(isNonEmptyString(name), 'Target name is required');
         assert(Array.isArray(methods));
 
         Object.defineProperties(this, {
+            name: {
+                enumerable: true,
+                value: name,
+            },
             methods: {
                 enumerable: true,
                 // Make copies of Objects before we freeze them.

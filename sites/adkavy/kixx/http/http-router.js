@@ -11,13 +11,10 @@ export default class HTTPRouter {
     #registeredTargetFactories = new Map();
     #routes = [];
 
-    constructor({ eventBus, logger }) {
+    constructor({ eventBus }) {
         Object.defineProperties(this, {
             eventBus: {
                 value: eventBus,
-            },
-            logger: {
-                value: logger,
             },
         });
     }
@@ -70,10 +67,11 @@ export default class HTTPRouter {
             );
 
             const createTarget = this.#registeredTargetFactories.get(targetName);
-            return createTarget({ methods, options });
+            return createTarget({ name: targetName, methods, options });
         });
 
         const route = createRoute({
+            name: routeName || 'DefaultRoute',
             patterns,
             targets: targetInstances,
         });
@@ -92,33 +90,47 @@ export default class HTTPRouter {
                 newResponse = await route.handleRequest(request, response);
             } catch (error) {
                 if (error.code !== NotFoundError.CODE) {
+                    newResponse = this.handleError(error, request, response);
                     this.eventBus.emit('error', error);
-                    return this.handleError(error, request, response);
                 }
             }
 
             if (newResponse) {
+                const now = new Date();
+                newResponse.headers.set('date', now.toUTCString());
                 return newResponse;
             }
         }
+
+        this.eventBus.emit('KixxHTTPRequest', {
+            method: request.method,
+            url: request.url,
+            route: null,
+            target: null,
+        });
 
         throw new NotFoundError(`The URL pathname ${ request.url.pathname } cannot be found on this server`);
     }
 
     handleError(error, request, response) {
-        return response.respondWithPlainText(500, 'Internal server error.\n');
+        const { method } = request;
+        const head = method === 'HEAD';
+        return response.respondWithPlainText(500, 'Internal server error.\n', { head });
     }
 
     returnNotFoundResponse(error, request, response) {
+        const { method } = request;
+        const head = method === 'HEAD';
         const { pathname } = request.url;
-        return response.respondWithPlainText(404, `URL ${ pathname } not found on this server.\n`);
+        return response.respondWithPlainText(404, `URL ${ pathname } not found on this server.\n`, { head });
     }
 
 
-    defaultRouteFactory({ patterns, targets }) {
+    defaultRouteFactory({ name, patterns, targets }) {
         const { eventBus } = this;
 
         return new Route({
+            name,
             eventBus,
             patterns,
             targets,
