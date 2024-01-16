@@ -9,6 +9,7 @@ const {
 } = KixxAssert;
 
 const {
+    WrappedError,
     UnauthorizedError,
     ForbiddenError,
     JSONParsingError,
@@ -17,10 +18,20 @@ const {
 
 export default class JsonRPCTarget extends Target {
 
-    constructor({ name, methods, remoteProcedureCalls }) {
+    constructor(options) {
+        const {
+            name,
+            methods,
+            eventBus,
+            remoteProcedureCalls,
+        } = options;
+
         super({ name, methods });
 
         Object.defineProperties(this, {
+            eventBus: {
+                value: eventBus,
+            },
             remoteProcedureCalls: {
                 value: remoteProcedureCalls,
             },
@@ -75,15 +86,25 @@ export default class JsonRPCTarget extends Target {
             return response.respondWithJSON(200, jsonResponse);
         }
 
-        let result;
-        // Use await to cast RPC results to a Promise.
-        if (Array.isArray(params)) {
-            result = await this.remoteProcedureCalls[method](...params);
-        } else {
-            result = await this.remoteProcedureCalls[method](params);
+        try {
+            // Use await to cast RPC results to a Promise.
+            if (Array.isArray(params)) {
+                jsonResponse.result = await this.remoteProcedureCalls[method](...params);
+            } else {
+                jsonResponse.result = await this.remoteProcedureCalls[method](params);
+            }
+        } catch (error) {
+            jsonResponse.error = {
+                code: -32603,
+                message: 'Internal error',
+                detail: 'Unspecified internal server error',
+            };
+
+            if (!(error instanceof WrappedError) || error.fatal) {
+                this.eventBus.emit('error', error);
+            }
         }
 
-        jsonResponse.result = result;
         return response.respondWithJSON(200, jsonResponse);
     }
 

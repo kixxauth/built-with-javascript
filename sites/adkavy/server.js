@@ -121,6 +121,7 @@ async function main() {
     registerObservations(router, {
         eventBus,
         logger,
+        dataStore,
     });
 
 

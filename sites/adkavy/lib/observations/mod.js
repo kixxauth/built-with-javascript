@@ -7,7 +7,7 @@ const { JsonRPCRoute } = Kixx.Routes;
 
 
 export function registerObservations(router, settings) {
-    const { eventBus, logger } = settings;
+    const { eventBus, logger, dataStore } = settings;
 
     router.registerRouteFactory('ObservationsRPC', ({ name, patterns, targets }) => {
         return new JsonRPCRoute({
@@ -19,11 +19,15 @@ export function registerObservations(router, settings) {
     });
 
     router.registerTargetFactory('ObservationsRPC', ({ name, methods }) => {
-        const remoteProcedureCalls = new ObservationsRemoteProcedureCalls();
+        const remoteProcedureCalls = new ObservationsRemoteProcedureCalls({
+            logger: logger.createChild({ name: 'ObservationsRemoteProcedureCalls' }),
+            dataStore,
+        });
 
         return new ObservationsRPCTarget({
             name,
             methods,
+            eventBus,
             remoteProcedureCalls,
         });
     });

@@ -31,9 +31,17 @@ export default class DataStoreModel {
             },
             attributes: {
                 enumerable: true,
-                value: Object.freeze(attributes || {}),
+                value: Object.freeze(this.mapAttributes(attributes || {})),
             },
         });
+    }
+
+    /**
+     * @private
+     */
+    mapAttributes(attrs) {
+        // Override me.
+        return attrs;
     }
 
     /**
@@ -120,17 +128,20 @@ export default class DataStoreModel {
     }
 
     static async createOrUpdate(dataStore, id, attributes) {
-        assert(isNonEmptyString(id), 'Model.createOrUpdate() must have an id');
-
         const Model = this;
+        let model;
 
-        let model = await Model.load(dataStore, id);
+        if (id) {
+            model = await Model.load(dataStore, id);
 
-        if (model) {
-            model = model.updateAttributes(attributes);
-        } else {
+            if (model) {
+                model = model.updateAttributes(attributes);
+            }
+        }
+
+        if (!model) {
             model = new Model({
-                id,
+                id: isNonEmptyString(id) ? id : util.randomUUID(),
                 attributes: attributes || {},
             });
         }
