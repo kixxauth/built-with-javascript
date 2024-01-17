@@ -31,8 +31,8 @@ if (!fs.statSync(sourceFilepath).isFile()) {
 async function main() {
     const records = await readJSONFile(sourceFilepath);
 
-    const res = await createObservation(records[0]);
-    console.log(res);
+    await createObservation(records[0]);
+    await addMedia(records[0]);
 }
 
 async function createObservation(record) {
@@ -91,6 +91,44 @@ async function createObservation(record) {
     return res.result;
 }
 
+async function addMedia(record) {
+    if (Array.isArray(record.attributes.photos)) {
+        for (const photo of record.attributes.photos) {
+            const { filename } = photo;
+            const filepath = path.join(path.dirname(sourceFilepath), 'observation-media', filename);
+
+            await uploadMedia(record, filepath);
+        }
+    }
+}
+
+async function uploadMedia(record, filepath) {
+    const filename = path.basename(filepath);
+    const stats = fs.statSync(filepath);
+    const readStream = fs.createReadStream(filepath);
+
+    const method = 'PUT';
+    const url = new URL(`/observations/${ record.id }/media/${ filename }`, endpoint);
+
+    const headers = {
+        'content-type': contentTypeByFileExtension(filename),
+        'content-length': stats.size,
+    };
+
+    const res = await makeRequest(method, url, headers, readStream);
+
+    if (res.errors) {
+        const msg = res.errors[0]?.detail || 'No server error message';
+        // eslint-disable-next-line no-console
+        console.log(record.id, 'error attaching observation media', res.errors);
+        throw new Error(msg);
+    }
+
+    // Uncomment for debugging
+    console.log('### === >>', res.data.attributes.media);
+    return res;
+}
+
 function makeRequest(method, url, headers, data) {
     return new Promise((resolve, reject) => {
         const options = { method, headers };
@@ -118,6 +156,10 @@ function makeRequest(method, url, headers, data) {
                     console.log(utf8);
                     reject(new Error('JSON parsing error', { cause }));
                 }
+
+                // Destroy the request after getting a response. This avoids hanging onto
+                // request streams which get stuck because of a server error.
+                // req.destroy();
             });
         });
 
@@ -133,6 +175,28 @@ function makeRequest(method, url, headers, data) {
             req.end();
         }
     });
+}
+
+function contentTypeByFileExtension(filename) {
+    const extname = path.extname(filename);
+
+    switch (extname) {
+        case '.mov':
+            return 'video/quicktime';
+        case '.m4v':
+            return 'video/mp4';
+        case '.heif':
+            return 'image/heif';
+        case '.heic':
+            return 'image/heic';
+        case '.jpg':
+        case '.jpeg':
+            return 'image/jpeg';
+        case '.png':
+            return 'image/png';
+        default:
+            throw new Error(`No content type registered for file extension "${ extname }"`);
+    }
 }
 
 async function readJSONFile(filepath) {

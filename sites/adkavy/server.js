@@ -122,6 +122,9 @@ async function main() {
         eventBus,
         logger,
         dataStore,
+        objectServiceEndpoint: config.objectService.endpoint,
+        objectServiceScope: config.objectService.scope,
+        objectServiceToken: config.objectService.token,
     });
 
 

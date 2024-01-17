@@ -12,6 +12,20 @@ const { isFunction } = KixxAssert;
 export default class NodeHTTPRouter extends HTTPRouter {
 
     async handleRequest(req, res) {
+
+
+        // Some request handlers may return a response without reading the full incoming request
+        // stream. Ex; Encountering an auth error during a file upload.
+        //
+        // This condition causes the connection to hang, as the client expects the incoming stream
+        // to be read, which it never is. Here, we assume if the response has finished, then the
+        // request will not be fully read by the handler, and we destroy it.
+        res.on('finish', () => {
+            if (!req.complete) {
+                req.destroy();
+            }
+        });
+
         const url = new URL(req.url, `${ this.#getProtocol(req) }://${ this.#getHost(req) }`);
 
         const request = new NodeHTTPRequest({ req, url });

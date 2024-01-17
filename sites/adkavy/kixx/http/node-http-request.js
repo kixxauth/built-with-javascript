@@ -6,7 +6,6 @@ const { JSONParsingError } = Errors;
 
 export default class NodeHTTPRequest {
 
-    pathnameParams = {};
     #nodeRequest = null;
 
     constructor(spec) {
@@ -40,13 +39,6 @@ export default class NodeHTTPRequest {
 
     getReadStream() {
         return this.#nodeRequest;
-    }
-
-    setPathnameParams(value) {
-        Object.defineProperty(this, 'pathnameParams', {
-            enumerable: true,
-            value,
-        });
     }
 
     json() {

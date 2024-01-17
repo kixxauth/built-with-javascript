@@ -1,4 +1,5 @@
 import Kixx from '../../kixx/mod.js';
+import ObjectManagementClient from '../object-management-client/object-management-client.js';
 import ObservationsRPCTarget from './observations-rpc-target.js';
 import ObservationsRemoteProcedureCalls from './observations-remote-procedure-calls.js';
 import ObservationsAddMediaTarget from './observations-add-media-target.js';
@@ -7,7 +8,14 @@ const { JsonRPCRoute } = Kixx.Routes;
 
 
 export function registerObservations(router, settings) {
-    const { eventBus, logger, dataStore } = settings;
+    const {
+        eventBus,
+        logger,
+        dataStore,
+        objectServiceEndpoint,
+        objectServiceScope,
+        objectServiceToken,
+    } = settings;
 
     router.registerRouteFactory('ObservationsRPC', ({ name, patterns, targets }) => {
         return new JsonRPCRoute({
@@ -32,13 +40,20 @@ export function registerObservations(router, settings) {
         });
     });
 
-    router.registerTargetFactory('ObservationsAddMedia', ({ name, methods, options }) => {
+    router.registerTargetFactory('ObservationsAddMedia', ({ name, methods }) => {
+        const objectManagementClient = new ObjectManagementClient({
+            logger: logger.createChild({ name: 'ObjectManagementClient' }),
+            objectServiceEndpoint,
+            objectServiceScope,
+            objectServiceToken,
+        });
+
         return new ObservationsAddMediaTarget({
             name,
-            eventBus,
-            logger: logger.createChild({ name: 'ObservationsAddMediaTarget' }),
             methods,
-            options,
+            logger: logger.createChild({ name: 'ObservationsAddMedia' }),
+            dataStore,
+            objectManagementClient,
         });
     });
 }
