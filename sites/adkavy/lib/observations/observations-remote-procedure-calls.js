@@ -1,7 +1,9 @@
 import { KixxAssert } from '../../dependencies.js';
+import Kixx from '../../kixx/mod.js';
 import ObservationModel from './observation-model.js';
 
 const { isNonEmptyString } = KixxAssert;
+const { BadRequestError } = Kixx.Errors;
 
 
 const TZAWARE_DATE = /^[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}[+-]{1}[\d]{2}:[\d]{2}$/;
@@ -56,5 +58,28 @@ export default class ObservationsRemoteProcedureCalls {
 
         // Returns a promise for the new ObservationModel instance.
         return ObservationModel.createOrUpdate(dataStore, id, attributes);
+    }
+
+    async updateObservationMedia(observationId, mediaItem) {
+        if (!isNonEmptyString(observationId)) {
+            throw new BadRequestError('observationId must be a non empty string');
+        }
+        if (!isNonEmptyString(mediaItem.id)) {
+            throw new BadRequestError('mediaItem must have an id string');
+        }
+
+        const dataStore = this.#dataStore;
+
+        let observation = await ObservationModel.load(dataStore, observationId);
+
+        if (!observation) {
+            throw new BadRequestError(`Observation "${ observationId }" does not exist`);
+        }
+
+        observation = observation.updateMediaItem(mediaItem);
+
+        const newObservation = await observation.save(dataStore);
+
+        return newObservation.getMediaItemById(mediaItem.id);
     }
 }

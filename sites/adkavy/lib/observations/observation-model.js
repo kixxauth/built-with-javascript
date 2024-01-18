@@ -1,5 +1,7 @@
+import { KixxAssert } from '../../dependencies.js';
 import Kixx from '../../kixx/mod.js';
 
+const { isNonEmptyString, isNumberNotNaN, isPlainObject } = KixxAssert;
 const { DataStoreModel } = Kixx.Stores;
 
 
@@ -83,17 +85,36 @@ export default class ObservationModel extends DataStoreModel {
             return id === item.id;
         });
 
-        const newItem = {
-            id: item.id,
-            type: item.contentType.split('/')[0],
-            contentType: item.contentType,
-            contentLength: item.contentLength,
-            md5Hash: item.md5Hash,
-            version: item.version,
-            mediaOutput: item.mediaOutput,
-            mediaURLs: item.mediaURLs,
-            posterURLs: item.posterURLs,
-        };
+        const newItem = { id: item.id };
+
+        if (isNonEmptyString(item.contentType)) {
+            newItem.contentType = item.contentType;
+            newItem.type = item.contentType.split('/')[0];
+        }
+        if (isNumberNotNaN(item.contentLength)) {
+            newItem.contentLength = item.contentLength;
+        }
+        if (isNonEmptyString(item.md5Hash)) {
+            newItem.md5Hash = item.md5Hash;
+        }
+        if (isNonEmptyString(item.version)) {
+            newItem.version = item.version;
+        }
+        if (isPlainObject(item.mediaOutput)) {
+            newItem.mediaOutput = item.mediaOutput;
+        }
+        if (isPlainObject(item.mediaURLs)) {
+            newItem.mediaURLs = item.mediaURLs;
+        }
+        if (isPlainObject(item.posterURLs)) {
+            newItem.posterURLs = item.posterURLs;
+        }
+        if (isNonEmptyString(item.title)) {
+            newItem.title = item.title;
+        }
+        if (isNonEmptyString(item.details)) {
+            newItem.details = item.details;
+        }
 
         if (existingIndex === -1) {
             // The media item does exist yet. Push it.

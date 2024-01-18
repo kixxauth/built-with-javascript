@@ -9,6 +9,7 @@ const {
 } = KixxAssert;
 
 const {
+    BadRequestError,
     UnauthorizedError,
     ForbiddenError,
     JSONParsingError,
@@ -93,13 +94,21 @@ export default class JsonRPCTarget extends Target {
                 jsonResponse.result = await this.remoteProcedureCalls[method](params);
             }
         } catch (error) {
-            this.eventBus.emit('error', error);
+            if (error.code === BadRequestError.CODE) {
+                jsonResponse.error = {
+                    code: -32602,
+                    message: 'Invalid params',
+                    detail: error.message,
+                };
+            } else {
+                this.eventBus.emit('error', error);
 
-            jsonResponse.error = {
-                code: -32603,
-                message: 'Internal error',
-                detail: 'Unspecified internal server error',
-            };
+                jsonResponse.error = {
+                    code: -32603,
+                    message: 'Internal error',
+                    detail: 'Unspecified internal server error',
+                };
+            }
         }
 
         return response.respondWithJSON(200, jsonResponse);

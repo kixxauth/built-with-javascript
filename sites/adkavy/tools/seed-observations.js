@@ -31,8 +31,10 @@ if (!fs.statSync(sourceFilepath).isFile()) {
 async function main() {
     const records = await readJSONFile(sourceFilepath);
 
-    await createObservation(records[4]);
-    await addMedia(records[4]);
+    for (const record of records) {
+        await createObservation(record);
+        await addMedia(record);
+    }
 }
 
 async function createObservation(record) {
@@ -99,14 +101,25 @@ async function addMedia(record) {
         const entries = fs.readdirSync(dir);
 
         for (const entry of entries) {
-            await uploadMedia(record, path.join(dir, entry));
+            const mediaItem = await uploadMedia(record, path.join(dir, entry));
+
+            await updateMediaMetadata(record, {
+                id: mediaItem.id,
+                title: record.attributes.title,
+            });
         }
     } else if (Array.isArray(record.attributes.photos)) {
         for (const photo of record.attributes.photos) {
             const { filename } = photo;
             const filepath = path.join(path.dirname(sourceFilepath), 'observation-media', filename);
 
-            await uploadMedia(record, filepath);
+            const mediaItem = await uploadMedia(record, filepath);
+
+            await updateMediaMetadata(record, {
+                id: mediaItem.id,
+                title: photo.title,
+                details: photo.details,
+            });
         }
     }
 }
@@ -139,6 +152,47 @@ async function uploadMedia(record, filepath) {
     // eslint-disable-next-line no-console
     console.log(record.id, 'attached media', res.data.id);
     return res.data;
+}
+
+async function updateMediaMetadata(record, mediaItem) {
+    const body = JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'updateObservationMedia',
+        id: record.id,
+        params: [
+            // The observationId
+            record.id,
+            // Media Item
+            {
+                id: mediaItem.id,
+                title: mediaItem.title,
+                details: mediaItem.details,
+            },
+        ],
+    });
+
+    const method = 'POST';
+    const url = new URL('/observations-rpc', endpoint);
+
+    const headers = {
+        'content-type': 'application/json',
+        'content-length': Buffer.byteLength(body),
+    };
+
+    const res = await makeRequest(method, url, headers, body);
+
+    if (res.error) {
+        // eslint-disable-next-line no-console
+        console.log(res);
+        const error = new Error(`JSON RPC Error: ${ res.error.message }`);
+        error.code = res.error.code;
+        throw error;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(record.id, 'updated observation media', res.result.id);
+
+    return res.result;
 }
 
 function makeRequest(method, url, headers, data) {
