@@ -31,8 +31,8 @@ if (!fs.statSync(sourceFilepath).isFile()) {
 async function main() {
     const records = await readJSONFile(sourceFilepath);
 
-    await createObservation(records[0]);
-    await addMedia(records[0]);
+    await createObservation(records[4]);
+    await addMedia(records[4]);
 }
 
 async function createObservation(record) {
@@ -92,7 +92,16 @@ async function createObservation(record) {
 }
 
 async function addMedia(record) {
-    if (Array.isArray(record.attributes.photos)) {
+    if (record.attributes.csv && record.attributes.csv.hasPhotos) {
+        const { row } = record.attributes.csv;
+        const dir = path.join(path.dirname(sourceFilepath), 'observation-media', row.toString());
+
+        const entries = fs.readdirSync(dir);
+
+        for (const entry of entries) {
+            await uploadMedia(record, path.join(dir, entry));
+        }
+    } else if (Array.isArray(record.attributes.photos)) {
         for (const photo of record.attributes.photos) {
             const { filename } = photo;
             const filepath = path.join(path.dirname(sourceFilepath), 'observation-media', filename);
@@ -125,8 +134,11 @@ async function uploadMedia(record, filepath) {
     }
 
     // Uncomment for debugging
-    console.log('### === >>', res.data.attributes.media);
-    return res;
+    // console.log('### === >>', res.data);
+
+    // eslint-disable-next-line no-console
+    console.log(record.id, 'attached media', res.data.id);
+    return res.data;
 }
 
 function makeRequest(method, url, headers, data) {
@@ -180,7 +192,7 @@ function makeRequest(method, url, headers, data) {
 function contentTypeByFileExtension(filename) {
     const extname = path.extname(filename);
 
-    switch (extname) {
+    switch (extname.toLowerCase()) {
         case '.mov':
             return 'video/quicktime';
         case '.m4v':
