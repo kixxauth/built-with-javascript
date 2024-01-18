@@ -125,12 +125,12 @@ export default class WriteServer {
      * @public
      */
     async putObject(request, response) {
-        const { href, protocol } = request.url;
+        const { href, protocol, hostname } = request.url;
         const env = this.#config.application.getEnvironment();
 
         // Redirect http: to https: (NOT in the development environment)
         // TODO: Set a seperate config for this like "redirectToHTTPS"
-        if (protocol === 'http:' && env !== 'development') {
+        if (protocol === 'http:' && env !== 'development' && hostname !== 'localhost') {
             const newLocation = href.replace(/^http:/, 'https:');
             return response.respondWithRedirect(301, newLocation);
         }
