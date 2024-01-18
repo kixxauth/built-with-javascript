@@ -232,7 +232,7 @@ export default class AwsDynamoDBClient {
                 }
                 message = json.Message || json.message || message;
             } else {
-                this.#logger.error('unexpected dynamodb response', {
+                this.#logger.warn('unexpected dynamodb response', {
                     statusCode: res.statusCode,
                     contentType: res.headers['content-type'],
                     utf8,

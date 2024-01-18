@@ -105,6 +105,8 @@ export default class StaticFileServerTarget extends Target {
             }
         }
 
+        this.#logger.debug('send fresh file', { pathname, filepath, ifModifiedSince });
+
         const extname = path.extname(filepath).replace(/^./, '');
         const contentType = getContentTypeForFileExtension(extname) || 'application/octet-stream';
 

@@ -1,10 +1,8 @@
 export default class UploadMediaJob {
 
-    #logger = null;
     #objectManagementClient = null;
 
-    constructor({ logger, objectManagementClient }) {
-        this.#logger = logger.createChild({ name: 'UploadMediaJob' });
+    constructor({ objectManagementClient }) {
         this.#objectManagementClient = objectManagementClient;
     }
 

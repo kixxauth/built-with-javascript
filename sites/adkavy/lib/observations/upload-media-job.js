@@ -3,11 +3,9 @@ import { slugifyFilename } from '../utils.js';
 
 export default class UploadMediaJob {
 
-    #logger = null;
     #objectManagementClient = null;
 
-    constructor({ logger, objectManagementClient }) {
-        this.#logger = logger;
+    constructor({ objectManagementClient }) {
         this.#objectManagementClient = objectManagementClient;
     }
 

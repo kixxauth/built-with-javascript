@@ -11,7 +11,6 @@ const { BadRequestError, NotFoundError } = Kixx.Errors;
 
 export default class ObservationsAddMedia extends Target {
 
-    #logger = null;
     #dataStore = null;
     #objectManagementClient = null;
 
@@ -19,14 +18,12 @@ export default class ObservationsAddMedia extends Target {
         const {
             name,
             methods,
-            logger,
             dataStore,
             objectManagementClient,
         } = settings;
 
         super({ name, methods });
 
-        this.#logger = logger;
         this.#dataStore = dataStore;
         this.#objectManagementClient = objectManagementClient;
     }
@@ -53,10 +50,8 @@ export default class ObservationsAddMedia extends Target {
             throw new NotFoundError(`Observation ${ observationId } does not exist.`);
         }
 
-        const job = new UploadMediaJob({
-            logger: this.#logger,
-            objectManagementClient: this.#objectManagementClient,
-        });
+        const objectManagementClient = this.#objectManagementClient;
+        const job = new UploadMediaJob({ objectManagementClient });
 
         const result = await job.uploadObservationAttachment(request.getReadStream(), {
             observationId,
@@ -78,8 +73,10 @@ export default class ObservationsAddMedia extends Target {
             posterURLs: result.posterURLs,
         });
 
+        observation = await observation.save(dataStore);
+
+        const data = observation.getMediaItemById(result.id);
         const status = existingMediaItem ? 200 : 201;
-        const data = await observation.save(dataStore);
 
         return response.respondWithJSON(status, { data });
     }

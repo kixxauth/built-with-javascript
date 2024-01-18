@@ -32,14 +32,14 @@ export default class ObservationsRemoteProcedureCalls {
         // but we do want to know about issues, so we log them out here.
 
         if (!isNonEmptyString(title)) {
-            this.#logger.error('invalid title in updateOrCreateObservation', {
+            this.#logger.warn('invalid title in updateOrCreateObservation', {
                 id,
                 title,
             });
         }
 
         if (!isNonEmptyString(observationDateTime) || !TZAWARE_DATE.test(observationDateTime)) {
-            this.#logger.error('invalid observationDateTime in updateOrCreateObservation', {
+            this.#logger.warn('invalid observationDateTime in updateOrCreateObservation', {
                 id,
                 title,
                 observationDateTime,
@@ -47,7 +47,7 @@ export default class ObservationsRemoteProcedureCalls {
         }
 
         if (!isNonEmptyString(reportedDateTime) || !TZAWARE_DATE.test(reportedDateTime)) {
-            this.#logger.error('invalid reportedDateTime in updateOrCreateObservation', {
+            this.#logger.warn('invalid reportedDateTime in updateOrCreateObservation', {
                 id,
                 title,
                 reportedDateTime,

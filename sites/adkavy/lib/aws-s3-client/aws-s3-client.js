@@ -31,7 +31,7 @@ export default class AwsS3Client {
         assert(isNonEmptyString(s3AccessKey), 'AWS accessKey must be a non empty String');
         assert(isNonEmptyString(s3SecretKey), 'AWS secretKey must be a non empty String');
 
-        this.#logger = logger.createChild({ name: 'AwsS3Client' });
+        this.#logger = logger;
         this.#s3Region = s3Region;
         this.#s3AccessKey = s3AccessKey;
         this.#s3SecretKey = s3SecretKey;

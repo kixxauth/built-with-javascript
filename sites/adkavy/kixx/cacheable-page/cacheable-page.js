@@ -116,6 +116,10 @@ export default class CacheablePage {
             return this.#cachedMarkup.get(key);
         }
 
+        const { pageId } = this;
+
+        this.logger.debug('refresh markup', { pageId });
+
         const data = await this.generateJSON(baseData, args);
         const template = await this.getTemplate();
 
@@ -137,6 +141,8 @@ export default class CacheablePage {
         }
 
         const { pageId, dataStore } = this;
+
+        this.logger.debug('refresh page data', { pageId });
 
         const page = await RootPage.load(dataStore, pageId);
 
@@ -164,6 +170,8 @@ export default class CacheablePage {
         }
 
         const { pageId, blobStore } = this;
+
+        this.logger.debug('refresh snippets', { snippetIds });
 
         const snippetsList = await blobStore.fetchBatch(snippetIds);
 
@@ -196,6 +204,8 @@ export default class CacheablePage {
         }
 
         const { templateId, templateStore } = this;
+
+        this.logger.debug('refresh template', { templateId });
 
         const template = await templateStore.fetch(templateId);
 
@@ -231,7 +241,7 @@ export default class CacheablePage {
      */
     deleteCache() {
         const { pageId } = this;
-        this.logger.info('deleting page cache', { pageId });
+        this.logger.info('clearing page cache', { pageId });
 
         this.#cachedMarkup.clear();
         this.#cachedPageData = null;
@@ -245,7 +255,7 @@ export default class CacheablePage {
     #onPageDataStoreUpdate({ id, attributes }) {
         const { pageId } = this;
         if (id === pageId) {
-            this.logger.log('detected page data update', { pageId });
+            this.logger.info('detected page data update', { pageId });
             this.deleteCache();
             this.#cachedPageData = structuredClone(attributes);
         }
@@ -259,7 +269,7 @@ export default class CacheablePage {
 
         if (Array.isArray(page.snippets) && page.snippets.includes(id)) {
             const { pageId } = this;
-            this.logger.log('detected snippet update', { pageId, snippetId: id });
+            this.logger.info('detected snippet update', { pageId, snippetId: id });
             this.deleteCache();
         }
     }

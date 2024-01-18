@@ -2,12 +2,7 @@ import PathToRegexp from 'path-to-regexp';
 import { KixxAssert } from '../../dependencies.js';
 import Errors from '../errors/mod.js';
 
-const {
-    WrappedError,
-    NotFoundError,
-    MethodNotAllowedError,
-} = Errors;
-
+const { NotFoundError, MethodNotAllowedError } = Errors;
 const { assert, isNonEmptyString } = KixxAssert;
 
 
@@ -92,9 +87,7 @@ export default class Route {
                 res = this.handleError(error, request, response, target);
             }
 
-            if (!(error instanceof WrappedError) || error.fatal) {
-                this.eventBus.emit('error', error);
-            }
+            this.eventBus.emit('error', error);
         }
 
         return res;

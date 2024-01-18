@@ -51,7 +51,6 @@ export function registerObservations(router, settings) {
         return new ObservationsAddMediaTarget({
             name,
             methods,
-            logger: logger.createChild({ name: 'ObservationsAddMedia' }),
             dataStore,
             objectManagementClient,
         });

@@ -33,7 +33,7 @@ export function registerHTMLPages(router, settings) {
             pageId: options.page,
             templateId: options.template,
             noCache,
-            logger: logger.createChild({ name: 'CachedHTMLPage' }),
+            logger: logger.createChild({ name: `CachedHTMLPage:${ name }` }),
             eventBus,
             dataStore,
             blobStore,
@@ -56,7 +56,7 @@ export function registerHTMLPages(router, settings) {
         return new ListEntitiesTarget({
             name,
             eventBus,
-            logger: logger.createChild({ name: 'ListEntities' }),
+            logger: logger.createChild({ name: `ListEntities:${ name }` }),
             methods,
             options,
         });
@@ -66,7 +66,7 @@ export function registerHTMLPages(router, settings) {
         return new ViewEntityTarget({
             name,
             eventBus,
-            logger: logger.createChild({ name: 'ViewEntity' }),
+            logger: logger.createChild({ name: `ViewEntity:${ name }` }),
             methods,
             options,
         });

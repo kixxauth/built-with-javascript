@@ -102,6 +102,7 @@ export default class HTTPRouter {
             }
         }
 
+        // Emit the KixxHTTPRequest on behalf of the route if no route was found.
         this.eventBus.emit('KixxHTTPRequest', {
             method: request.method,
             url: request.url,

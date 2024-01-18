@@ -160,6 +160,16 @@ export default class ObjectManagementClient {
                 });
 
                 res.on('end', () => {
+                    const { statusCode, headers } = res;
+
+                    if (statusCode !== 200 && statusCode !== 201) {
+                        this.#logger.warn('unexpected response status code', { statusCode, headers });
+                        reject(new OperationalError(
+                            `Unexpected ObjectManagementClient service response status code ${ statusCode }`
+                        ));
+                        return;
+                    }
+
                     const utf8 = Buffer.concat(chunks).toString('utf8');
                     let json;
                     try {

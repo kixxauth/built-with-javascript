@@ -9,7 +9,6 @@ const {
 } = KixxAssert;
 
 const {
-    WrappedError,
     UnauthorizedError,
     ForbiddenError,
     JSONParsingError,
@@ -94,15 +93,13 @@ export default class JsonRPCTarget extends Target {
                 jsonResponse.result = await this.remoteProcedureCalls[method](params);
             }
         } catch (error) {
+            this.eventBus.emit('error', error);
+
             jsonResponse.error = {
                 code: -32603,
                 message: 'Internal error',
                 detail: 'Unspecified internal server error',
             };
-
-            if (!(error instanceof WrappedError) || error.fatal) {
-                this.eventBus.emit('error', error);
-            }
         }
 
         return response.respondWithJSON(200, jsonResponse);
