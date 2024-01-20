@@ -20,7 +20,7 @@ import { fromFileUrl } from './lib/utils.js';
 
 import routes from './seeds/routes.js';
 
-const { WrappedError } = Kixx.Errors;
+const { isHttpError, WrappedError } = Kixx.Errors;
 const { NodeHTTPRouter } = Kixx.HTTP;
 
 
@@ -68,12 +68,15 @@ async function main() {
 
     const eventBus = new EventEmitter();
 
+    // Many components listen on the Event Bus
+    eventBus.setMaxListeners(50);
+
     eventBus.on('error', (error) => {
         if (!(error instanceof WrappedError) || error.fatal) {
             logger.fatal('fatal error emitted on event bus', { error });
             logger.fatal('will attempt shutdown');
             gracefullyExit();
-        } else {
+        } else if (!isHttpError(error)) {
             logger.error('error on event bus', { error });
         }
     });

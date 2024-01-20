@@ -1,5 +1,16 @@
 import { EOL } from 'node:os';
 
+
+const HTTP_ERROR_CODES = [
+    'BAD_REQUEST_ERROR',
+    'UNAUTHORIZED_ERROR',
+    'FORBIDDEN_ERROR',
+    'NOT_FOUND_ERROR',
+    'CONFLICT_ERROR',
+    'METHOD_NOT_ALLOWED_ERROR',
+    'NOT_IMPLEMENTED_ERROR',
+];
+
 export function getFullStack(err) {
     if (!err) {
         return 'Null or undefined error';
@@ -24,4 +35,8 @@ export function getFullStack(err) {
     recursivelyConcat(err);
 
     return stack.join(`${ EOL }caused by:${ EOL }`);
+}
+
+export function isHttpError(err) {
+    return HTTP_ERROR_CODES.includes(err.code);
 }

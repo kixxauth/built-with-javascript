@@ -17,6 +17,16 @@ export function registerObservations(router, settings) {
         objectServiceToken,
     } = settings;
 
+    dataStore.registerView({
+        name: 'observations_by_observation_datetime',
+        map(record, emit) {
+            if (record.type === 'observation') {
+                const dateTime = new Date(record.attributes.observationDateTime);
+                emit(dateTime.toISOString(), null);
+            }
+        },
+    });
+
     router.registerRouteFactory('ObservationsRPC', ({ name, patterns, targets }) => {
         return new JsonRPCRoute({
             name,

@@ -2,7 +2,16 @@ import PathToRegexp from 'path-to-regexp';
 import { KixxAssert } from '../../dependencies.js';
 import Errors from '../errors/mod.js';
 
-const { NotFoundError, MethodNotAllowedError } = Errors;
+const {
+    BadRequestError,
+    UnauthorizedError,
+    ForbiddenError,
+    NotFoundError,
+    ConflictError,
+    MethodNotAllowedError,
+    NotImplementedError,
+} = Errors;
+
 const { assert, isNonEmptyString } = KixxAssert;
 
 
@@ -110,7 +119,44 @@ export default class Route {
         const { method } = request;
         const head = method === 'HEAD';
 
-        return response.respondWithPlainText(500, 'Internal server error.\n', { head });
+        let statusCode;
+        let body;
+
+        switch (error.code) {
+            case BadRequestError.CODE:
+                statusCode = 400;
+                body = 'Bad request error.\n';
+                break;
+            case NotFoundError.CODE:
+                statusCode = 404;
+                body = 'Not found error.\n';
+                break;
+            case UnauthorizedError.CODE:
+                statusCode = 401;
+                body = 'Unauthorized error.\n';
+                break;
+            case ForbiddenError.CODE:
+                statusCode = 403;
+                body = 'Forbidden error.\n';
+                break;
+            case ConflictError.CODE:
+                statusCode = 409;
+                body = 'Method not allowed error.\n';
+                break;
+            case MethodNotAllowedError.CODE:
+                statusCode = 405;
+                body = 'Method not allowed error.\n';
+                break;
+            case NotImplementedError.CODE:
+                statusCode = 501;
+                body = 'Not implemented error.\n';
+                break;
+            default:
+                statusCode = 500;
+                body = 'Internal server error.\n';
+        }
+
+        return response.respondWithPlainText(statusCode, body, { head });
     }
 
     getAllowedMethodsAsArray() {

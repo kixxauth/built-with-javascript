@@ -19,6 +19,7 @@ export function createDataStore({ config, eventBus, logger }) {
 
     const engine = new DynamoDBEngine({
         environment,
+        logger: logger.createChild({ name: 'DynamoDBEngine' }),
         dynamoDBClient,
     });
 

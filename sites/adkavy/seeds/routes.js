@@ -44,7 +44,8 @@ export default [
             methods: [ 'GET', 'HEAD' ],
             targetName: 'ListEntities',
             options: {
-                type: 'observation',
+                dataType: 'observation',
+                viewName: 'observations_by_observation_datetime',
                 page: 'observations__list',
                 template: 'observations/list.html',
                 cacheControl: 'public, no-cache',
@@ -58,7 +59,7 @@ export default [
             methods: [ 'GET', 'HEAD' ],
             targetName: 'ViewEntity',
             options: {
-                type: 'observation',
+                dataType: 'observation',
                 page: 'observations__view',
                 template: 'observations/view.html',
                 cacheControl: 'public, no-cache',

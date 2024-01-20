@@ -94,13 +94,29 @@ export default class CacheablePage {
      * @public
      */
     async generateJSON(baseData, args) {
-        const page = await this.getPageData();
+        let page;
 
-        if (Array.isArray(page.snippets) && page.snippets.length > 0) {
-            // The snippets Array is converted to an Object here.
-            page.snippets = await this.getContentSnippets(page.snippets);
-        } else {
-            page.snippets = {};
+        try {
+            page = await this.getPageData();
+        } catch (error) {
+            // Catch, report, and rethrow so that we capture unexpected HTTP errors
+            // like NotFoundError
+            this.logger.warn('error in getPageData()', { error });
+            throw error;
+        }
+
+        try {
+            if (Array.isArray(page.snippets) && page.snippets.length > 0) {
+                // The snippets Array is converted to an Object here.
+                page.snippets = await this.getContentSnippets(page.snippets);
+            } else {
+                page.snippets = {};
+            }
+        } catch (error) {
+            // Catch, report, and rethrow so that we capture unexpected HTTP errors
+            // like NotFoundError
+            this.logger.warn('error in getContentSnippets()', { error });
+            throw error;
         }
 
         const data = await this.getDynamicData(args);
@@ -121,7 +137,16 @@ export default class CacheablePage {
         this.logger.debug('refresh markup', { pageId });
 
         const data = await this.generateJSON(baseData, args);
-        const template = await this.getTemplate();
+
+        let template;
+        try {
+            template = await this.getTemplate();
+        } catch (error) {
+            // Catch, report, and rethrow so that we capture unexpected HTTP errors
+            // like NotFoundError
+            this.logger.warn('error in getTemplate()', { error });
+            throw error;
+        }
 
         const utf8 = template(data);
 
@@ -225,6 +250,14 @@ export default class CacheablePage {
      * @private
      */
     getDynamicData() {
+        return {};
+    }
+
+    /**
+     * Override mapDataStoreRecordToView() for dynamic pages.
+     * @private
+     */
+    mapDataStoreRecordToView() {
         return {};
     }
 

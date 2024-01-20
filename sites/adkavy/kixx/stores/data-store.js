@@ -83,7 +83,11 @@ export default class DataStore {
 
         assert(isNonEmptyString(viewName), 'queryViewIndex() view name must be a string');
 
-        this.logger.debug('query view index', { viewName, limit });
+        this.logger.debug('query view index', {
+            viewName,
+            limit,
+            startKey: startKey ? startKey.id : null,
+        });
 
         const { items, lastKey } = await this.engine.queryViewIndex(viewName, {
             descending,

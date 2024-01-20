@@ -19,6 +19,7 @@ const ALLOWED_ENVIRONMENTS = [
 
 export default class DynamoDBEngine {
 
+    #logger = null;
     #dynamoDBClient = null;
     #tablePrefix = null;
 
@@ -28,13 +29,14 @@ export default class DynamoDBEngine {
 
     #viewIndexesLoaded = false;
 
-    constructor({ environment, dynamoDBClient }) {
+    constructor({ environment, logger, dynamoDBClient }) {
         assertIncludes(
             environment,
             ALLOWED_ENVIRONMENTS,
             `DataStore environment must be one of "${ ALLOWED_ENVIRONMENTS.join('","') }"`
         );
 
+        this.#logger = logger;
         this.#dynamoDBClient = dynamoDBClient;
         this.#tablePrefix = `adkavy_${ environment }`;
     }
@@ -111,6 +113,7 @@ export default class DynamoDBEngine {
     }
 
     getViewReduction(viewName) {
+        const logger = this.#logger;
         const index = this.#indexes.get(viewName);
 
         if (!index) {
@@ -124,11 +127,18 @@ export default class DynamoDBEngine {
         }
 
         return index.reduce((result, { key, value }) => {
-            return view.reduce(result, { key, value });
+            try {
+                return view.reduce(result, { key, value });
+            } catch (error) {
+                logger.error('error in view.reduce()', { view: viewName, error });
+                return result;
+            }
         }, null);
     }
 
     #mapRecords(records) {
+        const logger = this.#logger;
+
         this.#views.forEach((view, viewName) => {
             const index = this.#indexes.get(viewName);
 
@@ -137,13 +147,22 @@ export default class DynamoDBEngine {
                     const { type, id } = record;
 
                     if (record) {
-                        view.map(record, (key, value) => {
-                            assert(
-                                isNonEmptyString(key) || isNumberNotNaN(key),
-                                `Emitted key in "${ viewName }" view.map() must be a string or number`
-                            );
-                            index.push({ type, key, id, value });
-                        });
+                        try {
+                            view.map(record, (key, value) => {
+                                assert(
+                                    isNonEmptyString(key) || isNumberNotNaN(key),
+                                    `Emitted key in "${ viewName }" view.map() must be a string or number`
+                                );
+                                index.push({ type, key, id, value });
+                            });
+                        } catch (error) {
+                            logger.error('error in view.map()', {
+                                view: viewName,
+                                type,
+                                id,
+                                error,
+                            });
+                        }
                     }
                 }
 
@@ -162,12 +181,16 @@ export default class DynamoDBEngine {
 
     #getAscendingIndexKeys(index, startKey, limit) {
         const keys = [];
+        let startScan = !startKey;
 
-        // eslint-disable-next-line for-direction
-        for (let i = 0; i > index.length; i += 1) {
+        for (let i = 0; i < index.length; i += 1) {
             const { type, id } = index[i];
-            if (startKey && type === startKey.type && id === startKey.id) {
+
+            if (startScan) {
                 keys.push({ type, id });
+            } else if (startKey.type && id === startKey.id) {
+                keys.push({ type, id });
+                startScan = true;
             }
 
             if (keys.length === limit) {
@@ -180,11 +203,16 @@ export default class DynamoDBEngine {
 
     #getDescendingIndexKeys(index, startKey, limit) {
         const keys = [];
+        let startScan = !startKey;
 
         for (let i = index.length - 1; i >= 0; i -= 1) {
             const { type, id } = index[i];
-            if (startKey && type === startKey.type && id === startKey.id) {
+
+            if (startScan) {
                 keys.push({ type, id });
+            } else if (startKey.type && id === startKey.id) {
+                keys.push({ type, id });
+                startScan = true;
             }
 
             if (keys.length === limit) {

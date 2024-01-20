@@ -106,7 +106,9 @@ export default class AwsDynamoDBClient {
             items = [];
         }
 
-        const lastEvaluatedKey = deserializeObject(res.LastEvaluatedKey);
+        const lastEvaluatedKey = res.LastEvaluatedKey
+            ? deserializeObject(res.LastEvaluatedKey)
+            : null;
 
         return {
             items,

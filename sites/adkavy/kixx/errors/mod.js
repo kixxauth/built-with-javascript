@@ -1,4 +1,4 @@
-import { getFullStack } from './utils.js';
+import { getFullStack, isHttpError } from './utils.js';
 
 
 class WrappedError extends Error {
@@ -101,4 +101,5 @@ export default {
     NotImplementedError,
     JSONParsingError,
     getFullStack,
+    isHttpError,
 };
