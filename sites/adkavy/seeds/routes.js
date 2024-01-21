@@ -42,10 +42,8 @@ export default [
         routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            targetName: 'ListEntities',
+            targetName: 'ListObservations',
             options: {
-                dataType: 'observation',
-                viewName: 'observations_by_observation_datetime',
                 page: 'observations__list',
                 template: 'observations/list.html',
                 cacheControl: 'public, no-cache',
@@ -57,7 +55,7 @@ export default [
         routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
-            targetName: 'ViewEntity',
+            targetName: 'ViewObservation',
             options: {
                 dataType: 'observation',
                 page: 'observations__view',

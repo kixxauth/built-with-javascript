@@ -3,8 +3,10 @@ import ObjectManagementClient from '../object-management-client/object-managemen
 import ObservationsRPCTarget from './observations-rpc-target.js';
 import ObservationsRemoteProcedureCalls from './observations-remote-procedure-calls.js';
 import ObservationsAddMediaTarget from './observations-add-media-target.js';
+import ListObservationsPage from './list-observations-page.js';
 
 const { JsonRPCRoute } = Kixx.Routes;
+const { HTMLPageTarget } = Kixx.Targets;
 
 
 export function registerObservations(router, settings) {
@@ -12,9 +14,12 @@ export function registerObservations(router, settings) {
         eventBus,
         logger,
         dataStore,
+        blobStore,
+        templateStore,
         objectServiceEndpoint,
         objectServiceScope,
         objectServiceToken,
+        noCache,
     } = settings;
 
     dataStore.registerView({
@@ -25,6 +30,50 @@ export function registerObservations(router, settings) {
                 emit(dateTime.toISOString(), null);
             }
         },
+    });
+
+    router.registerTargetFactory('ListObservations', ({ name, methods, options }) => {
+        const page = new ListObservationsPage({
+            pageId: options.page,
+            templateId: options.template,
+            noCache,
+            logger: logger.createChild({ name: 'ListObservations' }),
+            eventBus,
+            dataStore,
+            blobStore,
+            templateStore,
+            descending: options.descending,
+            limit: options.limit,
+        });
+
+        return new HTMLPageTarget({
+            name,
+            methods,
+            options,
+            page,
+        });
+    });
+
+    router.registerTargetFactory('ViewObservation', ({ name, methods, options }) => {
+        const page = new ListObservationsPage({
+            pageId: options.page,
+            templateId: options.template,
+            noCache,
+            logger: logger.createChild({ name: 'ListObservations' }),
+            eventBus,
+            dataStore,
+            blobStore,
+            templateStore,
+            descending: options.descending,
+            limit: options.limit,
+        });
+
+        return new HTMLPageTarget({
+            name,
+            methods,
+            options,
+            page,
+        });
     });
 
     router.registerRouteFactory('ObservationsRPC', ({ name, patterns, targets }) => {

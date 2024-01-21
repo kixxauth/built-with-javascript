@@ -127,4 +127,18 @@ export default class ObservationModel extends DataStoreModel {
         return this.updateAttributes({ media: mediaItems });
     }
 
+    toView() {
+        const { id } = this;
+
+        const {
+            title,
+            observationDateTime,
+        } = this.attributes;
+
+        return {
+            id,
+            title,
+            observationDateTime,
+        };
+    }
 }

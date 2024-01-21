@@ -130,9 +130,12 @@ async function main() {
         eventBus,
         logger,
         dataStore,
+        blobStore,
+        templateStore,
         objectServiceEndpoint: config.objectService.endpoint,
         objectServiceScope: config.objectService.scope,
         objectServiceToken: config.objectService.token,
+        noCache: !config.pages.cache,
     });
 
 

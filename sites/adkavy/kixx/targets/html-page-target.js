@@ -24,7 +24,7 @@ export default class HTMLPageTarget extends Target {
         const searchParams = Object.fromEntries(request.url.searchParams);
 
         const baseData = {
-            canonicalURL: href,
+            links: { canonical: href },
         };
 
         const args = Object.assign({}, pathnameParams, searchParams);

@@ -254,14 +254,6 @@ export default class CacheablePage {
     }
 
     /**
-     * Override mapDataStoreRecordToView() for dynamic pages.
-     * @private
-     */
-    mapDataStoreRecordToView() {
-        return {};
-    }
-
-    /**
      * @private
      */
     bindEventListeners() {

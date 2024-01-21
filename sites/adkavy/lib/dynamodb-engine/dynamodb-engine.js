@@ -62,7 +62,7 @@ export default class DynamoDBEngine {
         return record;
     }
 
-    async queryViewIndex(viewName, options) {
+    async queryViewIndex(viewName, query, options) {
         const {
             descending,
             startKey,
@@ -86,14 +86,23 @@ export default class DynamoDBEngine {
         }
 
         const keys = descending
-            ? this.#getDescendingIndexKeys(index, startKey, limit)
-            : this.#getAscendingIndexKeys(index, startKey, limit);
+            ? this.#getDescendingIndexKeys(index, startKey, query, limit)
+            : this.#getAscendingIndexKeys(index, startKey, query, limit);
+
+        let hasNextPage = false;
+
+        // If there are more items, then the number of keys will be limit + 1.
+        if (keys.length > limit) {
+            hasNextPage = true;
+            // Pop off the last key if the length is over the limit.
+            keys.pop();
+        }
 
         const table = `${ this.#tablePrefix }_entities`;
 
         const items = await this.#dynamoDBClient.batchGetItem(table, keys);
 
-        // Sort results to match the order of the keys.
+        // Sort the results of the batch fetch to match the order of the keys.
         const results = [];
 
         for (const key of keys) {
@@ -104,12 +113,14 @@ export default class DynamoDBEngine {
             results.push(item || null);
         }
 
-        const lastKey = keys[keys.length - 1];
+        const res = { items: results };
 
-        return {
-            items: results,
-            lastKey: { type: lastKey.type, id: lastKey.id },
-        };
+        if (hasNextPage) {
+            const lastKey = keys[keys.length - 1];
+            res.lastKey = { type: lastKey.type, id: lastKey.id };
+        }
+
+        return res;
     }
 
     getViewReduction(viewName) {
@@ -179,18 +190,19 @@ export default class DynamoDBEngine {
         });
     }
 
-    #getAscendingIndexKeys(index, startKey, limit) {
+    #getAscendingIndexKeys(index, startKey, query, limit) {
         const keys = [];
         let startScan = !startKey;
 
         for (let i = 0; i < index.length; i += 1) {
-            const { type, id } = index[i];
+            const { type, id, key } = index[i];
 
-            if (startScan) {
-                keys.push({ type, id });
-            } else if (startKey.type && id === startKey.id) {
-                keys.push({ type, id });
+            if (!startScan && startKey.type && id === startKey.id) {
                 startScan = true;
+            }
+
+            if (startScan && this.#evaluateViewKey(query, key)) {
+                keys.push({ type, id });
             }
 
             if (keys.length === limit) {
@@ -201,18 +213,19 @@ export default class DynamoDBEngine {
         return keys;
     }
 
-    #getDescendingIndexKeys(index, startKey, limit) {
+    #getDescendingIndexKeys(index, startKey, query, limit) {
         const keys = [];
         let startScan = !startKey;
 
         for (let i = index.length - 1; i >= 0; i -= 1) {
-            const { type, id } = index[i];
+            const { type, id, key } = index[i];
 
-            if (startScan) {
-                keys.push({ type, id });
-            } else if (startKey.type && id === startKey.id) {
-                keys.push({ type, id });
+            if (!startScan && startKey.type && id === startKey.id) {
                 startScan = true;
+            }
+
+            if (startScan && this.#evaluateViewKey(query, key)) {
+                keys.push({ type, id });
             }
 
             if (keys.length === limit) {
@@ -221,6 +234,48 @@ export default class DynamoDBEngine {
         }
 
         return keys;
+    }
+
+    #evaluateViewKey(query, key) {
+        if (!query) {
+            return true;
+        }
+
+        const { condition, params } = query;
+
+        switch (condition) {
+            // Less than
+            case '<':
+                throw new Error('Query condition "<" is not supported');
+            // Less than or equal to
+            case '<=':
+                throw new Error('Query condition "<=" is not supported');
+            // Greater than
+            case '>':
+                throw new Error('Query condition ">" is not supported');
+            // Greater than or equal to
+            case '>=':
+                throw new Error('Query condition ">=" is not supported');
+            // Equal to
+            case '==':
+                throw new Error('Query condition "==" is not supported');
+
+            // Between
+            case 'between':
+                if (!isNonEmptyString(params?.start) && !isNumberNotNaN(params?.start)) {
+                    throw new Error('Query params.start must be a string or number');
+                }
+                if (!isNonEmptyString(params?.end) && !isNumberNotNaN(params?.end)) {
+                    throw new Error('Query params.end must be a string or number');
+                }
+                return key >= params.start && key <= params.end;
+
+            // Begins with
+            case 'begins_with':
+                throw new Error('Query condition "begins_with" is not supported');
+            default:
+                throw new Error(`Query condition "${ query.condition }" is not supported`);
+        }
     }
 
     #removeIndexKeysForRecord(type, id) {

@@ -74,7 +74,7 @@ export default class DataStore {
         return record;
     }
 
-    async queryViewIndex(viewName, options) {
+    async queryViewIndex(viewName, query, options) {
         const {
             descending,
             startKey,
@@ -89,7 +89,7 @@ export default class DataStore {
             startKey: startKey ? startKey.id : null,
         });
 
-        const { items, lastKey } = await this.engine.queryViewIndex(viewName, {
+        const { items, lastKey } = await this.engine.queryViewIndex(viewName, query, {
             descending,
             startKey,
             limit,
