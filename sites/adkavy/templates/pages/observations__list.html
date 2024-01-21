@@ -2,10 +2,7 @@
 {{> header }}
 <article id="page-list-observations">
 <section class="hero-section">
-	<img src="{{ hero_image.url }}?ar=2:1&fit=crop&w=600"
-		srcset="{{ hero_image.url }}?ar=2:1&fit=crop&w=600 600w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1000 1000w, {{ hero_image.url }}?ar=2:1&fit=crop&w=1500 1500w, {{ hero_image.url }}?ar=2:1&fit=crop&w=3000 3000w" 
-		sizes="100vw"
-		alt="A skier carving turns through powder snow in back country mountains">
+	{{> hero_image }}
 	<div class="hero-section__scrim">
 		<div class="width-wrapper">
 			<div class="hero-section__content">
@@ -30,16 +27,16 @@
 		</p>
 	</div>
 	{{#each observations}}
-	<section class="observation-card observation-card--{{observation_type_classname this}}" data-id="{{ this.id }}">
+	<section class="observation-card observation-card--{{ this.observationType }}" data-id="{{ this.id }}">
 		<a href="/observations/{{ this.id }}" class="observation-card__header">
 			<h4 class="observation-card__header-info">
 				<i class="observation-card__type-icon"></i>
-				<span class="observation-card__type">{{observation_type this }}</span>
-				<span class="observation-card__date">{{locale_date this.date }}</span>
+				<span class="observation-card__type">{{observation_type_label this.observationType }}</span>
+				<span class="observation-card__date">{{locale_date this.observationDateTime }}</span>
 				{{#if this.name}}
 				<span class="observation-card__author">by {{ this.name }}</span>
 				{{/if}}
-				{{#if this.hasPhotos}}
+				{{#if this.hasMedia}}
 				<i class="observation-card__has-photos material-symbols-outlined">local_see</i>
 				{{/if}}
 			</h4>

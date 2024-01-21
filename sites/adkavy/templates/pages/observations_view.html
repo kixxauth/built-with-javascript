@@ -1,16 +1,16 @@
 {{> site_head }}
 {{> header }}
 
-<article id="page-view-observation" data-id="{{ observation.id }}" class="width-wrapper observation-card observation-card--{{observation_type_classname observation}}">
+<article id="page-view-observation" data-id="{{ observation.id }}" class="width-wrapper observation-card observation-card--{{ observation.observationType }}">
 	<header class="observation-card__header">
 		<h4 class="observation-card__header-info">
 			<i class="observation-card__type-icon"></i>
-			<span class="observation-card__type">{{observation_type observation }}</span>
-			<span class="observation-card__date">{{locale_date observation.date }}</span>
+			<span class="observation-card__type">{{observation_type_label observation.observationType }}</span>
+			<span class="observation-card__date">{{locale_date observation.observationDateTime }}</span>
 			{{#if observation.name}}
 			<span class="observation-card__author">by {{ observation.name }}</span>
 			{{/if}}
-			{{#if observation.hasPhotos}}
+			{{#if observation.hasMedia}}
 			<i class="observation-card__has-photos material-symbols-outlined">local_see</i>
 			{{/if}}
 		</h4>
@@ -21,7 +21,7 @@
 		<div class="observation-card__table table">
 			<div class="table-row">
 				<span>Date &amp; Time</span>
-				<span>{{locale_date observation.date }} <i class="material-symbols-outlined">alternate_email</i> {{locale_time observation.time }}</span>
+				<span>{{locale_date observation.observationDateTime }} <i class="material-symbols-outlined">alternate_email</i> {{locale_time observation.observationDateTime }}</span>
 			</div>
 			<div class="table-row">
 				<span>Location</span>
@@ -65,10 +65,11 @@
 		</div>
 	</div>
 
-	{{#if observation.photos}}
-	<h3 class="heading3--light">Observation Photos</h3>
+	{{#if observation.hasMedia}}
+	<h3 class="heading3--light">Photos & Videos</h3>
 	{{/if}}
 
+	{{!
 	<div class="observation-card__photos">
 		{{#each observation.photos }}
 		<div class="observation-card__photo">
@@ -80,6 +81,7 @@
 		</div>
 		{{/each}}
 	</div>
+	}}
 </article>
 <nav class="post-hero-navigation">
 	<div class="post-hero-navigation__links width-wrapper">

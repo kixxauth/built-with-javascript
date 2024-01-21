@@ -3,6 +3,8 @@ const matcher = /T([\d]{2}):([\d]{2})/;
 exports.helper = function locale_time(str) {
     str = str || '';
 
+    // Will convert an ISO formatted datetime string with consideration of the timezone :D
+    // Ex: 2023-12-31T11:40:00-05:00
     const match = matcher.exec(str);
 
     if (match) {

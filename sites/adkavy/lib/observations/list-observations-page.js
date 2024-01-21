@@ -96,14 +96,14 @@ export default class ListObservationsPage extends CacheablePage {
             limit,
         });
 
-        let items;
+        let observations;
 
         if (Array.isArray(result.items)) {
-            items = result.items.map((record) => {
+            observations = result.items.map((record) => {
                 return new ObservationModel(record).toView();
             });
         } else {
-            items = [];
+            observations = [];
         }
 
         baseData.links.pages = pages.map(({ start, end }, i) => {
@@ -120,7 +120,7 @@ export default class ListObservationsPage extends CacheablePage {
             };
         });
 
-        return { items };
+        return { observations };
     }
 
     #generatePageQueries() {

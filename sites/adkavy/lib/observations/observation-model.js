@@ -133,12 +133,72 @@ export default class ObservationModel extends DataStoreModel {
         const {
             title,
             observationDateTime,
+            name,
+            location,
+            elevation,
+            aspect,
+            travelMode,
+            redFlags,
+            triggeredAvalanche,
+            observedAvalanche,
+            triggeredAvalancheType,
+            triggeredAvalancheSize,
+            triggeredAvalancheComments,
+            observedAvalancheType,
+            observedAvalancheSize,
+            observedAvalancheComments,
+            details,
         } = this.attributes;
+
+        let observationType = 'observation';
+        if (triggeredAvalanche) {
+            observationType = 'triggered-avalanche';
+        } else if (observedAvalanche) {
+            observationType = 'observed-avalanche';
+        }
+
+        const hasMedia = Array.isArray(this.attributes.media) && this.attributes.media.length > 0;
+
+        let media = [];
+        if (hasMedia) {
+            media = this.attributes.media.map((item) => {
+                return {
+                    type: item.type,
+                    title: item.title,
+                    details: item.details,
+                    contentType: item.contentType,
+                    format: item.mediaOutput?.format,
+                    contentLength: item.contentLength,
+                    urls: {
+                        media: item.mediaURLs?.cdns?.[0],
+                        poster: item.posterURLs?.cdns?.[0],
+                    },
+                };
+            });
+        }
 
         return {
             id,
             title,
             observationDateTime,
+            observationType,
+            hasMedia,
+            name,
+            location,
+            elevation,
+            aspect,
+            travelMode,
+            redFlags,
+            triggeredAvalanche,
+            observedAvalanche,
+            triggeredAvalancheType,
+            triggeredAvalancheSize,
+            triggeredAvalancheComments,
+            observedAvalancheType,
+            observedAvalancheSize,
+            observedAvalancheComments,
+            details,
+            media,
         };
     }
 }

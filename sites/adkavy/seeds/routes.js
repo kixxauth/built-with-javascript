@@ -32,7 +32,7 @@ export default [
             targetName: 'HTMLPage',
             options: {
                 page: 'observations__form',
-                template: 'observations/form.html',
+                template: 'observations__form.html',
                 cacheControl: 'public, max-age=129600',
             },
         }],
@@ -45,7 +45,7 @@ export default [
             targetName: 'ListObservations',
             options: {
                 page: 'observations__list',
-                template: 'observations/list.html',
+                template: 'observations__list.html',
                 cacheControl: 'public, no-cache',
             },
         }],
@@ -59,7 +59,7 @@ export default [
             options: {
                 dataType: 'observation',
                 page: 'observations__view',
-                template: 'observations/view.html',
+                template: 'observations__view.html',
                 cacheControl: 'public, no-cache',
             },
         }],
