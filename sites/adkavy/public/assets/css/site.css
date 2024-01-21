@@ -265,9 +265,6 @@ button.button--icon-button > .button__icon {
 		height: auto;
 		min-height: 24rem;
 	}
-	.hero-section__scrim {
-		background-color: rgba(0, 0, 0, 0.1);
-	}
 	.hero-section__content h2 {
 		font-size: 2.5em;
 	}
@@ -283,18 +280,14 @@ button.button--icon-button > .button__icon {
 @media screen and (min-width: 68rem) {
 	.hero-section {
 		font-size: 1.5em;
+		height: 36rem;
 	}
 	.hero-section__content {
+		margin-top: 6%;
 		max-width: 44rem;
 	}
 }
 @media screen and (min-width: 90rem) {
-	.hero-section {
-		height: 48rem;
-	}
-	.hero-section > img {
-		object-position: left top;
-	}
 	.hero-section__content {
 		max-width: 60rem;
 	}
@@ -1030,6 +1023,7 @@ select {
 }
 .observation-card__type,
 .observation-card__date,
+.observation-card__author,
 .observation-card__has-photos {
 	display: inline-block;
 	color: hsla(45, 15%, 16%, 0.5);
@@ -1046,6 +1040,13 @@ select {
 	margin-left: 1rem;
 	color: hsla(45, 15%, 16%, 0.5);
 	font-weight: 700;
+}
+.observation-card__author {
+	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+	font-size: 1rem;
+	margin-left: 1rem;
+	color: hsla(45, 15%, 16%, 0.5);
+	font-weight: 400;
 }
 .observation-card__has-photos {
 	margin-left: 1rem;
