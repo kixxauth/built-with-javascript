@@ -10,7 +10,7 @@ export default class ListObservationsPage extends CacheablePage {
 
     #dataType = 'observation';
     #viewName = 'observations_by_observation_datetime';
-    #descending = false;
+    #descending = true;
     #limit = 100;
 
     constructor(spec) {
@@ -36,7 +36,7 @@ export default class ListObservationsPage extends CacheablePage {
      * @param {Boolean} args.descending [description]
      * @param {Number} args.limit [description]
      */
-    async getDynamicData(args) {
+    async getDynamicData(baseData, args) {
         const startKey = args.startkey ? { type: this.#dataType, id: args.startkey } : null;
         const descending = isBoolean(args.descending) ? args.descending : this.#descending;
 
@@ -106,13 +106,21 @@ export default class ListObservationsPage extends CacheablePage {
             items = [];
         }
 
-        let newStartKey;
+        baseData.links.pages = pages.map(({ start, end }, i) => {
+            const { canonical } = baseData.links;
 
-        if (result.lastKey) {
-            newStartKey = result.lastKey.id;
-        }
+            const search = `?page=${ i + 1 }`;
 
-        return { items, startkey: newStartKey };
+            return {
+                search,
+                href: canonical.base + canonical.pathname + search,
+                start,
+                end,
+                label: `${ start.split('-')[0] }/${ end.split('-')[0] }`,
+            };
+        });
+
+        return { items };
     }
 
     #generatePageQueries() {

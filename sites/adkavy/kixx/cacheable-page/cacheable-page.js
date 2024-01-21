@@ -119,7 +119,7 @@ export default class CacheablePage {
             throw error;
         }
 
-        const data = await this.getDynamicData(args);
+        const data = await this.getDynamicData(baseData, args);
 
         return Object.assign(baseData, page, data);
     }
