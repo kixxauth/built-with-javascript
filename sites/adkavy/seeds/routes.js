@@ -79,7 +79,7 @@ export default [
             targetName: 'HTMLPage',
             options: {
                 page: 'incident-reports__list',
-                template: 'incident-reports/list.html',
+                template: 'incident-reports__list.html',
                 cacheControl: 'public, no-cache',
             },
         }],
@@ -92,7 +92,7 @@ export default [
             targetName: 'HTMLPage',
             options: {
                 page: 'incident-reports__view',
-                template: 'incident-reports/view.html',
+                template: 'incident-reports__view.html',
                 cacheControl: 'public, no-cache',
             },
         }],

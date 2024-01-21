@@ -1,5 +1,5 @@
 export const type = 'page';
-export const id = 'making-snow-observations';
+export const id = 'making-observations';
 
 export const attributes = {
     pageType: 'website',

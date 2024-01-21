@@ -1,5 +1,5 @@
 export const type = 'page';
-export const id = 'incident-reports';
+export const id = 'incident-reports__list';
 
 export const attributes = {
     pageType: 'website',

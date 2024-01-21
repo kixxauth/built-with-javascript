@@ -5,4 +5,5 @@ TODO
 - [ ] Redirect to HTTPS. In the Kixx router?
 - [ ] Ensure pages are cacheable when appropriate.
 - [ ] Add a pageImage to each page record (for social card image - get from site owners).
+- [ ] Use dynamic page title and description for observation detail pages.
 - [ ] Implement BlobStore for content management of snippets.

@@ -1,5 +1,5 @@
 export const type = 'page';
-export const id = 'incident-reports__2022-02-12-angel-slides';
+export const id = 'incident-reports__view';
 
 export const attributes = {
     pageType: 'website',
