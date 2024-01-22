@@ -11,6 +11,7 @@ export function registerStaticFileServer(router, settings) {
         eventBus,
         logger,
         publicDirectory,
+        cacheOff,
     } = settings;
 
     router.registerRouteFactory('StaticFileServer', ({ name, patterns, targets }) => {
@@ -41,6 +42,7 @@ export function registerStaticFileServer(router, settings) {
             methods,
             rootPath,
             cacheControl,
+            cacheOff,
         });
     });
 }

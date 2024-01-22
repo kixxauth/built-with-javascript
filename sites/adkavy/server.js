@@ -113,6 +113,7 @@ async function main() {
         eventBus,
         logger,
         publicDirectory: path.join(ROOT_DIR, 'public'),
+        cacheOff: !config.staticFileServer.cache,
     });
 
     // Cacheable HTML Page Plugin

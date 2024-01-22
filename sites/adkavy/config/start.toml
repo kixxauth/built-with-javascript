@@ -26,6 +26,10 @@ endpoint = ""
 scope = "adkavy-development"
 token = ""
 
+[staticFileServer]
+# Set to true to enable HTTP caching.
+cache = true
+
 [pages]
 # Set to true to enable page caching.
 cache = true

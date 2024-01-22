@@ -19,6 +19,7 @@ export default class StaticFileServerTarget extends Target {
     #logger = null;
     #rootPath = null;
     #cacheControl = null;
+    #cacheOff = false;
 
     constructor(options) {
         const {
@@ -27,6 +28,7 @@ export default class StaticFileServerTarget extends Target {
             logger,
             rootPath,
             cacheControl,
+            cacheOff,
         } = options;
 
         super({ name, methods });
@@ -34,6 +36,7 @@ export default class StaticFileServerTarget extends Target {
         this.#logger = logger;
         this.#rootPath = rootPath;
         this.#cacheControl = cacheControl;
+        this.#cacheOff = Boolean(cacheOff);
     }
 
     async handleRequest(request, response) {
@@ -88,7 +91,9 @@ export default class StaticFileServerTarget extends Target {
 
         response.headers.set('last-modified', modifiedDate.toUTCString());
 
-        if (this.#cacheControl) {
+        if (this.#cacheOff) {
+            response.headers.set('cache-control', 'no-store');
+        } else if (this.#cacheControl) {
             response.headers.set('cache-control', this.#cacheControl);
         }
 
