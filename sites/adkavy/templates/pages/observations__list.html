@@ -21,8 +21,20 @@
 	</div>
 </nav>
 <div id="observations-list" class="width-wrapper">
+	<h1>Observations for the {{ pageLabel }} Season</h1>
+	<nav class="observations-list-page-selector">
+		<ul class="observations-list-page-selector__list">
+			{{#each links.pages}}
+			{{#unless this.isActive}}
+			<li class="observations-list-page-selector__item">
+				<a class="nav-link" href="{{ this.href }}">{{ this.label }} Season</a>
+			</li>
+			{{/unless}}
+			{{/each}}
+		</ul>
+	</nav>
 	<div class="observations-list__disclaimer">
-		<h2 class="heading2--light">Understand The Risks</h2>
+		<h3 class="heading3--light">Understand The Risks</h3>
 		<p>Adirondack Community Avalanche Project cannot vouch for the quality or accuracy of observations from the general public. These observations are a tool to help mitigate risk, but in no way are they a complete representation of the avalanche hazards in the backcountry. We encourage users to take avalanche education courses, make their own observations, and understand the consequences of traveling in avalanche terrain, especially in the Adirondacks where there is no forecasting service. Use at your own risk.
 		</p>
 	</div>
@@ -45,6 +57,18 @@
 		</a>
 	</section>
 	{{/each}}
+	<nav class="observations-list-page-selector">
+		<h3>Links to other seasons:</h3>
+		<ul class="observations-list-page-selector__list">
+			{{#each links.pages}}
+			{{#unless this.isActive}}
+			<li class="observations-list-page-selector__item">
+				<a class="nav-link" href="{{ this.href }}">{{ this.label }} Season</a>
+			</li>
+			{{/unless}}
+			{{/each}}
+		</ul>
+	</nav>
 </div>
 </article>
 {{> footer }}

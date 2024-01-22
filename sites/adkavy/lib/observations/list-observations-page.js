@@ -80,6 +80,10 @@ export default class ListObservationsPage extends CacheablePage {
 
         const params = pages[pageIndex];
 
+        // Date strings formatted like '2023-08-01'.
+        const startDate = params.start;
+        const endDate = params.end;
+
         const query = {
             condition: 'between',
             params,
@@ -117,10 +121,14 @@ export default class ListObservationsPage extends CacheablePage {
                 start,
                 end,
                 label: `${ start.split('-')[0] }/${ end.split('-')[0] }`,
+                isActive: i === pageIndex,
             };
         });
 
-        return { observations };
+        return {
+            pageLabel: `${ startDate.split('-')[0] }/${ endDate.split('-')[0] }`,
+            observations,
+        };
     }
 
     #generatePageQueries() {

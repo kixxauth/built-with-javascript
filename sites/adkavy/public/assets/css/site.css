@@ -31,13 +31,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 .heading2--light {
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-	font-size: 2rem;
+	font-size: 2em;
 	font-weight: 200;
 	line-height: 1.2;
 }
 .heading3--light {
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-	font-size: 1.4rem;
+	font-size: 1.4em;
 	font-weight: 200;
 	line-height: 1.2;
 }
@@ -310,7 +310,7 @@ input[type="date"],
 input[type="time"],
 textarea {
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-	font-size: 1rem;
+	font-size: 1em;
 	-webkit-appearance: none;
 	-moz-appearance: none;
 	appearance: none;
@@ -346,7 +346,7 @@ textarea {
 	height: 80px;
 }
 select {
-	font-size: 1rem;
+	font-size: 1em;
 	box-shadow: none;
 	line-height: 1;
 	padding: 0.3em 1em;
@@ -357,7 +357,7 @@ select {
 }
 .form-field--vertical > label,
 .form-field--vertical > legend {
-	font-size: 1.1rem;
+	font-size: 1.1em;
 	display: block;
 	line-height: 1;
 	margin-bottom: 0.5rem;
@@ -366,9 +366,9 @@ select {
 	margin-bottom: 1rem;
 }
 .form-field__help {
-	font-size: 0.85rem;
-	margin-top: 0.2rem;
-	margin-bottom: 0.2rem;
+	font-size: 0.85em;
+	margin-top: 0.2em;
+	margin-bottom: 0.2em;
 	color: hsla(45, 15%, 25%, 0.7);
 }
 .form-field--required label > span,
@@ -581,7 +581,8 @@ select {
 }
 
 /* Article Sections */
-.article-text a {
+.article-text a,
+a.nav-link {
 	color: hsla(203, 53%, 43%, 1.0);
 	text-decoration: underline;
 }
@@ -986,12 +987,26 @@ select {
 #page-list-observations {
 	padding-bottom: 4rem;
 }
+.observations-list__disclaimer {
+	font-size: 0.85em;
+}
+.observations-list-page-selector {
+	margin-top: 2rem;
+}
+ul.observations-list-page-selector__list {
+	list-style-type: none;
+	padding: 0;
+	margin-top: 0.5rem;
+}
+ul.observations-list-page-selector__list a.nav-link {
+	font-size: 1.2em;
+}
 
 /* Observation Cards */
 .observation-card {
 	margin-top: 2rem;
-	border-top: 1px solid hsla(45, 20%, 20%, 0.3);
-	padding-top: 1rem;
+	border-bottom: 1px solid hsla(45, 20%, 20%, 0.3);
+	padding-bottom: 1rem;
 }
 .observation-card > a {
 	display: block;
@@ -1030,21 +1045,21 @@ select {
 }
 .observation-card__type {
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-	font-size: 0.9rem;
+	font-size: 0.9em;
 	font-weight: 400;
 	text-transform: lowercase;
 }
 .observation-card__date {
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-	font-size: 1.1rem;
-	margin-left: 1rem;
+	font-size: 1.1em;
+	margin-left: 1em;
 	color: hsla(45, 15%, 16%, 0.5);
 	font-weight: 700;
 }
 .observation-card__author {
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-	font-size: 1rem;
-	margin-left: 1rem;
+	font-size: 1em;
+	margin-left: 1em;
 	color: hsla(45, 15%, 16%, 0.5);
 	font-weight: 400;
 }
@@ -1053,15 +1068,15 @@ select {
 	color: hsla(45, 15%, 16%, 0.5);
 }
 .observation-card__title {
-	font-size: 1.5rem;
-	margin-top: 0.4rem;
+	font-size: 1.5em;
+	margin-top: 0.4em;
 	margin-bottom: 0;
 	line-height: 1.2;
 }
 .observation-card__location {
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
 	text-transform: capitalize;
-	font-size: 1.1rem;
+	font-size: 1.1em;
 	margin-top: 0.3em;
 	margin-bottom: 0;
 	line-height: 1.2;
@@ -1074,23 +1089,23 @@ select {
 	margin-top: 0.3rem;
 	margin-bottom: 0;
 	line-height: 1.2;
-	font-size: 1rem;
+	font-size: 1em;
 	color: hsla(45, 15%, 16%, 0.5);
 }
 .observation-card__body p {
 	margin-top: 0.5rem;
 }
 .observation-card__table {
-	margin-top: 2rem;
-	font-size: 0.9rem;
+	margin-top: 2em;
+	font-size: 0.9em;
 	line-height: 1.2;
 }
 .observation-card__table .material-symbols-outlined {
 	vertical-align: middle;
-	font-size: 1rem;
+	font-size: 1em;
 }
 .observation-card__table .table-row {
-	margin-top: 1rem;
+	margin-top: 1em;
 }
 .observation-card__table span:first-child {
 	font-weight: 700;
@@ -1147,13 +1162,13 @@ a.observation-card__photo-link {
 }
 .incident-card h4 { /* date */
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-	font-size: 1.1rem;
+	font-size: 1.1em;
 	color: hsla(45, 15%, 16%, 0.5);
 	font-weight: 700;
 }
 .incident-card h3 { /* Title */
-	font-size: 1.5rem;
-	margin-top: 0.4rem;
+	font-size: 1.5em;
+	margin-top: 0.4em;
 	margin-bottom: 0;
 	line-height: 1.2;
 	text-decoration: underline;
@@ -1162,20 +1177,20 @@ a.observation-card__photo-link {
 /* Incident Report */
 .incident-report__date {
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-	font-size: 1.1rem;
+	font-size: 1.1em;
 	color: hsla(45, 15%, 16%, 0.5);
 	font-weight: 700;
 }
 .incident-report__title {
-	font-size: 1.5rem;
-	margin-top: 0.4rem;
+	font-size: 1.5em;
+	margin-top: 0.4em;
 	margin-bottom: 0;
 	line-height: 1.2;
 }
 .incident-report__location {
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
 	text-transform: capitalize;
-	font-size: 1.1rem;
+	font-size: 1.1em;
 	margin-top: 0.3em;
 	margin-bottom: 0;
 	line-height: 1.2;
@@ -1350,14 +1365,14 @@ a.observation-card__photo-link {
 	align-items: center;
 }
 #site-footer-social-cta h2 {
-	font-size: 2rem;
+	font-size: 2em;
 }
 #site-footer-contact-cta {
 	text-align: center;
 	padding: 2rem 0;
 }
 #site-footer-contact-cta h2 {
-	font-size: 2rem;
+	font-size: 2em;
 }
 #site-footer-contact-cta .email-address {
 	color: hsla(203, 53%, 36%, 1.0);
