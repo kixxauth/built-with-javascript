@@ -73,24 +73,29 @@
 		{{#each observation.media }}
 		{{#if this.isImage}}
 		<div class="observation-card__photo">
-			<h4>{{ this.title }} <a href="{{ this.urls.media }}?fm=jpg&auto=format" class="observation-card__photo-link"><i class="material-symbols-outlined">open_in_new</i> full size</a></h4>
+			<h4>{{ this.title }} <a href="{{ this.urls.media }}?fm=jpg&auto=format" class="observation-card__media-link"><i class="material-symbols-outlined">open_in_new</i> full size</a></h4>
 			<div class="image-wrapper">
 				<img src="{{ this.urls.media }}?fm=jpg&auto=format&w=600"
 					srcset="{{ this.urls.media }}?fm=jpg&auto=format&w=400 400w, {{ this.urls.media }}?fm=jpg&auto=format&w=600 600w, {{ this.urls.media }}?fm=jpg&auto=format&w=1000 1000w"
-					sizes="(min-width: 56rem) 50vw, 100vw" 
+					sizes="(min-width: 56rem) 50vw, 100vw"
 					alt="{{ this.title }}">
 			</div>
 			<p>{{ this.details }}</p>
 		</div>
 		{{/if}}
 		{{#if this.isVideo}}
-		<div class="observation-card__photo">
-			<h4>{{ this.title }} <a href="{{ this.urls.media }}" class="observation-card__photo-link"><i class="material-symbols-outlined">open_in_new</i> watch video</a></h4>
+		<div class="observation-card__video">
+			<h4>{{ this.title }} <a href="{{ this.urls.media }}" class="observation-card__media-link"><i class="material-symbols-outlined">open_in_new</i> watch video</a></h4>
 			<div class="image-wrapper">
 				<img src="{{ this.urls.poster }}?fm=jpg&auto=format&w=600"
 					srcset="{{ this.urls.poster }}?fm=jpg&auto=format&w=400 400w, {{ this.urls.poster }}?fm=jpg&auto=format&w=600 600w, {{ this.urls.poster }}?fm=jpg&auto=format&w=1000 1000w"
-					sizes="(min-width: 56rem) 50vw, 100vw" 
+					sizes="(min-width: 56rem) 50vw, 100vw"
 					alt="{{ this.title }}">
+				<a class="video-poster-scrim" href="{{ this.urls.media }}">
+					<div class="video-poster-scrim__icon">
+						<i class="material-symbols-outlined">play_circle</i>
+					</div>
+				</a>
 			</div>
 			<p>{{ this.details }}</p>
 		</div>

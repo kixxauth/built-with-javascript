@@ -473,6 +473,35 @@ select {
 	font-size: 1.4em;
 }
 
+.youtube-video > header {
+	margin-bottom: 2rem;
+}
+.youtube-video > iframe {
+	aspect-ratio: 16/9;
+	width: 100%;
+}
+
+.video-poster-scrim {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	align-items: center;
+	display: flex;
+}
+.video-poster-scrim__icon {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+}
+.video-poster-scrim__icon > .material-symbols-outlined {
+	font-size: 7rem;
+	color: hsla(203, 53%, 36%, 1.0);
+}
+
 /* Observation Form */
 #observation-form-intro {
 	border-bottom: 1px solid hsla(45, 20%, 20%, 0.3);
@@ -998,6 +1027,9 @@ ul.observations-list-page-selector__list {
 	padding: 0;
 	margin-top: 0.5rem;
 }
+ul.observations-list-page-selector__list > li {
+	margin-top: 0.7em;
+}
 ul.observations-list-page-selector__list a.nav-link {
 	font-size: 1.2em;
 }
@@ -1117,22 +1149,28 @@ ul.observations-list-page-selector__list a.nav-link {
 .observation-card__table .red-flags {
 	color: hsla(22, 80%, 50%, 1.0);
 }
-a.observation-card__photo-link {
+a.observation-card__media-link {
 	display: inline-block;
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
 	color: hsla(203, 53%, 43%, 1.0);
 	font-weight: 400;
 	margin-left: 1em;
 }
-.observation-card__photo-link > .material-symbols-outlined {
+.observation-card__media-link > .material-symbols-outlined {
 	font-size: 1rem;
 }
-.observation-card__photo .image-wrapper {
+.observation-card__photo .image-wrapper,
+.observation-card__video .image-wrapper {
 	margin-top: 1rem;
 	width: 100%;
 }
-.observation-card__photo .image-wrapper > img {
+.observation-card__photo .image-wrapper > img,
+.observation-card__video .image-wrapper > img {
+	display: block;
 	width: 100%;
+}
+.observation-card__video .image-wrapper {
+	position: relative;
 }
 @media screen and (min-width: 56rem) {
 	.observation-card__body {
@@ -1150,7 +1188,8 @@ a.observation-card__photo-link {
 		flex-wrap: wrap;
 		justify-content: space-between;
 	}
-	.observation-card__photo .image-wrapper > img {
+	.observation-card__photo .image-wrapper > img,
+	.observation-card__video .image-wrapper > img {
 		width: auto;
 		max-height: 700px;
 		max-width: 900px;
@@ -1265,13 +1304,6 @@ a.observation-card__photo-link {
 #page-education .youtube-video {
 	margin-top: 4rem;
 	max-width: 900px;
-}
-#page-education .youtube-video > header {
-	margin-bottom: 2rem;
-}
-#page-education .youtube-video > iframe {
-	aspect-ratio: 16/9;
-	width: 100%;
 }
 
 /* Events Page */
