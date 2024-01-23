@@ -166,6 +166,8 @@ export default class ObservationModel extends DataStoreModel {
                     type: item.type,
                     title: item.title,
                     details: item.details,
+                    isVideo: item.type === 'video',
+                    isImage: item.type === 'image',
                     contentType: item.contentType,
                     format: item.mediaOutput?.format,
                     contentLength: item.contentLength,

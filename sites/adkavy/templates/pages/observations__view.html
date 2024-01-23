@@ -69,19 +69,34 @@
 	<h3 class="heading3--light">Photos & Videos</h3>
 	{{/if}}
 
-	{{!
-	<div class="observation-card__photos">
-		{{#each observation.photos }}
+	<div class="observation-card__media">
+		{{#each observation.media }}
+		{{#if this.isImage}}
 		<div class="observation-card__photo">
-			<h4>{{ this.title }} <a href="{{ this.url }}" class="observation-card__photo-link"><i class="material-symbols-outlined">open_in_new</i> full size</a></h4>
+			<h4>{{ this.title }} <a href="{{ this.urls.media }}?fm=jpg&auto=format" class="observation-card__photo-link"><i class="material-symbols-outlined">open_in_new</i> full size</a></h4>
 			<div class="image-wrapper">
-				<img src="{{ this.url }}">
+				<img src="{{ this.urls.media }}?fm=jpg&auto=format&w=600"
+					srcset="{{ this.urls.media }}?fm=jpg&auto=format&w=400 400w, {{ this.urls.media }}?fm=jpg&auto=format&w=600 600w, {{ this.urls.media }}?fm=jpg&auto=format&w=1000 1000w"
+					sizes="(min-width: 56rem) 50vw, 100vw" 
+					alt="{{ this.title }}">
 			</div>
 			<p>{{ this.details }}</p>
 		</div>
+		{{/if}}
+		{{#if this.isVideo}}
+		<div class="observation-card__photo">
+			<h4>{{ this.title }} <a href="{{ this.urls.media }}" class="observation-card__photo-link"><i class="material-symbols-outlined">open_in_new</i> watch video</a></h4>
+			<div class="image-wrapper">
+				<img src="{{ this.urls.poster }}?fm=jpg&auto=format&w=600"
+					srcset="{{ this.urls.poster }}?fm=jpg&auto=format&w=400 400w, {{ this.urls.poster }}?fm=jpg&auto=format&w=600 600w, {{ this.urls.poster }}?fm=jpg&auto=format&w=1000 1000w"
+					sizes="(min-width: 56rem) 50vw, 100vw" 
+					alt="{{ this.title }}">
+			</div>
+			<p>{{ this.details }}</p>
+		</div>
+		{{/if}}
 		{{/each}}
 	</div>
-	}}
 </article>
 <nav class="post-hero-navigation">
 	<div class="post-hero-navigation__links width-wrapper">

@@ -51,13 +51,12 @@ export default [
         }],
     },
     {
-        patterns: [ '/observations/:observationId(.json)' ],
+        patterns: [ '/observations/:observationId.:ext?' ],
         routeName: 'HTMLPage',
         targets: [{
             methods: [ 'GET', 'HEAD' ],
             targetName: 'ViewObservation',
             options: {
-                dataType: 'observation',
                 page: 'observations__view',
                 template: 'observations__view.html',
                 cacheControl: 'public, no-cache',

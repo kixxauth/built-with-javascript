@@ -4,6 +4,7 @@ import ObservationsRPCTarget from './observations-rpc-target.js';
 import ObservationsRemoteProcedureCalls from './observations-remote-procedure-calls.js';
 import ObservationsAddMediaTarget from './observations-add-media-target.js';
 import ListObservationsPage from './list-observations-page.js';
+import ViewObservationPage from './view-observation-page.js';
 
 const { JsonRPCRoute } = Kixx.Routes;
 const { HTMLPageTarget } = Kixx.Targets;
@@ -55,17 +56,15 @@ export function registerObservations(router, settings) {
     });
 
     router.registerTargetFactory('ViewObservation', ({ name, methods, options }) => {
-        const page = new ListObservationsPage({
+        const page = new ViewObservationPage({
             pageId: options.page,
             templateId: options.template,
             noCache,
-            logger: logger.createChild({ name: 'ListObservations' }),
+            logger: logger.createChild({ name: 'ViewObservation' }),
             eventBus,
             dataStore,
             blobStore,
             templateStore,
-            descending: options.descending,
-            limit: options.limit,
         });
 
         return new HTMLPageTarget({
