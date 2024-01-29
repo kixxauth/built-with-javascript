@@ -343,7 +343,7 @@ textarea:focus-visible {
 }
 textarea {
 	line-height: 1.3;
-	height: 80px;
+	height: 80px; /* Important to manage height with JavaScript */
 }
 select {
 	font-size: 1em;

@@ -56,8 +56,12 @@ export default class DynamoDBEngine {
         const table = `${ this.#tablePrefix }_entities`;
         await this.#dynamoDBClient.putItem(table, record);
 
-        this.#removeIndexKeysForRecord(type, id);
-        this.#mapRecords([ record ]);
+        // Only update this entity in the view indexes if the view indexes have
+        // already been loaded.
+        if (this.#viewIndexesLoaded) {
+            this.#removeIndexKeysForRecord(type, id);
+            this.#mapRecords([ record ]);
+        }
 
         return record;
     }
@@ -100,7 +104,20 @@ export default class DynamoDBEngine {
 
         const table = `${ this.#tablePrefix }_entities`;
 
-        const items = await this.#dynamoDBClient.batchGetItem(table, keys);
+        // DynamoDB BatchGet() cannot handle duplicate keys.
+        const uniqueKeys = [];
+
+        for (const key of keys) {
+            const i = uniqueKeys.findIndex(({ type, id }) => {
+                return type === key.type && id === key.id;
+            });
+
+            if (i < 0) {
+                uniqueKeys.push(key);
+            }
+        }
+
+        const items = await this.#dynamoDBClient.batchGetItem(table, uniqueKeys);
 
         // Sort the results of the batch fetch to match the order of the keys.
         const results = [];

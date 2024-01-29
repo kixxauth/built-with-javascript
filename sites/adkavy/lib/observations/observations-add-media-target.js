@@ -55,7 +55,7 @@ export default class ObservationsAddMedia extends Target {
 
         const result = await job.uploadObservationAttachment(request.getReadStream(), {
             observationId,
-            filename,
+            filename: decodeURIComponent(filename),
             contentType,
             contentLength,
         });

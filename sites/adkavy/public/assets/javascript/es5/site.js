@@ -23,6 +23,20 @@
         return ('00' + n).slice(-2);
     }
 
+    function dateToISOTZString(date) {
+        var tzo = -date.getTimezoneOffset();
+        var dif = tzo >= 0 ? '+' : '-';
+
+        return date.getFullYear()
+            + '-' + padNumber(date.getMonth() + 1)
+            + '-' + padNumber(date.getDate())
+            + 'T' + padNumber(date.getHours())
+            + ':' + padNumber(date.getMinutes())
+            + ':' + padNumber(date.getSeconds())
+            + dif + padNumber(Math.floor(Math.abs(tzo) / 60))
+            + ':' + padNumber(Math.abs(tzo) % 60);
+    }
+
     function showAlert(el, timeout) {
         el.classList.add('alert--active');
 
@@ -33,7 +47,46 @@
         }
     }
 
-    function uploadImageFile(file, callback) {
+    function updateOrCreateObservation(observation, callback) {
+        var body = JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'updateOrCreateObservation',
+            id: observation.id || new Date().getTime().toString(),
+            params: {
+                id: observation.id,
+                attributes: observation,
+            },
+        });
+
+        var xhr = new XMLHttpRequest();
+
+        xhr.responseType = 'json';
+
+        xhr.onload = function onRequestLoaded() {
+            console.log('xhr.response', xhr.response);
+            var res = xhr.response;
+
+            if (res.error) {
+                // eslint-disable-next-line no-console
+                console.log('JSON RPC Response:', res);
+                alert('JSON RPC Error: ' + res.error.message);
+            } else {
+                observation.id = res.result.id;
+            }
+
+            if (callback) {
+                callback();
+            }
+        };
+
+        xhr.open('POST', '/observations-rpc');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(body);
+    }
+
+    // This will upload the media file to the object management service, and associate the
+    // media item meta data with the observation record.
+    function uploadMediaFile(observation, file, callback) {
         var xhr = new XMLHttpRequest();
 
         xhr.responseType = 'json';
@@ -44,19 +97,29 @@
             xhr.onerror = null;
             xhr.onload = null;
 
-            if (xhr.status === 201) {
-                callback(null, xhr.response);
+            if (xhr.status === 201 || xhr.status === 200) {
+                var res = xhr.response;
+
+                if (res.errors) {
+                    var msg = (res.errors[0] || {}).detail || 'No server error message';
+                    // eslint-disable-next-line no-console
+                    console.log(observation.id, 'error uploading observation media', res.errors);
+                    callback(new Error('Unexpected RPC error: ' + msg));
+                } else {
+                    callback(null, res.data);
+                }
             } else {
                 callback(new Error('Unexpected status code: ' + xhr.status));
             }
         };
 
-        xhr.open('POST', '/images/');
+        xhr.open('PUT', '/observations/' + observation.id + '/media/' + file.name);
         xhr.setRequestHeader('Content-Type', file.type);
         xhr.send(file);
     }
 
-    function addObservationPhoto(observationId, photoAttributes, callback) {
+    // Updates the title and detail attributes of an existing media item.
+    function updateObservationMedia(observation, mediaItem, callback) {
         var xhr = new XMLHttpRequest();
 
         xhr.responseType = 'json';
@@ -67,16 +130,42 @@
             xhr.onerror = null;
             xhr.onload = null;
 
-            if (xhr.status === 201) {
-                callback(null, xhr.response);
+            if (xhr.status === 200) {
+                var res = xhr.response;
+
+                if (res.error) {
+                    // eslint-disable-next-line no-console
+                    console.log(res);
+                    var error = new Error('JSON RPC Error: ' + res.error.message);
+                    error.code = res.error.code;
+                    callback(error);
+                } else {
+                    callback(null, res.result);
+                }
             } else {
                 callback(new Error('Unexpected status code: ' + xhr.status));
             }
         };
 
-        xhr.open('PUT', '/observations/' + observationId + '/photos/' + photoAttributes.id);
+        var body = JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'updateObservationMedia',
+            id: observation.id,
+            params: [
+                // The observationId
+                observation.id,
+                // Media Item
+                {
+                    id: mediaItem.id,
+                    title: mediaItem.title,
+                    details: mediaItem.details,
+                },
+            ],
+        });
+
+        xhr.open('POST', '/observations-rpc');
         xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.send(JSON.stringify(photoAttributes));
+        xhr.send(body);
     }
 
     function initializeTextArea(el) {
@@ -108,20 +197,17 @@
         };
     }
 
-    function initializeObservationPhotoUpload(el, observation) {
+    function initializeObservationMediaUpload(el, observation) {
         var fileInput = el.querySelector('input[type="file"]');
         var selectFilesButtons = el.querySelectorAll('button.form-field__file-select-button');
         var thumbnailsContainer = el.querySelector('.media-input-field__thumbnails');
         var templateText = document.getElementById('template_image-card').innerHTML;
-        var files = [];
 
-        function buildImageCard(file) {
-            var photo;
+        function buildMediaCard(file) {
+            var mediaItem;
             var wrapper = document.createElement('div');
             var removeButton;
             var uploadButton;
-
-            files.push(file);
 
             wrapper.classList.add('media-preview-thumbnail');
             wrapper.innerHTML = templateText;
@@ -137,10 +223,6 @@
 
                 function onTransitionEnd() {
                     wrapper.removeEventListener('transitionend', onTransitionEnd);
-
-                    var index = files.indexOf(file);
-                    files.splice(index, 1);
-
                     wrapper.parentNode.removeChild(wrapper);
 
                     thumbnailsContainer.scrollIntoView({
@@ -157,23 +239,33 @@
                 removeButton.disabled = true;
                 uploadButton.disabled = true;
 
-                uploadImageFile(file, function whenFileUploaded(err, response) {
+                function whenFileUploaded(err, response) {
                     if (err) {
                         alert(err.message);
                     } else {
-                        photo = response;
-                        updateObservationPhoto();
+                        mediaItem = response;
+                        updateObservationMetadata();
                     }
-                });
+                }
+
+                // If the observation has not been created yet, we will need to create it before we can
+                // attach media to it.
+                if (!observation.id) {
+                    updateOrCreateObservation(observation, function whenObservationCreated() {
+                        uploadMediaFile(observation, file, whenFileUploaded);
+                    });
+                } else {
+                    uploadMediaFile(observation, file, whenFileUploaded);
+                }
             }
 
-            function updateObservationPhoto() {
+            function updateObservationMetadata() {
                 var formData = getFormData();
 
-                photo.title = formData.title;
-                photo.details = formData.details;
+                mediaItem.title = formData.title;
+                mediaItem.details = formData.details;
 
-                addObservationPhoto(observation.id, photo, whenObservationUpdated);
+                updateObservationMedia(observation, mediaItem, whenObservationUpdated);
             }
 
             function whenObservationUpdated(error) {
@@ -184,7 +276,7 @@
                 uploadButton.disabled = false;
                 uploadButton.querySelector('.button__label').innerText = 'Update Photo Info';
 
-                uploadButton.onclick = updateObservationPhoto;
+                uploadButton.onclick = updateObservationMetadata;
             }
 
             // Wait for a turn of the event loop before querying the
@@ -224,7 +316,7 @@
             target.classList.add('collapsed');
         }
 
-        function showImageCards() {
+        function showMediaCards() {
             thumbnailsContainer.classList.add('active');
         }
 
@@ -240,20 +332,20 @@
 
         // When the user has selected file(s).
         fileInput.oninput = function onSelectFilesInput() {
-            var imageCards = [];
+            var mediaCards = [];
 
             for (var i = 0; i < fileInput.files.length; i = i + 1) {
-                imageCards.push(buildImageCard(fileInput.files[i]));
+                mediaCards.push(buildMediaCard(fileInput.files[i]));
             }
 
             // Hide the button which initially triggered the file selector.
             hideInitialInputAction(function renderImageCards() {
-                imageCards.forEach(function appendNode(node) {
+                mediaCards.forEach(function appendNode(node) {
                     thumbnailsContainer.appendChild(node);
                 });
 
                 collapseInitialInputAction();
-                showImageCards();
+                showMediaCards();
                 showAddMoreButton();
             });
         };
@@ -317,7 +409,7 @@
         getValues: function getValues() {
             return {
                 date: document.getElementById('observation-form__date').value,
-                travelMode: document.getElementById('observation-form__travel_mode').value,
+                time: document.getElementById('observation-form__time').value,
                 observationType: this.getObservationType(),
                 location: document.getElementById('observation-form__location').value,
                 title: document.getElementById('observation-form__title').value,
@@ -327,7 +419,7 @@
         validateInput: function validateInput() {
             this.values = this.getValues();
 
-            if (!this.values.date || !this.values.location || !this.values.title) {
+            if (!this.values.date || !this.values.time || !this.values.location || !this.values.title) {
                 showAlert(this.el.querySelector('.alert'), 4000);
                 return false;
             }
@@ -369,7 +461,7 @@
         validateInput: function validateInput() {
             var values = this.getValues();
 
-            if (!values.avalancheType || !values.avalancheSize || !values.avalancheComments) {
+            if (!values.avalancheComments) {
                 showAlert(this.el.querySelector('.alert'), 4000);
                 return false;
             }
@@ -400,7 +492,7 @@
 
         getValues: function getValues() {
             return {
-                time: document.getElementById('observation-form__time').value,
+                travelMode: document.getElementById('observation-form__travel_mode').value,
                 elevation: document.getElementById('observation-form__elevation').value,
                 aspect: this.el.querySelector('select[name="aspect"]').value,
                 redFlags: this.getRedFlags(),
@@ -409,14 +501,14 @@
         },
 
         validateInput: function validateInput() {
-            var values = this.getValues();
+            var data = this.getValues();
 
-            if (!values.time || !values.details) {
+            if (!data.details) {
                 showAlert(this.el.querySelector('.alert'), 4000);
                 return false;
             }
 
-            return values;
+            return data;
         },
     });
 
@@ -532,15 +624,21 @@
         }
 
         function onSectionBack() {
+            if (observation.id) {
+                updateOrCreateObservation(observation);
+            }
             transitionBackward();
         }
 
-        function onSectionNext() {
+        function onSectionNext(ev) {
             var data = currentSection.validateInput();
 
             if (data) {
+                if (observation.id || ev.target.getAttribute('data-submit')) {
+                    updateOrCreateObservation(observation);
+                }
+
                 observation.mergeFormData(data);
-                createOrUpdateObservation();
 
                 if (typeof currentSection.areAvalancheDetailsRequired === 'function') {
                     avalancheDetailsRequired = currentSection.areAvalancheDetailsRequired();
@@ -550,30 +648,11 @@
             }
         }
 
-        function createOrUpdateObservation() {
-            var xhr = new XMLHttpRequest();
-
-            xhr.responseType = 'json';
-
-            xhr.onload = function onRequestLoaded() {
-                observation.id = (xhr.response || {}).id;
-            };
-
-            if (observation.id) {
-                xhr.open('PUT', '/observations/' + observation.id);
-            } else {
-                xhr.open('POST', '/observations/');
-            }
-
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify(observation));
-        }
-
         // Activate the first section.
         currentSection.bindHandlers(onSectionBack, onSectionNext);
 
         // Initialize the photo upload controller once.
-        initializeObservationPhotoUpload(
+        initializeObservationMediaUpload(
             document.getElementById('observation-form__photos-field'),
             observation
         );
@@ -590,8 +669,8 @@
         this.name = '';
         this.email = '';
         this.title = '';
-        this.date = '';
-        this.time = '';
+        this.observationDateTime = '';
+        this.reportedDateTime = dateToISOTZString(new Date());
         this.travelMode = '';
         this.location = '';
         this.elevation = '';
@@ -609,16 +688,12 @@
     }
 
     Observation.prototype.mergeFormData = function mergeFormData(newData) {
+        console.log('new data =>', newData);
         extendObject(this.formData, newData);
 
         this.name = this.formData.name || '';
         this.email = this.formData.email || '';
         this.title = this.formData.title || '';
-        this.date = this.formData.date || '';
-
-        if (this.formData.time) {
-            this.time = this.formatTime(this.formData.time);
-        }
 
         this.travelMode = this.formData.travelMode;
         this.location = this.formData.location || '';
@@ -626,6 +701,11 @@
         this.aspect = this.formData.aspect || '';
         this.details = this.formData.details || '';
         this.redFlags = this.formData.redFlags || [];
+
+        if (this.formData.date && this.formData.time) {
+            var datetime = new Date(this.formData.date + 'T' + this.formData.time);
+            this.observationDateTime = dateToISOTZString(datetime);
+        }
 
         if (this.formData.observationType === 'triggeredAvalanche') {
             this.triggeredAvalanche = true;
@@ -659,25 +739,6 @@
             this.triggeredAvalancheSize = '';
             this.triggeredAvalancheComments = '';
         }
-    };
-
-    Observation.prototype.formatTime = function formatTime(timeString) {
-        var parts = timeString.split(':');
-        var hours = parseInt(parts[0], 10);
-        var minutes = parseInt(parts[1], 10);
-        var postfix = 'AM';
-
-        if (hours > 11) {
-            postfix = 'PM';
-        }
-
-        if (hours === 0) {
-            hours = 12;
-        } else if (hours > 12) {
-            hours = hours - 12;
-        }
-
-        return padNumber(hours) + ':' + padNumber(minutes) + ':00 ' + postfix;
     };
 
     // Contained initialization.

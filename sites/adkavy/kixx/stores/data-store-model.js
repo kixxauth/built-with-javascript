@@ -1,4 +1,4 @@
-import util from 'node:util';
+import crypto from 'node:crypto'; // eslint-disable-line no-shadow
 import { KixxAssert } from '../../dependencies.js';
 import Errors from '../errors/mod.js';
 
@@ -92,7 +92,7 @@ export default class DataStoreModel {
                 throw new ConflictError(`DataStore create() ${ type }:${ id } already exists`);
             }
         } else {
-            id = util.randomUUID();
+            id = crypto.randomUUID();
         }
 
         const model = new Model({
@@ -141,7 +141,7 @@ export default class DataStoreModel {
 
         if (!model) {
             model = new Model({
-                id: isNonEmptyString(id) ? id : util.randomUUID(),
+                id: isNonEmptyString(id) ? id : crypto.randomUUID(),
                 attributes: attributes || {},
             });
         }

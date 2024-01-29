@@ -31,17 +31,10 @@
 			<input type="date" name="date" id="observation-form__date" autocomplete="off" value="{{ iso_date }}" max="{{ iso_date }}">
 		</div>
 
-		<div class="form-field form-field--vertical form-field--select">
-			<label for="observation-form__travel_mode">Mode of Travel</label>
-			<select id="observation-form__travel_mode" name="travelMode" autocomplete="off">
-				<option value="">Choose One</option>
-				<option value="skiing_or_snowboarding">Skiing/Snowboarding</option>
-				<option value="xc_skiing_or_snowshoeing">XC Skiing/Snowshoeing</option>
-				<option value="walking_hiking">Walking/Hiking</option>
-				<option value="snowmobiling">Snowmobiling</option>
-				<option value="driving">Driving</option>
-				<option value="other">Other</option>
-			</select>
+		<div class="form-field form-field--vertical form-field--time-input form-field--required">
+			<label for="observation-form__time">Time of Observation <span>*required</span></label>
+			<input type="time" name="time" id="observation-form__time" value="10:10" autocomplete="off">
+			<p class="form-field__help">A "fuzzy" time is ok. Your best guess is more important than precision.</p>
 		</div>
 
 		<fieldset class="form-field form-field--vertical form-field--checkbox-fieldset">
@@ -98,7 +91,7 @@
 
 		<div class="alert alert--error">
 			<i class="alert__icon material-symbols-outlined">error</i>
-			<p>The date, location, and title fields are required.</p>
+			<p>The date, time, location, and title fields are required.</p>
 		</div>
 	</div>
 
@@ -193,18 +186,25 @@
 	<div id="observation-form__section-3" class="form-section">
 		<h2>Additional Details</h2>
 
-		<div class="form-field form-field--vertical form-field--time-input form-field--required">
-			<label for="observation-form__time">Time of Observation <span>*required</span></label>
-			<input type="time" name="time" id="observation-form__time" value="10:10" autocomplete="off">
-			<p class="form-field__help">A "fuzzy" time is ok. Your best guess is more important than precision.</p>
+		<div class="form-field form-field--vertical form-field--select">
+			<label for="observation-form__travel_mode">Mode of Travel</label>
+			<select id="observation-form__travel_mode" name="travelMode" autocomplete="off">
+				<option value="">Choose One</option>
+				<option value="skiing_or_snowboarding">Skiing/Snowboarding</option>
+				<option value="xc_skiing_or_snowshoeing">XC Skiing/Snowshoeing</option>
+				<option value="walking_hiking">Walking/Hiking</option>
+				<option value="snowmobiling">Snowmobiling</option>
+				<option value="driving">Driving</option>
+				<option value="other">Other</option>
+			</select>
 		</div>
 
 		<div class="form-fieldset--2column">
 
 			<div class="form-field form-field--vertical form-field--text-input form-field--required">
-				<label for="observation-form__elevation">Elevation</label>
+				<label for="observation-form__elevation">Elevation <span>*required</span></label>
 				<input type="text" name="elevation" id="observation-form__elevation" autocomplete="off">
-				<p class="form-field__help">The approximate elevation in feet above see level. Enter numbers only; no other characters</p>
+				<p class="form-field__help">The approximate elevation in feet above sea level. Enter numbers only; no other characters</p>
 			</div>
 
 			<div class="form-field form-field--vertical form-field--select">
@@ -268,7 +268,7 @@
 		</fieldset>
 
 		<div class="form-field form-field--vertical form-field--textarea form-field--required">
-			<label for="observation-form__details">What did you observe? <span>*required</span></label>
+			<label for="observation-form__details">Details: What did you observe? <span>*required</span></label>
 			<textarea name="details" id="observation-form__details" autocomplete="off"></textarea>
 			<p class="form-field__help">This may include more detailed information about where you traveled; aspects, elevations, routes, etc. Did you seek out or avoid specific terrain? You can also include snowpack test results, riding conditions, weather observations, red flags observed, and anything else you think helps frame the observation.</p>
 		</div>
@@ -286,7 +286,7 @@
 
 		<div class="alert alert--error">
 			<i class="alert__icon material-symbols-outlined">error</i>
-			<p>The time, elevation, and details fields are required. Elevation must be entered using numbers only.</p>
+			<p>The elevation and details fields are required. Elevation must be entered using numbers only.</p>
 		</div>
 	</div>
 
@@ -383,7 +383,7 @@
 				<i class="button__icon material-symbols-outlined">navigate_before</i>
 				<span class="button__label">Back</span>
 			</button>
-			<button class="observation-form__next-button button--filled">Submit</button>
+			<button class="observation-form__next-button button--filled" data-submit="true">Submit</button>
 		</div>
 	</div>
 
