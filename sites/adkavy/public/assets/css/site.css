@@ -451,6 +451,20 @@ select {
 	border: 1px solid hsla(45, 15%, 20%, 0.8);
 	overflow: hidden; /* allows the corners of the images to be clipped with border-radius */
 }
+.media-preview-thumbnail__image-wrapper.loading {
+	display: flex;
+	align-items: center; /* vertical centering */
+	text-align: center; /* horizontal centering */
+	min-height: 8rem;
+}
+.media-preview-thumbnail__image-wrapper.loading > p {
+	width: 100%;
+	color: hsla(45, 10%, 50%, 1.0);
+}
+.media-preview-thumbnail__image-wrapper.loading > p > i.material-symbols-outlined {
+	vertical-align: middle;
+	font-size: 3em;
+}
 .media-preview-thumbnail__image-wrapper > img {
 	width: 100%;
 }
@@ -458,18 +472,15 @@ select {
 	margin-left: 1rem;
 	margin-right: 1rem;
 }
-.media-preview-thumbnail__preview-actions,
-.media-preview-thumbnail__upload-actions {
+.media-preview-thumbnail__preview-actions {
 	margin-top: 0.5rem;
 	margin-left: 1rem;
 	margin-right: 1rem;
 }
-.media-preview-thumbnail__preview-actions > button,
-.media-preview-thumbnail__upload-actions > button {
+.media-preview-thumbnail__preview-actions > button {
 	font-size: 0.85em;
 }
-.media-preview-thumbnail__preview-actions > button > .button__icon,
-.media-preview-thumbnail__upload-actions > button > .button__icon {
+.media-preview-thumbnail__preview-actions > button > .button__icon {
 	font-size: 1.4em;
 }
 

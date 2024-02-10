@@ -162,12 +162,12 @@ async function updateMediaMetadata(record, mediaItem) {
         params: [
             // The observationId
             record.id,
-            // Media Item
-            {
+            // Media Items (must be an Array)
+            [{
                 id: mediaItem.id,
                 title: mediaItem.title,
                 details: mediaItem.details,
-            },
+            }],
         ],
     });
 

@@ -11,33 +11,10 @@ export default class ObservationModel extends DataStoreModel {
 
     mapAttributes(attrs) {
 
-        function mapMediaURLs(urls) {
-            urls = urls || {};
-
-            const origin = urls.origin || null;
-            const cdns = urls.cdns || [];
-
-            return Object.freeze({ origin, cdns });
-        }
-
         let media = [];
 
         if (Array.isArray(attrs.media)) {
-            media = attrs.media.map((item) => {
-                return {
-                    id: item.id,
-                    type: item.type,
-                    contentType: item.contentType,
-                    contentLength: item.contentLength,
-                    md5Hash: item.md5Hash,
-                    version: item.version,
-                    mediaOutput: item.mediaOutput,
-                    mediaURLs: mapMediaURLs(item.mediaURLs),
-                    posterURLs: mapMediaURLs(item.posterURLs),
-                    title: item.title,
-                    details: item.details,
-                };
-            });
+            media = attrs.media.map(mapMediaItem);
         }
 
         return {
@@ -76,7 +53,7 @@ export default class ObservationModel extends DataStoreModel {
         return null;
     }
 
-    updateMediaItem(item) {
+    updateOrCreateMediaItem(item) {
         const mediaItems = Array.isArray(this.attributes.media)
             ? this.attributes.media.slice()
             : [];
@@ -85,36 +62,7 @@ export default class ObservationModel extends DataStoreModel {
             return id === item.id;
         });
 
-        const newItem = { id: item.id };
-
-        if (isNonEmptyString(item.contentType)) {
-            newItem.contentType = item.contentType;
-            newItem.type = item.contentType.split('/')[0];
-        }
-        if (isNumberNotNaN(item.contentLength)) {
-            newItem.contentLength = item.contentLength;
-        }
-        if (isNonEmptyString(item.md5Hash)) {
-            newItem.md5Hash = item.md5Hash;
-        }
-        if (isNonEmptyString(item.version)) {
-            newItem.version = item.version;
-        }
-        if (isPlainObject(item.mediaOutput)) {
-            newItem.mediaOutput = item.mediaOutput;
-        }
-        if (isPlainObject(item.mediaURLs)) {
-            newItem.mediaURLs = item.mediaURLs;
-        }
-        if (isPlainObject(item.posterURLs)) {
-            newItem.posterURLs = item.posterURLs;
-        }
-        if (isNonEmptyString(item.title)) {
-            newItem.title = item.title;
-        }
-        if (isNonEmptyString(item.details)) {
-            newItem.details = item.details;
-        }
+        const newItem = mapMediaItem(item);
 
         if (existingIndex === -1) {
             // The media item does exist yet. Push it.
@@ -125,6 +73,28 @@ export default class ObservationModel extends DataStoreModel {
         }
 
         return this.updateAttributes({ media: mediaItems });
+    }
+
+    updateMediaItems(mediaItems) {
+        const newMediaList = [];
+
+        const existingItems = Array.isArray(this.attributes.media)
+            ? this.attributes.media.slice()
+            : [];
+
+        existingItems.forEach((item) => {
+            const newItem = mediaItems.find(({ id }) => {
+                return id === item.id;
+            });
+
+            // Only add an item to the media list if it exists in the new list. This way the
+            // client can remove media items by simply excluding them from the update list.
+            if (newItem) {
+                newMediaList.push(mapMediaItem(newItem));
+            }
+        });
+
+        return this.updateAttributes({ media: newMediaList });
     }
 
     toView() {
@@ -203,4 +173,46 @@ export default class ObservationModel extends DataStoreModel {
             media,
         };
     }
+}
+
+function mapMediaItem(item) {
+    const newItem = { id: item.id };
+
+    function mapMediaURLs(urls) {
+        const origin = urls?.origin || null;
+        const cdns = urls?.cdns || [];
+
+        return Object.freeze({ origin, cdns });
+    }
+
+    if (isNonEmptyString(item.contentType)) {
+        newItem.type = item.contentType.split('/')[0];
+        newItem.contentType = item.contentType;
+    }
+    if (isNumberNotNaN(item.contentLength)) {
+        newItem.contentLength = item.contentLength;
+    }
+    if (isNonEmptyString(item.md5Hash)) {
+        newItem.md5Hash = item.md5Hash;
+    }
+    if (isNonEmptyString(item.version)) {
+        newItem.version = item.version;
+    }
+    if (isPlainObject(item.mediaOutput)) {
+        newItem.mediaOutput = item.mediaOutput;
+    }
+    if (isPlainObject(item.mediaURLs)) {
+        newItem.mediaURLs = mapMediaURLs(item.mediaURLs);
+    }
+    if (isPlainObject(item.posterURLs)) {
+        newItem.posterURLs = mapMediaURLs(item.posterURLs);
+    }
+    if (isNonEmptyString(item.title)) {
+        newItem.title = item.title;
+    }
+    if (isNonEmptyString(item.details)) {
+        newItem.details = item.details;
+    }
+
+    return newItem;
 }

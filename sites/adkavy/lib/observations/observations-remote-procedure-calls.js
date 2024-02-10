@@ -60,12 +60,12 @@ export default class ObservationsRemoteProcedureCalls {
         return ObservationModel.createOrUpdate(dataStore, id, attributes);
     }
 
-    async updateObservationMedia(observationId, mediaItem) {
+    async updateObservationMedia(observationId, mediaItems) {
         if (!isNonEmptyString(observationId)) {
             throw new BadRequestError('observationId must be a non empty string');
         }
-        if (!isNonEmptyString(mediaItem.id)) {
-            throw new BadRequestError('mediaItem must have an id string');
+        if (!Array.isArray(mediaItems)) {
+            throw new BadRequestError('mediaItems must be an array');
         }
 
         const dataStore = this.#dataStore;
@@ -76,10 +76,16 @@ export default class ObservationsRemoteProcedureCalls {
             throw new BadRequestError(`Observation "${ observationId }" does not exist`);
         }
 
-        observation = observation.updateMediaItem(mediaItem);
+        mediaItems.forEach((item) => {
+            if (!isNonEmptyString(item.id)) {
+                throw new BadRequestError('mediaItem must have an id string');
+            }
+        });
+
+        observation = observation.updateMediaItems(mediaItems);
 
         const newObservation = await observation.save(dataStore);
 
-        return newObservation.getMediaItemById(mediaItem.id);
+        return newObservation.attributes.media;
     }
 }

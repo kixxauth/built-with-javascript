@@ -19,6 +19,7 @@ module.exports = {
         },
     },
     rules: {
+        'object-shorthand': [ 'off' ],
         'no-var': [ 'off' ],
         'prefer-arrow-callback': [ 'off' ],
         'prefer-rest-params': [ 'off' ],

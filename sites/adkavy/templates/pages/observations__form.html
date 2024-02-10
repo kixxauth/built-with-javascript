@@ -14,7 +14,7 @@
 			alt="A placeholder image">
 	</div>
 	<div id="observation-form-intro__content">
-		<p>Use the form below to submit your <a href="/making-observations">snowpack, avalanche, and weather observations</a>. This form is optimized for mobile devices to make it easier to upload photos from your mobile phone as part of your observations.</p>
+		<p>Use the form below to submit your <a href="/making-observations">snowpack, avalanche, and weather observations</a>. This form is optimized for mobile devices to make it easier to upload photos and video from your mobile phone as part of your observations.</p>
 		<p>Visit our information page about <a href="/making-observations">making observations</a> to learn more about providing useful information for the community.</p>
 		{{! The "top-of-form" element is the scroll target when the page changes}}
 		<p id="top-of-form">Once it is submitted, your observation will be posted for the public to view on the observations page.</p>
@@ -291,18 +291,18 @@
 	</div>
 
 	<div id="observation-form__section-4" class="form-section">
-		<h2>Photos</h2>
-		<p>Adding photos to your observation is great way to add important details which are valuable to other winter backcountry enthusiasts.
+		<h2>Photos and Video</h2>
+		<p>Photos and video of your observation is great way to add important details which are valuable to other winter backcountry enthusiasts.
 		</p>
 
 		<div id="observation-form__photos-field" class="form-field form-field--vertical form-field--media-input media-input-field">
 			<div class="form-field form-field--vertical form-field--file-input">
-				<label for="observation-form__photos">Attach Photos to Your Post</label>
-				<input type="file" name="photos" accept="image/jpeg,image/png" multiple style="display:none">
+				<label for="observation-form__photos">Attach Photos and Videos to Your Post</label>
+				<input type="file" name="photos" accept="image/*,video/*" multiple style="display:none">
 				<p class="form-field__file-input-action">
 					<button class="form-field__file-select-button button--icon-start button--filled">
 						<i class="button__icon material-symbols-outlined">add_a_photo</i>
-						<span class="button__label">Select Photos</span>
+						<span class="button__label">Select</span>
 					</button>
 				</p>
 			</div>
@@ -310,39 +310,37 @@
 			<div class="media-input-field__thumbnails"></div>
 
 			<div class="media-input-field__add-more">
-				<p>Like to add more photos to your post?</p>
+				<p>Like to add more photos or videos to your post?</p>
 				<button class="form-field__file-select-button button--icon-start button--outlined">
 					<i class="button__icon material-symbols-outlined">add_a_photo</i>
-					<span class="button__label">Select More Photos</span>
+					<span class="button__label">Select More</span>
 				</button>
-				<p>Done uploading photos?</p>
+				<p>Done uploading?</p>
 			</div>
 
 			<!-- image card template -->
 			<script type="text/html" id="template_image-card">
-				<div class="media-preview-thumbnail__image-wrapper">
-					<img src="" alt="Preview thumbnail">
+				<div class="media-preview-thumbnail__image-wrapper loading">
+					<p><i class="material-symbols-outlined">pending</i> Upload pending &#x22EF</p>
+				</div>
+				<div class="form-field form-field--vertical form-field--text-input">
+					<label>File Name</label>
+					<p name="file_name"></p>
 				</div>
 				<div class="media-preview-thumbnail__preview-actions">
 					<button class="button--outlined button--icon-start media-preview-thumbnail__remove-button">
 						<i class="button__icon material-symbols-outlined">cancel</i>
-						<span class="button__label">Remove Photo</span>
+						<span class="button__label">Remove</span>
 					</button>
 				</div>
 				<div class="form-field form-field--vertical form-field--text-input form-field--required">
-					<label for="observation-form__location">Photo Title <span>*required</span></label>
+					<label for="observation-form__location">Title <span>*required</span></label>
 					<input type="text" name="photo_title" autocomplete="off">
 				</div>
 				<div class="form-field form-field--vertical form-field--textarea">
-					<label>Photo Details</label>
+					<label>Details</label>
 					<textarea name="photo_details" autocomplete="off"></textarea>
-					<p class="form-field__help">Add details to provide context for the photo.</p>
-				</div>
-				<div class="media-preview-thumbnail__upload-actions">
-					<button class="button--filled button--icon-start media-preview-thumbnail__upload-button">
-						<i class="button__icon material-symbols-outlined">publish</i>
-						<span class="button__label">Upload Photo</span>
-					</button>
+					<p class="form-field__help">Add details to provide context and background information.</p>
 				</div>
 			</script>
 		</div>
@@ -360,7 +358,7 @@
 
 		<div class="alert alert--error">
 			<i class="alert__icon material-symbols-outlined">error</i>
-			<p>The photo title field is required.</p>
+			<p>The title field is required.</p>
 		</div>
 	</div>
 

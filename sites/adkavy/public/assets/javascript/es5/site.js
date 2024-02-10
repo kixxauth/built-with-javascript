@@ -63,12 +63,11 @@
         xhr.responseType = 'json';
 
         xhr.onload = function onRequestLoaded() {
-            console.log('xhr.response', xhr.response);
             var res = xhr.response;
 
             if (res.error) {
                 // eslint-disable-next-line no-console
-                console.log('JSON RPC Response:', res);
+                console.log('Error in updateOrCreateObservation()', res);
                 alert('JSON RPC Error: ' + res.error.message);
             } else {
                 observation.id = res.result.id;
@@ -113,13 +112,20 @@
             }
         };
 
-        xhr.open('PUT', '/observations/' + observation.id + '/media/' + file.name);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.send(file);
+        // Open and send the request in the next turn of the event loop. This is required for the caller
+        // to be able to set the upload event listeners.
+        // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/upload
+        setTimeout(function () {
+            xhr.open('PUT', '/observations/' + observation.id + '/media/' + file.name);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.send(file);
+        });
+
+        return xhr;
     }
 
     // Updates the title and detail attributes of an existing media item.
-    function updateObservationMedia(observation, mediaItem, callback) {
+    function updateObservationMedia(observation, mediaItems, callback) {
         var xhr = new XMLHttpRequest();
 
         xhr.responseType = 'json';
@@ -135,7 +141,7 @@
 
                 if (res.error) {
                     // eslint-disable-next-line no-console
-                    console.log(res);
+                    console.log('Error in updateObservationMedia()', res);
                     var error = new Error('JSON RPC Error: ' + res.error.message);
                     error.code = res.error.code;
                     callback(error);
@@ -154,12 +160,8 @@
             params: [
                 // The observationId
                 observation.id,
-                // Media Item
-                {
-                    id: mediaItem.id,
-                    title: mediaItem.title,
-                    details: mediaItem.details,
-                },
+                // Media Items
+                mediaItems,
             ],
         });
 
@@ -197,165 +199,139 @@
         };
     }
 
-    function initializeObservationMediaUpload(el, observation) {
-        var fileInput = el.querySelector('input[type="file"]');
-        var selectFilesButtons = el.querySelectorAll('button.form-field__file-select-button');
-        var thumbnailsContainer = el.querySelector('.media-input-field__thumbnails');
-        var templateText = document.getElementById('template_image-card').innerHTML;
+    function createMediaUploader(observable, observation, file) {
 
-        function buildMediaCard(file) {
-            var mediaItem;
-            var wrapper = document.createElement('div');
-            var removeButton;
-            var uploadButton;
-
-            wrapper.classList.add('media-preview-thumbnail');
-            wrapper.innerHTML = templateText;
-
-            function getFormData() {
-                return {
-                    title: wrapper.querySelector('input[name="photo_title"]').value,
-                    details: wrapper.querySelector('textarea[name="photo_details"]').value,
-                };
-            }
-
-            function onRemoveClick() {
-
-                function onTransitionEnd() {
-                    wrapper.removeEventListener('transitionend', onTransitionEnd);
-                    wrapper.parentNode.removeChild(wrapper);
-
-                    thumbnailsContainer.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'nearest',
-                    });
-                }
-
-                wrapper.addEventListener('transitionend', onTransitionEnd);
-                wrapper.classList.add('hidden');
-            }
-
-            function onUploadClick() {
-                removeButton.disabled = true;
-                uploadButton.disabled = true;
-
-                function whenFileUploaded(err, response) {
-                    if (err) {
-                        alert(err.message);
-                    } else {
-                        mediaItem = response;
-                        updateObservationMetadata();
-                    }
-                }
-
-                // If the observation has not been created yet, we will need to create it before we can
-                // attach media to it.
-                if (!observation.id) {
-                    updateOrCreateObservation(observation, function whenObservationCreated() {
-                        uploadMediaFile(observation, file, whenFileUploaded);
-                    });
-                } else {
-                    uploadMediaFile(observation, file, whenFileUploaded);
-                }
-            }
-
-            function updateObservationMetadata() {
-                var formData = getFormData();
-
-                mediaItem.title = formData.title;
-                mediaItem.details = formData.details;
-
-                updateObservationMedia(observation, mediaItem, whenObservationUpdated);
-            }
-
-            function whenObservationUpdated(error) {
-                if (error) {
-                    alert(error.message);
-                }
-
-                uploadButton.disabled = false;
-                uploadButton.querySelector('.button__label').innerText = 'Update Photo Info';
-
-                uploadButton.onclick = updateObservationMetadata;
-            }
-
-            // Wait for a turn of the event loop before querying the
-            // newly rendered DOM.
-            setTimeout(function whenRendered() {
-                removeButton = wrapper.querySelector('.media-preview-thumbnail__remove-button');
-                uploadButton = wrapper.querySelector('.media-preview-thumbnail__upload-button');
-
-                wrapper.querySelector('img').src = URL.createObjectURL(file);
-
-                removeButton.onclick = onRemoveClick;
-                uploadButton.onclick = onUploadClick;
-            });
-
-
-            return wrapper;
-        }
-
-        function hideInitialInputAction(callback) {
-            var target = el.querySelector('.form-field__file-input-action');
-
-            function onTransitionEnd() {
-                target.removeEventListener('transitionend', onTransitionEnd);
-                callback();
-            }
-
-            if (target.classList.contains('hidden')) {
-                callback();
+        return function uploadMedia(callback) {
+            // We avoid a race condition on creating the observation on the server by
+            // serializing the calls to uploadMedia (see below).
+            if (observation.id) {
+                whenObservationCreated();
             } else {
-                target.addEventListener('transitionend', onTransitionEnd);
-                target.classList.add('hidden');
-            }
-        }
-
-        function collapseInitialInputAction() {
-            var target = el.querySelector('.form-field__file-input-action');
-            target.classList.add('collapsed');
-        }
-
-        function showMediaCards() {
-            thumbnailsContainer.classList.add('active');
-        }
-
-        function showAddMoreButton() {
-            el.querySelector('.media-input-field__add-more').classList.add('active');
-        }
-
-        selectFilesButtons.forEach(function addButtonClickHandler(button) {
-            button.onclick = function onSelectFilesClicked() {
-                fileInput.click();
-            };
-        });
-
-        // When the user has selected file(s).
-        fileInput.oninput = function onSelectFilesInput() {
-            var mediaCards = [];
-
-            for (var i = 0; i < fileInput.files.length; i = i + 1) {
-                mediaCards.push(buildMediaCard(fileInput.files[i]));
+                updateOrCreateObservation(observation, whenObservationCreated);
             }
 
-            // Hide the button which initially triggered the file selector.
-            hideInitialInputAction(function renderImageCards() {
-                mediaCards.forEach(function appendNode(node) {
-                    thumbnailsContainer.appendChild(node);
+            function whenObservationCreated() {
+                var xhr = uploadMediaFile(observation, file, whenMediaCreated);
+
+                xhr.upload.addEventListener('progress', function onxhrprogress(ev) {
+                    var percent = ev.loaded / ev.total;
+
+                    if (typeof observable.onuploadprogress === 'function') {
+                        observable.onuploadprogress({ progress: percent });
+                    }
                 });
+            }
 
-                collapseInitialInputAction();
-                showMediaCards();
-                showAddMoreButton();
-            });
+            function whenMediaCreated(err, mediaItem) {
+                if (mediaItem && typeof observable.onuploadprogress === 'function') {
+                    observable.onuploadprogress({ mediaItem: mediaItem });
+                }
+
+                // Signal to the caller that the observation has been created and updated:
+                // It is safe to upload the next media file without causing a race condition.
+                callback();
+            }
         };
     }
+
+    function Observation() {
+        // Keep the formData value private.
+        Object.defineProperty(this, 'formData', {
+            enumerable: false,
+            value: {},
+        });
+
+        this.id = null;
+        this.name = '';
+        this.email = '';
+        this.title = '';
+        this.observationDateTime = '';
+        this.reportedDateTime = dateToISOTZString(new Date());
+        this.travelMode = '';
+        this.location = '';
+        this.elevation = '';
+        this.aspect = '';
+        this.redFlags = [];
+        this.triggeredAvalanche = false;
+        this.observedAvalanche = false;
+        this.triggeredAvalancheType = '';
+        this.triggeredAvalancheSize = '';
+        this.triggeredAvalancheComments = '';
+        this.observedAvalancheType = '';
+        this.observedAvalancheSize = '';
+        this.observedAvalancheComments = '';
+        this.details = '';
+    }
+
+    Observation.prototype.mergeFormData = function mergeFormData(newData) {
+        extendObject(this.formData, newData);
+
+        this.name = this.formData.name || '';
+        this.email = this.formData.email || '';
+        this.title = this.formData.title || '';
+
+        this.travelMode = this.formData.travelMode;
+        this.location = this.formData.location || '';
+        this.elevation = this.formData.elevation || '';
+        this.aspect = this.formData.aspect || '';
+        this.details = this.formData.details || '';
+        this.redFlags = this.formData.redFlags || [];
+
+        if (this.formData.date && this.formData.time) {
+            var datetime = new Date(this.formData.date + 'T' + this.formData.time);
+            this.observationDateTime = dateToISOTZString(datetime);
+        }
+
+        if (this.formData.observationType === 'triggeredAvalanche') {
+            this.triggeredAvalanche = true;
+            this.triggeredAvalancheType = this.formData.avalancheType;
+            this.triggeredAvalancheSize = this.formData.avalancheSize;
+            this.triggeredAvalancheComments = this.formData.avalancheComments;
+
+            this.observedAvalanche = false;
+            this.observedAvalancheType = '';
+            this.observedAvalancheSize = '';
+            this.observedAvalancheComments = '';
+        } else if (this.formData.observationType === 'observedAvalanche') {
+            this.observedAvalanche = true;
+            this.observedAvalancheType = this.formData.avalancheType;
+            this.observedAvalancheSize = this.formData.avalancheSize;
+            this.observedAvalancheComments = this.formData.avalancheComments;
+
+            this.triggeredAvalanche = false;
+            this.triggeredAvalancheType = '';
+            this.triggeredAvalancheSize = '';
+            this.triggeredAvalancheComments = '';
+        } else {
+            this.triggeredAvalanche = false;
+            this.observedAvalanche = false;
+
+            this.observedAvalancheType = '';
+            this.observedAvalancheSize = '';
+            this.observedAvalancheComments = '';
+
+            this.triggeredAvalancheType = '';
+            this.triggeredAvalancheSize = '';
+            this.triggeredAvalancheComments = '';
+        }
+    };
 
     var FormSectionPrototype = {
 
         bindHandlers: function bindHandlers(onSectionBack, onSectionNext) {
-            this.onSectionBack = onSectionBack;
-            this.onSectionNext = onSectionNext;
+            var thisSelf = this;
+
+            this.onSectionBack = function (ev) {
+                thisSelf.beforeSectionBack(function () {
+                    onSectionBack(ev);
+                });
+            };
+
+            this.onSectionNext = function (ev) {
+                thisSelf.beforeSectionNext(function () {
+                    onSectionNext(ev);
+                });
+            };
 
             this.backButton = this.el.querySelector('.observation-form__back-button');
             this.nextButton = this.el.querySelector('.observation-form__next-button');
@@ -367,6 +343,14 @@
             if (this.nextButton) {
                 this.nextButton.addEventListener('click', this.onSectionNext);
             }
+        },
+
+        beforeSectionBack: function beforeSectionBack(cb) {
+            cb();
+        },
+
+        beforeSectionNext: function beforeSectionNext(cb) {
+            cb();
         },
 
         unbindHandlers: function unbindHandlers() {
@@ -512,12 +496,154 @@
         },
     });
 
-    function ObservationFormSectionPhotos(el) {
+    function ObservationFormSectionPhotos(el, observation) {
         this.el = el;
         this.id = el.id;
+        this.observation = observation;
+        this.mediaCards = [];
+
+        var fileInput = el.querySelector('input[type="file"]');
+        this.fileInput = fileInput;
+
+        this.thumbnailsContainer = el.querySelector('.media-input-field__thumbnails');
+
+        fileInput.oninput = this.onSelectFilesInput.bind(this);
+
+        var selectFilesButtons = el.querySelectorAll('button.form-field__file-select-button');
+
+        // Activate the hidden file input.
+        selectFilesButtons.forEach(function (button) {
+            button.onclick = function () {
+                fileInput.click();
+            };
+        });
     }
 
     extendObject(ObservationFormSectionPhotos.prototype, FormSectionPrototype);
+
+    extendObject(ObservationFormSectionPhotos.prototype, {
+
+        beforeSectionNext: function beforeSectionNext(callback) {
+            var mediaItems = this.mediaCards.map(function (card) {
+                return card.getFormData();
+            });
+
+            if (this.observation.id && mediaItems.length > 0) {
+                // Only update the media items if the observation has been created during the
+                // media upload process.
+                updateObservationMedia(this.observation, mediaItems, callback);
+            } else {
+                callback();
+            }
+        },
+
+        beforeSectionBack: function beforeSectionBack(callback) {
+            var mediaItems = this.mediaCards.map(function (card) {
+                return card.getFormData();
+            });
+
+            if (this.observation.id && mediaItems.length > 0) {
+                // Only update the media items if the observation has been created during the
+                // media upload process.
+                updateObservationMedia(this.observation, mediaItems, callback);
+            } else {
+                callback();
+            }
+        },
+
+        // When the user has selected file(s).
+        onSelectFilesInput: function onSelectFilesInput() {
+            var thisSelf = this;
+            var mediaCards = this.mediaCards;
+            var fileInput = this.fileInput;
+            var thumbnailsContainer = this.thumbnailsContainer;
+            var observation = this.observation;
+
+            var mediaCardsToAppend = [];
+            var uploaders = [];
+
+            for (var i = 0; i < fileInput.files.length; i = i + 1) {
+                var observable = {};
+                var observationMediaCard = new ObservationMediaCard(observable, fileInput.files[i]);
+
+                mediaCards.push(observationMediaCard);
+                mediaCardsToAppend.push(observationMediaCard);
+
+                uploaders.push(createMediaUploader(observable, observation, fileInput.files[i]));
+
+                observationMediaCard.onremove = function onremove(thisCard) {
+                    var index = mediaCards.findIndex(function (card) {
+                        return card === thisCard;
+                    });
+
+                    if (index >= 0) {
+                        mediaCards.splice(index, 1);
+                    }
+
+                    thisSelf.scrollThumbnailsContainerIntoView();
+                };
+
+                observationMediaCard.initialize();
+            }
+
+            // Hide the button which initially triggered the file selector.
+            this.hideInitialInputAction(function renderImageCards() {
+                mediaCardsToAppend.forEach(function appendNode(card) {
+                    thumbnailsContainer.appendChild(card.el);
+                });
+
+                thisSelf.collapseInitialInputAction();
+                thisSelf.showMediaCards();
+                thisSelf.showAddMoreButton();
+            });
+
+            // Create the observation, and upload media in serial to avoid race conditions.
+            function uploadMedia() {
+                if (uploaders.length > 0) {
+                    var uploader = uploaders.pop();
+                    uploader(uploadMedia);
+                }
+            }
+
+            uploadMedia();
+        },
+
+        hideInitialInputAction: function hideInitialInputAction(callback) {
+            var target = this.el.querySelector('.form-field__file-input-action');
+
+            function onTransitionEnd() {
+                target.removeEventListener('transitionend', onTransitionEnd);
+                callback();
+            }
+
+            if (target.classList.contains('hidden')) {
+                callback();
+            } else {
+                target.addEventListener('transitionend', onTransitionEnd);
+                target.classList.add('hidden');
+            }
+        },
+
+        collapseInitialInputAction: function collapseInitialInputAction() {
+            var target = this.el.querySelector('.form-field__file-input-action');
+            target.classList.add('collapsed');
+        },
+
+        showMediaCards: function showMediaCards() {
+            this.thumbnailsContainer.classList.add('active');
+        },
+
+        showAddMoreButton: function showAddMoreButton() {
+            this.el.querySelector('.media-input-field__add-more').classList.add('active');
+        },
+
+        scrollThumbnailsContainerIntoView: function scrollThumbnailsContainerIntoView() {
+            this.thumbnailsContainer.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        },
+    });
 
     function ObservationFormSectionSubmit(el) {
         this.el = el;
@@ -542,28 +668,99 @@
 
     extendObject(ObservationFormSectionThankYou.prototype, FormSectionPrototype);
 
-    function createFormSection(el) {
-        switch (el.id) {
-            case 'observation-form__section-1':
-                return new ObservationFormSectionBase(el);
-            case 'observation-form__section-2':
-                return new ObservationFormSectionAvalanche(el);
-            case 'observation-form__section-3':
-                return new ObservationFormSectionDetails(el);
-            case 'observation-form__section-4':
-                return new ObservationFormSectionPhotos(el);
-            case 'observation-form__section-5':
-                return new ObservationFormSectionSubmit(el);
-            case 'observation-form__section-6':
-                return new ObservationFormSectionThankYou(el);
-        }
-
-        return null;
+    function ObservationMediaCard(observable, file) {
+        this.observable = observable;
+        this.file = file;
+        this.mediaItem = null;
+        this.el = document.createElement('div');
     }
+
+    ObservationMediaCard.prototype.initialize = function () {
+        var thisSelf = this;
+        var wrapper = this.el;
+        var file = this.file;
+        var observable = this.observable;
+
+        wrapper.classList.add('media-preview-thumbnail');
+        wrapper.innerHTML = document.getElementById('template_image-card').innerHTML;
+
+        // Wait for a turn of the event loop before querying the
+        // newly rendered DOM.
+        setTimeout(function () {
+            wrapper.querySelector('[name="file_name"]').innerText = file.name;
+
+            var removeButton = wrapper.querySelector('.media-preview-thumbnail__remove-button');
+
+            removeButton.onclick = function onremoveclick() {
+
+                function onTransitionEnd() {
+                    wrapper.removeEventListener('transitionend', onTransitionEnd);
+                    wrapper.parentNode.removeChild(wrapper);
+
+                    // Signal that this DOM tree has been removed.
+                    if (typeof thisSelf.onremove === 'function') {
+                        thisSelf.onremove(thisSelf);
+                    }
+                }
+
+                wrapper.addEventListener('transitionend', onTransitionEnd);
+                wrapper.classList.add('hidden');
+
+                observable.onuploadprogress = null;
+            };
+        });
+
+        observable.onuploadprogress = this.onUploadProgress.bind(this);
+    };
+
+    ObservationMediaCard.prototype.getFormData = function () {
+        return {
+            // The MediaItem should have been created before calling getFormData()
+            id: this.mediaItem.id,
+            title: this.el.querySelector('input[name="photo_title"]').value,
+            details: this.el.querySelector('textarea[name="photo_details"]').value,
+        };
+    };
+
+    ObservationMediaCard.prototype.onUploadProgress = function onUploadProgress(ev) {
+        var wrapper = this.el;
+
+        if (ev.mediaItem) {
+            var imageWrapper = wrapper.querySelector('.media-preview-thumbnail__image-wrapper');
+            this.mediaItem = ev.mediaItem;
+
+            if (this.mediaItem.type === 'video') {
+                // Videos will continue to process in the background. At this point we do not have a way
+                // to be notified when the poster image is ready. Instead we give the user a pacifier.
+                imageWrapper.innerHTML = '<p><i class="material-symbols-outlined">cloud_sync</i><br />Video upload complete.<br />The video will be available when the observation is submitted.</p>';
+            } else {
+                // Image processing will be ready on demand.
+                var mediaURLs = this.mediaItem.mediaURLs && this.mediaItem.mediaURLs.cdns;
+                imageWrapper.innerHTML = '<img src="' + mediaURLs[0] + '?auto=format&width=640" alt="Image preview">';
+            }
+        } else {
+            var icon = wrapper.querySelector('.media-preview-thumbnail__image-wrapper i.material-symbols-outlined');
+
+            if (ev.progress >= 0.8) {
+                icon.innerText = 'clock_loader_80';
+            } else if (ev.progress >= 0.6) {
+                icon.innerText = 'clock_loader_60';
+            } else if (ev.progress >= 0.4) {
+                icon.innerText = 'clock_loader_40';
+            } else if (ev.progress >= 0.2) {
+                icon.innerText = 'clock_loader_20';
+            } else {
+                // Did it start?
+                icon.innerText = 'clock_loader_10';
+            }
+        }
+    };
 
     function initializeObservationForm(form) {
         var AVALANCHE_DETAILS_SECTION_ID = 'observation-form__section-2';
+        var avalancheDetailsRequired = false;
 
+        var observation = new Observation();
         var formIntro = document.getElementById('top-of-form');
         var formSectionNodes = form.querySelectorAll('.form-section');
 
@@ -571,15 +768,31 @@
 
         var currentSectionIndex = 0;
         var currentSection = sections[currentSectionIndex];
-        var avalancheDetailsRequired = false;
-
-        var observation = new Observation();
 
         // Prevent form submission when back <> next buttons are clicked.
         form.addEventListener('submit', function onObservationFormSubmit(ev) {
             ev.preventDefault();
             ev.stopPropagation();
         });
+
+        function createFormSection(el) {
+            switch (el.id) {
+                case 'observation-form__section-1':
+                    return new ObservationFormSectionBase(el, observation);
+                case 'observation-form__section-2':
+                    return new ObservationFormSectionAvalanche(el, observation);
+                case 'observation-form__section-3':
+                    return new ObservationFormSectionDetails(el, observation);
+                case 'observation-form__section-4':
+                    return new ObservationFormSectionPhotos(el, observation);
+                case 'observation-form__section-5':
+                    return new ObservationFormSectionSubmit(el, observation);
+                case 'observation-form__section-6':
+                    return new ObservationFormSectionThankYou(el, observation);
+            }
+
+            return null;
+        }
 
         function hideCurrentSection() {
             currentSection.el.classList.remove('form-section--active');
@@ -620,25 +833,37 @@
                 currentSectionIndex = currentSectionIndex + 1;
                 currentSection = sections[currentSectionIndex];
             }
+
             showCurrentSection();
         }
 
-        function onSectionBack() {
-            if (observation.id) {
-                updateOrCreateObservation(observation);
+        function onSectionBack(ev) {
+            var data = currentSection.validateInput();
+
+            if (data) {
+                observation.mergeFormData(data);
+
+                if (observation.id || ev.target.getAttribute('data-submit')) {
+                    updateOrCreateObservation(observation);
+                }
+
+                if (typeof currentSection.areAvalancheDetailsRequired === 'function') {
+                    avalancheDetailsRequired = currentSection.areAvalancheDetailsRequired();
+                }
+
+                transitionBackward();
             }
-            transitionBackward();
         }
 
         function onSectionNext(ev) {
             var data = currentSection.validateInput();
 
             if (data) {
+                observation.mergeFormData(data);
+
                 if (observation.id || ev.target.getAttribute('data-submit')) {
                     updateOrCreateObservation(observation);
                 }
-
-                observation.mergeFormData(data);
 
                 if (typeof currentSection.areAvalancheDetailsRequired === 'function') {
                     avalancheDetailsRequired = currentSection.areAvalancheDetailsRequired();
@@ -650,96 +875,7 @@
 
         // Activate the first section.
         currentSection.bindHandlers(onSectionBack, onSectionNext);
-
-        // Initialize the photo upload controller once.
-        initializeObservationMediaUpload(
-            document.getElementById('observation-form__photos-field'),
-            observation
-        );
     }
-
-    function Observation() {
-        // Keep the formData value private.
-        Object.defineProperty(this, 'formData', {
-            enumerable: false,
-            value: {},
-        });
-
-        this.id = null;
-        this.name = '';
-        this.email = '';
-        this.title = '';
-        this.observationDateTime = '';
-        this.reportedDateTime = dateToISOTZString(new Date());
-        this.travelMode = '';
-        this.location = '';
-        this.elevation = '';
-        this.aspect = '';
-        this.redFlags = [];
-        this.triggeredAvalanche = false;
-        this.observedAvalanche = false;
-        this.triggeredAvalancheType = '';
-        this.triggeredAvalancheSize = '';
-        this.triggeredAvalancheComments = '';
-        this.observedAvalancheType = '';
-        this.observedAvalancheSize = '';
-        this.observedAvalancheComments = '';
-        this.details = '';
-    }
-
-    Observation.prototype.mergeFormData = function mergeFormData(newData) {
-        console.log('new data =>', newData);
-        extendObject(this.formData, newData);
-
-        this.name = this.formData.name || '';
-        this.email = this.formData.email || '';
-        this.title = this.formData.title || '';
-
-        this.travelMode = this.formData.travelMode;
-        this.location = this.formData.location || '';
-        this.elevation = this.formData.elevation || '';
-        this.aspect = this.formData.aspect || '';
-        this.details = this.formData.details || '';
-        this.redFlags = this.formData.redFlags || [];
-
-        if (this.formData.date && this.formData.time) {
-            var datetime = new Date(this.formData.date + 'T' + this.formData.time);
-            this.observationDateTime = dateToISOTZString(datetime);
-        }
-
-        if (this.formData.observationType === 'triggeredAvalanche') {
-            this.triggeredAvalanche = true;
-            this.triggeredAvalancheType = this.formData.avalancheType;
-            this.triggeredAvalancheSize = this.formData.avalancheSize;
-            this.triggeredAvalancheComments = this.formData.avalancheComments;
-
-            this.observedAvalanche = false;
-            this.observedAvalancheType = '';
-            this.observedAvalancheSize = '';
-            this.observedAvalancheComments = '';
-        } else if (this.formData.observationType === 'observedAvalanche') {
-            this.observedAvalanche = true;
-            this.observedAvalancheType = this.formData.avalancheType;
-            this.observedAvalancheSize = this.formData.avalancheSize;
-            this.observedAvalancheComments = this.formData.avalancheComments;
-
-            this.triggeredAvalanche = false;
-            this.triggeredAvalancheType = '';
-            this.triggeredAvalancheSize = '';
-            this.triggeredAvalancheComments = '';
-        } else {
-            this.triggeredAvalanche = false;
-            this.observedAvalanche = false;
-
-            this.observedAvalancheType = '';
-            this.observedAvalancheSize = '';
-            this.observedAvalancheComments = '';
-
-            this.triggeredAvalancheType = '';
-            this.triggeredAvalancheSize = '';
-            this.triggeredAvalancheComments = '';
-        }
-    };
 
     // Contained initialization.
     (function encloseInitialization() {

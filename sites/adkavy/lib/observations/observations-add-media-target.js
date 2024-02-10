@@ -62,7 +62,7 @@ export default class ObservationsAddMedia extends Target {
 
         const existingMediaItem = observation.getMediaItemById(result.id);
 
-        observation = observation.updateMediaItem({
+        observation = observation.updateOrCreateMediaItem({
             id: result.id,
             contentType: result.contentType,
             contentLength: result.contentLength,
