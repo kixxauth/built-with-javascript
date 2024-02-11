@@ -130,7 +130,7 @@ async function uploadMedia(record, filepath) {
     const readStream = fs.createReadStream(filepath);
 
     const method = 'PUT';
-    const url = new URL(`/observations/${ record.id }/media/${ filename }`, endpoint);
+    const url = new URL(`/media/${ filename }`, endpoint);
 
     const headers = {
         'content-type': contentTypeByFileExtension(filename),
@@ -157,17 +157,17 @@ async function uploadMedia(record, filepath) {
 async function updateMediaMetadata(record, mediaItem) {
     const body = JSON.stringify({
         jsonrpc: '2.0',
-        method: 'updateObservationMedia',
+        method: 'updateOrCreateMediaItem',
         id: record.id,
         params: [
             // The observationId
             record.id,
-            // Media Items (must be an Array)
-            [{
+            // Media Item
+            {
                 id: mediaItem.id,
                 title: mediaItem.title,
                 details: mediaItem.details,
-            }],
+            },
         ],
     });
 

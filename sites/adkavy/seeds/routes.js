@@ -64,10 +64,10 @@ export default [
         }],
     },
     {
-        patterns: [ '/observations/:observationId/media/:filename' ],
+        patterns: [ '/media/:filename' ],
         targets: [{
             methods: [ 'PUT' ],
-            targetName: 'ObservationsAddMedia',
+            targetName: 'AddMedia',
         }],
     },
     {

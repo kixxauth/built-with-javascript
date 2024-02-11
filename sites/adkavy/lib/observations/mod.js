@@ -1,8 +1,6 @@
 import Kixx from '../../kixx/mod.js';
-import ObjectManagementClient from '../object-management-client/object-management-client.js';
 import ObservationsRPCTarget from './observations-rpc-target.js';
 import ObservationsRemoteProcedureCalls from './observations-remote-procedure-calls.js';
-import ObservationsAddMediaTarget from './observations-add-media-target.js';
 import ListObservationsPage from './list-observations-page.js';
 import ViewObservationPage from './view-observation-page.js';
 
@@ -17,9 +15,6 @@ export function registerObservations(router, settings) {
         dataStore,
         blobStore,
         templateStore,
-        objectServiceEndpoint,
-        objectServiceScope,
-        objectServiceToken,
         noCache,
     } = settings;
 
@@ -95,22 +90,6 @@ export function registerObservations(router, settings) {
             methods,
             eventBus,
             remoteProcedureCalls,
-        });
-    });
-
-    router.registerTargetFactory('ObservationsAddMedia', ({ name, methods }) => {
-        const objectManagementClient = new ObjectManagementClient({
-            logger: logger.createChild({ name: 'ObjectManagementClient' }),
-            objectServiceEndpoint,
-            objectServiceScope,
-            objectServiceToken,
-        });
-
-        return new ObservationsAddMediaTarget({
-            name,
-            methods,
-            dataStore,
-            objectManagementClient,
         });
     });
 }

@@ -13,6 +13,7 @@ import {
 
 import { registerStaticFileServer } from './lib/static-file-server/mod.js';
 import { registerHTMLPages } from './lib/html-pages/mod.js';
+import { registerMedia } from './lib/media/mod.js';
 import { registerObservations } from './lib/observations/mod.js';
 
 import { createLogger } from './lib/logger.js';
@@ -126,6 +127,14 @@ async function main() {
         noCache: !config.pages.cache,
     });
 
+    registerMedia(router, {
+        logger,
+        dataStore,
+        objectServiceEndpoint: config.objectService.endpoint,
+        objectServiceScope: config.objectService.scope,
+        objectServiceToken: config.objectService.token,
+    });
+
     // ADK Observations Plugin
     registerObservations(router, {
         eventBus,
@@ -133,9 +142,6 @@ async function main() {
         dataStore,
         blobStore,
         templateStore,
-        objectServiceEndpoint: config.objectService.endpoint,
-        objectServiceScope: config.objectService.scope,
-        objectServiceToken: config.objectService.token,
         noCache: !config.pages.cache,
     });
 

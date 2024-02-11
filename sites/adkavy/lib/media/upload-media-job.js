@@ -11,14 +11,12 @@ export default class UploadMediaJob {
 
     async uploadObservationAttachment(sourceStream, options) {
         const {
-            observationId,
             filename,
             contentType,
             contentLength,
         } = options;
 
-        let key = slugifyFilename(`${ contentType }-${ contentLength }-${ filename }`);
-        key = `observations/${ observationId }/${ key }`;
+        const key = slugifyFilename(`${ contentType }-${ contentLength }-${ filename }`);
 
         // Always include processing params. These values will only be used if the
         // content type triggers media processing (video transcoding).

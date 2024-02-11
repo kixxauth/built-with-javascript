@@ -2,7 +2,7 @@ import { KixxAssert } from '../../dependencies.js';
 import Kixx from '../../kixx/mod.js';
 import ObservationModel from './observation-model.js';
 
-const { isNonEmptyString } = KixxAssert;
+const { isNonEmptyString, isPlainObject } = KixxAssert;
 const { BadRequestError } = Kixx.Errors;
 
 
@@ -56,16 +56,22 @@ export default class ObservationsRemoteProcedureCalls {
             });
         }
 
+        if (attributes.media) {
+            throw new BadRequestError(
+                'Cannot update observation.media items in updateOrCreateObservation'
+            );
+        }
+
         // Returns a promise for the new ObservationModel instance.
         return ObservationModel.createOrUpdate(dataStore, id, attributes);
     }
 
-    async updateObservationMedia(observationId, mediaItems) {
+    async updateOrCreateMediaItem(observationId, mediaItem) {
         if (!isNonEmptyString(observationId)) {
             throw new BadRequestError('observationId must be a non empty string');
         }
-        if (!Array.isArray(mediaItems)) {
-            throw new BadRequestError('mediaItems must be an array');
+        if (!isPlainObject(mediaItem) && !isNonEmptyString(mediaItem.id)) {
+            throw new BadRequestError('media item id must be a non empty string');
         }
 
         const dataStore = this.#dataStore;
@@ -76,16 +82,33 @@ export default class ObservationsRemoteProcedureCalls {
             throw new BadRequestError(`Observation "${ observationId }" does not exist`);
         }
 
-        mediaItems.forEach((item) => {
-            if (!isNonEmptyString(item.id)) {
-                throw new BadRequestError('mediaItem must have an id string');
-            }
-        });
-
-        observation = observation.updateMediaItems(mediaItems);
+        observation = observation.updateOrCreateMediaItem(mediaItem);
 
         const newObservation = await observation.save(dataStore);
 
-        return newObservation.attributes.media;
+        return newObservation.getMediaItemById(mediaItem.id);
+    }
+
+    async removeMediaItem(observationId, id) {
+        if (!isNonEmptyString(observationId)) {
+            throw new BadRequestError('observationId must be a non empty string');
+        }
+        if (!isNonEmptyString(id)) {
+            throw new BadRequestError('media item id must be a non empty string');
+        }
+
+        const dataStore = this.#dataStore;
+
+        let observation = await ObservationModel.load(dataStore, observationId);
+
+        if (!observation) {
+            throw new BadRequestError(`Observation "${ observationId }" does not exist`);
+        }
+
+        observation = observation.removeMediaItem(id);
+
+        await observation.save(dataStore);
+
+        return true;
     }
 }

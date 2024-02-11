@@ -75,27 +75,20 @@ export default class ObservationModel extends DataStoreModel {
         return this.updateAttributes({ media: mediaItems });
     }
 
-    updateMediaItems(mediaItems) {
-        const newMediaList = [];
-
-        const existingItems = Array.isArray(this.attributes.media)
+    removeMediaItem(id) {
+        const mediaItems = Array.isArray(this.attributes.media)
             ? this.attributes.media.slice()
             : [];
 
-        existingItems.forEach((item) => {
-            const newItem = mediaItems.find(({ id }) => {
-                return id === item.id;
-            });
-
-            // Only add an item to the media list if it exists in the new list. This way the
-            // client can remove media items by simply excluding them from the update list.
-            if (newItem) {
-                // Merge the new item with the existing item.
-                newMediaList.push(Object.assign({}, item, mapMediaItem(newItem)));
-            }
+        const index = mediaItems.findIndex((item) => {
+            return item.id === id;
         });
 
-        return this.updateAttributes({ media: newMediaList });
+        if (index !== -1) {
+            mediaItems.splice(index, 1);
+        }
+
+        return this.updateAttributes({ media: mediaItems });
     }
 
     toView() {
