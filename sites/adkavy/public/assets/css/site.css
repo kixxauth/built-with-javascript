@@ -570,10 +570,10 @@ select {
 	margin-top: 2rem;
 }
 .observation-form__section-actions button {
-	margin-left: 2rem;
+	margin-right: 2rem;
 }
-.observation-form__section-actions button:first-child {
-	margin-left: 0;
+#observation-form.not-ready-to-save button.observation-form__save-button {
+	display: none;
 }
 #observation-form__photos-field .form-field__file-input-action {
 	margin-top: 1rem;

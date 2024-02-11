@@ -23,6 +23,8 @@
         return ('00' + n).slice(-2);
     }
 
+    function noop() {}
+
     function dateToISOTZString(date) {
         var tzo = -date.getTimezoneOffset();
         var dif = tzo >= 0 ? '+' : '-';
@@ -199,6 +201,7 @@
         };
     }
 
+    // Create a media uploading function enclosed with an observable, observation, and file.
     function createMediaUploader(observable, observation, file) {
 
         return function uploadMedia(callback) {
@@ -261,9 +264,10 @@
         this.observedAvalancheSize = '';
         this.observedAvalancheComments = '';
         this.details = '';
+        this.media = [];
     }
 
-    Observation.prototype.mergeFormData = function mergeFormData(newData) {
+    Observation.prototype.mergeFormData = function (newData) {
         extendObject(this.formData, newData);
 
         this.name = this.formData.name || '';
@@ -314,11 +318,14 @@
             this.triggeredAvalancheSize = '';
             this.triggeredAvalancheComments = '';
         }
+
+        if (Array.isArray(this.formData.media)) {
+        }
     };
 
     var FormSectionPrototype = {
 
-        bindHandlers: function bindHandlers(onSectionBack, onSectionNext) {
+        bindHandlers: function bindHandlers(onSectionBack, onSectionNext, onSectionSave) {
             var thisSelf = this;
 
             this.onSectionBack = function (ev) {
@@ -333,8 +340,11 @@
                 });
             };
 
+            this.onSectionSave = onSectionSave;
+
             this.backButton = this.el.querySelector('.observation-form__back-button');
             this.nextButton = this.el.querySelector('.observation-form__next-button');
+            this.saveButton = this.el.querySelector('.observation-form__save-button');
 
             if (this.backButton) {
                 this.backButton.addEventListener('click', this.onSectionBack);
@@ -343,8 +353,13 @@
             if (this.nextButton) {
                 this.nextButton.addEventListener('click', this.onSectionNext);
             }
+
+            if (this.saveButton) {
+                this.saveButton.addEventListener('click', this.onSectionSave);
+            }
         },
 
+        // TODO: Remove these
         beforeSectionBack: function beforeSectionBack(cb) {
             cb();
         },
@@ -360,6 +375,10 @@
 
             if (this.nextButton) {
                 this.nextButton.removeEventListener('click', this.onSectionNext);
+            }
+
+            if (this.saveButton) {
+                this.saveButton.removeEventListener('click', this.onSectionSave);
             }
         },
 
@@ -509,6 +528,8 @@
 
         fileInput.oninput = this.onSelectFilesInput.bind(this);
 
+        // The file-select-button selector will include both the original
+        // file selector button as well as the Select More button.
         var selectFilesButtons = el.querySelectorAll('button.form-field__file-select-button');
 
         // Activate the hidden file input.
@@ -523,7 +544,8 @@
 
     extendObject(ObservationFormSectionPhotos.prototype, {
 
-        beforeSectionNext: function beforeSectionNext(callback) {
+        // TODO: Remove beforeSectionNext()
+        beforeSectionNext: function (callback) {
             var mediaItems = this.mediaCards.map(function (card) {
                 return card.getFormData();
             });
@@ -537,7 +559,9 @@
             }
         },
 
-        beforeSectionBack: function beforeSectionBack(callback) {
+        // TODO: Remove beforeSectionBack()
+        beforeSectionBack: function (callback) {
+            // TODO: The media items do not exist until the media uploads complete.
             var mediaItems = this.mediaCards.map(function (card) {
                 return card.getFormData();
             });
@@ -552,7 +576,7 @@
         },
 
         // When the user has selected file(s).
-        onSelectFilesInput: function onSelectFilesInput() {
+        onSelectFilesInput: function () {
             var thisSelf = this;
             var mediaCards = this.mediaCards;
             var fileInput = this.fileInput;
@@ -568,21 +592,8 @@
 
                 mediaCards.push(observationMediaCard);
                 mediaCardsToAppend.push(observationMediaCard);
-
                 uploaders.push(createMediaUploader(observable, observation, fileInput.files[i]));
-
-                observationMediaCard.onremove = function onremove(thisCard) {
-                    var index = mediaCards.findIndex(function (card) {
-                        return card === thisCard;
-                    });
-
-                    if (index >= 0) {
-                        mediaCards.splice(index, 1);
-                    }
-
-                    thisSelf.scrollThumbnailsContainerIntoView();
-                };
-
+                observation.onremove = this.onMediaCardRemoved.bind(this);
                 observationMediaCard.initialize();
             }
 
@@ -608,7 +619,7 @@
             uploadMedia();
         },
 
-        hideInitialInputAction: function hideInitialInputAction(callback) {
+        hideInitialInputAction: function (callback) {
             var target = this.el.querySelector('.form-field__file-input-action');
 
             function onTransitionEnd() {
@@ -624,24 +635,42 @@
             }
         },
 
-        collapseInitialInputAction: function collapseInitialInputAction() {
+        collapseInitialInputAction: function () {
             var target = this.el.querySelector('.form-field__file-input-action');
             target.classList.add('collapsed');
         },
 
-        showMediaCards: function showMediaCards() {
+        showMediaCards: function () {
             this.thumbnailsContainer.classList.add('active');
         },
 
-        showAddMoreButton: function showAddMoreButton() {
+        showAddMoreButton: function () {
             this.el.querySelector('.media-input-field__add-more').classList.add('active');
         },
 
-        scrollThumbnailsContainerIntoView: function scrollThumbnailsContainerIntoView() {
+        scrollThumbnailsContainerIntoView: function () {
             this.thumbnailsContainer.scrollIntoView({
                 behavior: 'smooth',
                 block: 'nearest',
             });
+        },
+
+        onMediaCardRemoved: function (thisCard) {
+            var index = this.mediaCards.findIndex(function (card) {
+                return card === thisCard;
+            });
+
+            var mediaItems = this.mediaCards.map(function (card) {
+                return card.getFormData();
+            });
+
+            if (index >= 0) {
+                this.mediaCards.splice(index, 1);
+            }
+
+            this.scrollThumbnailsContainerIntoView();
+
+            updateObservationMedia(this.observation, mediaItems, noop);
         },
     });
 
@@ -675,6 +704,10 @@
         this.el = document.createElement('div');
     }
 
+    ObservationMediaCard.prototype.getRemoveButton = function () {
+        return this.el.querySelector('.media-preview-thumbnail__remove-button');
+    };
+
     ObservationMediaCard.prototype.initialize = function () {
         var thisSelf = this;
         var wrapper = this.el;
@@ -689,7 +722,7 @@
         setTimeout(function () {
             wrapper.querySelector('[name="file_name"]').innerText = file.name;
 
-            var removeButton = wrapper.querySelector('.media-preview-thumbnail__remove-button');
+            var removeButton = thisSelf.getRemoveButton();
 
             removeButton.onclick = function onremoveclick() {
 
@@ -715,8 +748,8 @@
 
     ObservationMediaCard.prototype.getFormData = function () {
         return {
-            // The MediaItem should have been created before calling getFormData()
-            id: this.mediaItem.id,
+            // The MediaItem may not be ready before calling getFormData()
+            id: this.mediaItem && this.mediaItem.id,
             title: this.el.querySelector('input[name="photo_title"]').value,
             details: this.el.querySelector('textarea[name="photo_details"]').value,
         };
@@ -738,6 +771,9 @@
                 var mediaURLs = this.mediaItem.mediaURLs && this.mediaItem.mediaURLs.cdns;
                 imageWrapper.innerHTML = '<img src="' + mediaURLs[0] + '?auto=format&width=640" alt="Image preview">';
             }
+
+            // Enable the remove button
+            this.getRemoveButton().disabled = false;
         } else {
             var icon = wrapper.querySelector('.media-preview-thumbnail__image-wrapper i.material-symbols-outlined');
 
@@ -800,8 +836,12 @@
         }
 
         function showCurrentSection() {
+            if (observation.id) {
+                form.classList.remove('not-ready-to-save');
+            }
+
             currentSection.el.classList.add('form-section--active');
-            currentSection.bindHandlers(onSectionBack, onSectionNext);
+            currentSection.bindHandlers(onSectionBack, onSectionNext, onSectionSave);
 
             formIntro.scrollIntoView({
                 behavior: 'smooth',
@@ -870,6 +910,15 @@
                 }
 
                 transitionForward();
+            }
+        }
+
+        function onSectionSave() {
+            var data = currentSection.validateInput();
+
+            if (data) {
+                observation.mergeFormData(data);
+                updateOrCreateObservation(observation);
             }
         }
 
