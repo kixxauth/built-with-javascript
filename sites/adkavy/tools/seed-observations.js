@@ -103,10 +103,9 @@ async function addMedia(record) {
         for (const entry of entries) {
             const mediaItem = await uploadMedia(record, path.join(dir, entry));
 
-            await updateMediaMetadata(record, {
-                id: mediaItem.id,
-                title: record.attributes.title,
-            });
+            mediaItem.title = record.attributes.title;
+
+            await updateMediaMetadata(record, mediaItem);
         }
     } else if (Array.isArray(record.attributes.photos)) {
         for (const photo of record.attributes.photos) {
@@ -115,11 +114,10 @@ async function addMedia(record) {
 
             const mediaItem = await uploadMedia(record, filepath);
 
-            await updateMediaMetadata(record, {
-                id: mediaItem.id,
-                title: photo.title,
-                details: photo.details,
-            });
+            mediaItem.title = photo.title;
+            mediaItem.details = photo.details;
+
+            await updateMediaMetadata(record, mediaItem);
         }
     }
 }
@@ -163,11 +161,7 @@ async function updateMediaMetadata(record, mediaItem) {
             // The observationId
             record.id,
             // Media Item
-            {
-                id: mediaItem.id,
-                title: mediaItem.title,
-                details: mediaItem.details,
-            },
+            mediaItem,
         ],
     });
 
