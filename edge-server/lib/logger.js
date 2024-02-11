@@ -1,3 +1,6 @@
+import process from 'node:process'; // eslint-disable-line no-shadow
+
+
 export default class Logger {
 
     constructor({ name }) {
@@ -32,6 +35,7 @@ export default class Logger {
         const data = {
             time: now.toISOString(),
             name: this.name,
+            pid: process.pid,
             level,
             msg,
         };
