@@ -87,14 +87,7 @@ export default class RemoteObject {
      * @public
      */
     isVideoSource() {
-        switch (this.contentType.toLowerCase()) {
-            case 'video/mp4':
-            case 'video/quicktime':
-            case 'video/3gpp':
-                return true;
-        }
-
-        return false;
+        return this.contentType.toLowerCase().startsWith('video');
     }
 
     /**
