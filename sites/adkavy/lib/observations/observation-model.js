@@ -90,7 +90,8 @@ export default class ObservationModel extends DataStoreModel {
             // Only add an item to the media list if it exists in the new list. This way the
             // client can remove media items by simply excluding them from the update list.
             if (newItem) {
-                newMediaList.push(mapMediaItem(newItem));
+                // Merge the new item with the existing item.
+                newMediaList.push(Object.assign({}, item, mapMediaItem(newItem)));
             }
         });
 
