@@ -153,6 +153,9 @@ async function main() {
     const server = http.createServer((req, res) => {
 
         req.on('error', (error) => {
+            // TODO: Handle errors when the client aborts:
+            // { "error":{"name":"Error","code":"ECONNRESET","message":"aborted"}}
+            // The request/response cycle is in progress. So how do we handle this?
             logger.warn('request error event', { name: error.name, code: error.code, message: error.message });
         });
 

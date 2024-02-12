@@ -97,6 +97,8 @@ export function createHttpRequestHandler(deps) {
         };
 
         req.once('error', (error) => {
+            // TODO: Handle errors when the client aborts:
+            // { "error":{"name":"Error","code":"ECONNRESET","message":"aborted"}}
             logger.error('edge request error event', { error });
         });
 

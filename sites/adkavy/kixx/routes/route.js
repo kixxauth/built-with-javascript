@@ -96,6 +96,8 @@ export default class Route {
                 res = this.handleError(error, request, response, target);
             }
 
+            // TODO: Wrap errors to capture this point in the stack trace.
+            // Maybe we can do this by creating our own event bus with an emitError() method?
             this.eventBus.emit('error', error);
         }
 

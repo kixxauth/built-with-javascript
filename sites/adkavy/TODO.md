@@ -13,6 +13,7 @@ TODO
 - [ ] Ensure pages are cacheable when appropriate.
 - [ ] Add a pageImage to each page record (for social card image - get from site owners).
 - [ ] Use dynamic page title and description for observation detail pages.
+- [ ] Handle aborted requests in Kixx (see TODO in server.js)
 - [ ] Implement BlobStore for content management of snippets.
 
 ### Pick my Poison
