@@ -660,8 +660,10 @@
                 this.state.mediaItem = ev.mediaItem;
 
                 var imageWrapper = this.el.querySelector('.media-preview-thumbnail__image-wrapper');
+                var contentType = ev.mediaItem.contentType || '';
+                var isVideo = contentType.indexOf('video') === 0;
 
-                if (ev.mediaItem.type === 'video') {
+                if (isVideo) {
                     // Videos will continue to process in the background. At this point we do not have a way
                     // to be notified when the poster image is ready. Instead we give the user a pacifier.
                     imageWrapper.innerHTML = '<p><i class="material-symbols-outlined">cloud_sync</i><br />Video upload complete.<br />The video will be available when the observation is submitted.</p>';

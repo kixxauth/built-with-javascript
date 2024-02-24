@@ -5,15 +5,16 @@ TODO
 - [x] Optionally turn off static asset HTTP caching (for development).
 - [x] Observation travel mode is not saving.
 - [x] Remove photo does not do anything.
-- [ ] Disable remove button until images upload.
-- [ ] Disable buttons while images and videos upload.
-- [ ] Why can't we upload HEIF images? (observation 58)
-- [ ] Add a save button.
+- [x] Disable remove button until images upload.
+- [x] Disable buttons while images and videos upload.
+- [x] Why can't we upload HEIF images? (observation 58)
+- [x] Add a save button.
+- [ ] Videos which have already been processed are not returned with posterURLs (Leaving open: This is only an issue when the same file is uploaded more than once. It will need to be fixed in the Object Management Service).
+- [ ] Handle aborted requests in Kixx (see TODO in server.js)
 - [ ] Redirect to HTTPS. In the Kixx router?
 - [ ] Ensure pages are cacheable when appropriate.
 - [ ] Add a pageImage to each page record (for social card image - get from site owners).
 - [ ] Use dynamic page title and description for observation detail pages.
-- [ ] Handle aborted requests in Kixx (see TODO in server.js)
 - [ ] Implement BlobStore for content management of snippets.
 
 ### Pick my Poison
