@@ -54,6 +54,11 @@ export default class ObservationModel extends DataStoreModel {
     }
 
     updateOrCreateMediaItem(item) {
+        // If the item does not have an id, this is a no-op.
+        if (!isNonEmptyString(item.id)) {
+            return this;
+        }
+
         const mediaItems = Array.isArray(this.attributes.media)
             ? this.attributes.media.slice()
             : [];

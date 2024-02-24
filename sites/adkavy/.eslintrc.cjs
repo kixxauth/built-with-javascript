@@ -9,7 +9,7 @@ module.exports = {
     parserOptions: {
         sourceType: 'module',
     },
-    ignorePatterns: [ '**/vendor/' ],
+    ignorePatterns: [ '**/vendor/', 'tmp/' ],
     rules: {
         'array-bracket-spacing': [
             'error',

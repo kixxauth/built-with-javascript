@@ -20,4 +20,4 @@ TODO
 
 1. Disable the Back/Save/Next buttons - User Experience Ok - Requires creating an object to track all photo uploads
 2. Update media items in the background - User Experience Good - Requires creating an object to track all photo uploads (super fragile)
-3. Update media items 1 by 1 - User Experience Good - Requires updating the service to remove media items in a different way.
+3. Update media items 1 by 1 - User Experience Good - Requires updating the service to remove media items in a different way. Will still require tracking uploads to enable navigating away from the observation photos form section.
