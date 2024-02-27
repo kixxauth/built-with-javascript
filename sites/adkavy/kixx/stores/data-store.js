@@ -68,9 +68,7 @@ export default class DataStore {
             this.eventBus.emit('DataStore:updateItem', event);
         } catch (error) {
             this.logger.error('error while emitting DataStore:updateItem', { error });
-            // TODO: Wrap errors to capture this point in the stack trace.
-            // Maybe we can do this by creating our own event bus with an emitError() method?
-            this.eventBus.emit('error', error);
+            this.eventBus.emitError(error);
         }
 
         return record;

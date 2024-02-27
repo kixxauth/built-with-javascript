@@ -1,7 +1,6 @@
 import path from 'node:path';
 import http from 'node:http';
 import util from 'node:util';
-import { EventEmitter } from 'node:events';
 import Kixx from './kixx/mod.js';
 import ConfigManager from './lib/config-manager/config-manager.js';
 
@@ -21,6 +20,7 @@ import { fromFileUrl } from './lib/utils.js';
 
 import routes from './seeds/routes.js';
 
+const { EventBus } = Kixx.Lib;
 const { isHttpError, WrappedError } = Kixx.Errors;
 const { NodeHTTPRouter } = Kixx.HTTP;
 
@@ -67,10 +67,7 @@ async function main() {
         makePretty: config.logger.makePretty,
     });
 
-    const eventBus = new EventEmitter();
-
-    // Many components listen on the Event Bus
-    eventBus.setMaxListeners(50);
+    const eventBus = new EventBus();
 
     eventBus.on('error', (error) => {
         if (!(error instanceof WrappedError) || error.fatal) {
@@ -80,6 +77,7 @@ async function main() {
         } else if (!isHttpError(error)) {
             logger.error('error on event bus', { error });
         }
+        // Ignore non-fatal HTTP errors.
     });
 
     eventBus.on('KixxHTTPRequest', (ev) => {

@@ -10,7 +10,7 @@ TODO
 - [x] Why can't we upload HEIF images? (observation 58)
 - [x] Add a save button.
 - [ ] Videos which have already been processed are not returned with posterURLs (Leaving open: This is only an issue when the same file is uploaded more than once. It will need to be fixed in the Object Management Service).
-- [ ] Handle aborted requests in Kixx (see TODO in server.js)
+- [ ] Handle aborted requests in Kixx (see TODO in server.js). Also need to abort any requests in progress (ex: to the Object Management Service).
 - [ ] Redirect to HTTPS. In the Kixx router?
 - [ ] Ensure pages are cacheable when appropriate.
 - [ ] Add a pageImage to each page record (for social card image - get from site owners).

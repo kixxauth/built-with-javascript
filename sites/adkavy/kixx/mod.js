@@ -1,3 +1,4 @@
+import Lib from './lib/mod.js';
 import Errors from './errors/mod.js';
 import Stores from './stores/mod.js';
 import HTTP from './http/mod.js';
@@ -7,6 +8,7 @@ import Targets from './targets/mod.js';
 
 
 export default {
+    Lib,
     Errors,
     Stores,
     HTTP,
