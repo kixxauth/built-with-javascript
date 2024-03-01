@@ -160,6 +160,11 @@ export default class ObjectManagementClient {
                 });
 
                 res.on('end', () => {
+
+                    // Release the source stream.
+                    // This is important in the case of connection errors.
+                    sourceStream.unpipe(req);
+
                     const { statusCode, headers } = res;
 
                     if (statusCode !== 200 && statusCode !== 201) {
