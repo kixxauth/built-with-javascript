@@ -158,6 +158,7 @@ export function createHttpRequestHandler(deps) {
             logger.warn('proxy request error event', { error });
 
             // Immediately abort the proxy request.
+            req.unpipe(proxyRequest);
             proxyRequest.destroy();
 
             if (!res.headersSent) {

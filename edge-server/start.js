@@ -30,6 +30,7 @@ const DISALLOWED_HOST_CHARACTERS = /[^a-z0-9_\.\:\-]/i;
 
 
 const logger = new Logger({ name: 'EdgeServer' });
+process.title = 'node-edgeserver';
 
 const servers = [];
 const subProcesses = [];
@@ -218,7 +219,8 @@ function startEncryptedServer(config) {
                 throw new TypeError('Disallowed characters in SNI servername');
             }
 
-            logger.log('server name indication callback', { servername });
+            // Let's not log this out anymore. Needlessly verbose.
+            // logger.log('server name indication callback', { servername });
 
             // Uncomment for testing.
             // An Error here, without using the provided callback, will crash the server.
@@ -230,18 +232,19 @@ function startEncryptedServer(config) {
 
             const certname = CERTNAME_BY_SERVERNAME.get(servername);
 
-            if (!certname) {
-                throw new Error(`SNI servername "${ servername }" is unknown`);
-            }
+            if (certname) {
+                const ca = getSslCaForServername(certname);
+                const cert = getSslCertForServername(certname);
+                const key = getSslKeyForServername(certname);
 
-            const ca = getSslCaForServername(certname);
-            const cert = getSslCertForServername(certname);
-            const key = getSslKeyForServername(certname);
-
-            if (ca) {
-                context = tls.createSecureContext({ ca, cert, key });
+                if (ca) {
+                    context = tls.createSecureContext({ ca, cert, key });
+                } else {
+                    context = tls.createSecureContext({ cert, key });
+                }
             } else {
-                context = tls.createSecureContext({ cert, key });
+                // The servername is not known.
+                callback(new Error(`SNI servername "${ servername }" is unknown`));
             }
         } catch (error) {
             logger.error('error in SNI callback', { errorMessage: error.message });
