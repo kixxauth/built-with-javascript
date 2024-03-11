@@ -9,3 +9,5 @@ TODO
 - [ ] Validate the scope and key URL pathname parts to ensure safety and naming rules.
 - [ ] Ensure contentLength is always included in write server responses.
 - [ ] How do we inform clients when a job is complete or has aborted with an error?
+- [ ] Create a read web interface to view uploaded objects so we can use the object management service for static sites.
+- [ ] Create a write web interface to upload new objects from a web browser so we can use the object management service for static sites.
