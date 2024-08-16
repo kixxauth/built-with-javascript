@@ -1,0 +1,20 @@
+{
+    "certDirectory": "/home/kris/webserver/ssl-certificates",
+    "encryptedServer": {
+        "port": 3443
+    },
+    "unencryptedServer": {
+        "port": 8000
+    },
+    "virtualHosts": [
+        {
+            "port": 3033,
+            "command": "node sites/adkavy/server.js",
+            "hostnames": [
+                {
+                    "hostname": "localhost"
+                }
+            ]
+        }
+    ]
+}

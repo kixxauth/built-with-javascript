@@ -1,0 +1,6 @@
+{
+    "awsRegion": "us-east-2",
+    "dynamodbEndpoint": "https://dynamodb.us-east-2.amazonaws.com",
+    "awsAccessKey": "foo",
+    "awsSecretKey": "bar"
+}

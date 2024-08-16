@@ -1,0 +1,31 @@
+{
+    "certDirectory": "/home/kris/webserver/ssl-certificates",
+    "encryptedServer": {
+        "port": 443
+    },
+    "unencryptedServer": {
+        "port": 80
+    },
+    "virtualHosts": [
+        {
+            "port": 8001,
+            "command": "node sites/test/server.js",
+            "hostnames": [
+                {
+                    "hostname": "test.kixx.name",
+                    "certname": "kixx_name"
+                }
+            ]
+        },
+        {
+            "port": 8002,
+            "command": "node sites/object-management-service/server.js --environment production",
+            "hostnames": [
+                {
+                    "hostname": "media.kixx.name",
+                    "certname": "kixx_name"
+                }
+            ]
+        }
+    ]
+}

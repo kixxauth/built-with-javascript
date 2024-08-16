@@ -1,0 +1,6 @@
+{
+    "s3Region": "us-east-2",
+    "s3Bucket": "adkavy",
+    "s3AccessKey": "foo",
+    "s3SecretKey": "bar"
+}
