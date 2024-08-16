@@ -83,6 +83,13 @@ export default class Route {
             target: target.name,
         });
 
+        // TODO: Redirect to https:
+        // We should be able to ask the target if it forces https. It will know from the
+        // route configuration combined with the global configuration setting.
+        //
+        // Although, this is not fitting well into the target object, since Kixx doesn't really
+        // controle the implementation of a Target
+
         let res;
 
         // By using `await route.handleRequest()` we cast the result to a Promise and catch any errors

@@ -12,6 +12,8 @@ export default class HTTPRouter {
     #routes = [];
 
     constructor({ eventBus }) {
+        // TODO: Allow a parameter called redirectToHttps
+        // What is the best practice for passing in config settings?
         Object.defineProperties(this, {
             eventBus: {
                 value: eventBus,
@@ -67,6 +69,7 @@ export default class HTTPRouter {
             );
 
             const createTarget = this.#registeredTargetFactories.get(targetName);
+            // TODO: Pass in a prop called allowUnencrypted which is false by default.
             return createTarget({ name: targetName, methods, options });
         });
 

@@ -98,6 +98,7 @@ async function main() {
         directory: path.join(ROOT_DIR, 'templates'),
     });
 
+    // TODO: How do we pass in config settings?
     const router = new NodeHTTPRouter({
         logger: logger.createChild({ name: 'HTTPRouter' }),
         eventBus,
